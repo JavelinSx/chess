@@ -12,7 +12,9 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@unocss/reset": "^0.59.4"
+    "@pinia/nuxt": "^0.5.1",
+    "@unocss/reset": "^0.59.4",
+    "pinia": "^2.1.7"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.15.0",

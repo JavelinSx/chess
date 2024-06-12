@@ -1,64 +1,79 @@
-# Nuxt 3 + FSD + UnoCSS
+app/: Основные компоненты приложения
+entities/: Модели и сущности (например, ChessPiece, Board)
+features/: Отдельные функциональные модули (например, DragAndDrop, BoardSetup)
+layouts/: Основные шаблоны и макеты
+pages/: Страницы приложения
+public/: Статические файлы
+shared/: Общие компоненты и утилиты
+widgets/: Вспомогательные виджеты
+структура проекта
+chess/
+├── .nuxt/
+├── .vscode/
+├── app/
+│   ├── App.vue
+│   ├── main.ts
+├── entities/
+│   ├── chessPiece/
+│   │   ├── model/
+│   │   │   ├── ChessPiece.ts
+│   │   │   └── index.ts
+│   │   ├── ui/
+│   │   │   └── ChessPiece.vue
+│   │   └── index.ts
+│   ├── board/
+│   │   ├── model/
+│   │   │   ├── Board.ts
+│   │   │   └── index.ts
+│   │   ├── ui/
+│   │   │   └── Board.vue
+│   │   └── index.ts
+├── features/
+│   ├── dragAndDrop/
+│   │   ├── model/
+│   │   │   └── DragAndDrop.ts
+│   │   ├── ui/
+│   │   │   └── DragAndDrop.vue
+│   │   └── index.ts
+│   ├── boardSetup/
+│   │   ├── model/
+│   │   │   └── BoardSetup.ts
+│   │   ├── ui/
+│   │   │   └── BoardSetup.vue
+│   │   └── index.ts
+├── layouts/
+│   └── default.vue
+├── pages/
+│   ├── index.vue
+│   └── game.vue
+├── public/
+├── shared/
+│   ├── api/
+│   │   └── api.ts
+│   ├── config/
+│   │   └── config.ts
+│   ├── lib/
+│   │   └── utils.ts
+│   ├── ui/
+│   │   ├── Button.vue
+│   │   └── Modal.vue
+│   └── index.ts
+├── widgets/
+│   ├── scoreBoard/
+│   │   ├── model/
+│   │   │   └── ScoreBoard.ts
+│   │   ├── ui/
+│   │   │   └── ScoreBoard.vue
+│   │   └── index.ts
+├── .gitignore
+├── .npmrc
+├── eslint.config.js
+├── nuxt.config.ts
+├── package-lock.json
+├── package.json
+├── README.md
+├── tsconfig.json
+└── uno.config.ts
 
-Template for development on Nuxt 3 in the Feature-Sliced Design architecture
-
-## Includes
-
-✅ Nuxt 3
-
-✅ FSD (Feature-Sliced Design)
-
-✅ Uno CSS
-
-✅ ESLint (Preset by @antfu)
-
-## Developer Experience
-
-* [FSD Slices Generator](https://marketplace.visualstudio.com/items?itemName=SbokyZahodi.fsd-slices) — The VS Code extension that gives you the ability to quickly create FSD slices
-
-* [Feature-Sliced Design Helper](https://plugins.jetbrains.com/plugin/21638-feature-sliced-design-helper) — IntelliJ IDEA plugin that lets you quickly create layers, slices, and segments
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm run dev
-
-# yarn
-yarn dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm run build
-
-# yarn
-yarn build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm run preview
-
-# yarn
-yarn preview
-```
-
-[![code style](https://antfu.me/badge-code-style.svg)](https://github.com/antfu/eslint-config)
+find . -type d \( -name ".nuxt" -o -name ".vscode" -o -name "node_modules" -o -name ".git" \) -prune -o -print
+для вывода в терминал структуры проекта
