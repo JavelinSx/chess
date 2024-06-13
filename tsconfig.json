@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "types": ["node"]
+    "types": ["node", "lodash"]
   },
   "exclude": ["node_modules", ".nuxt", "dist"]
 }

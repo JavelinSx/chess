@@ -1,18 +1,16 @@
-<script setup lang="ts">
-import type { IPiece } from '@/entities/piece/model/Piece'
-
-const props = defineProps<{
-    piece: IPiece
-}>()
-
-</script>
-
 <template>
     <div class="piece" :class="[props.piece.color, props.piece.type]" />
 </template>
 
+<script setup lang="ts">
+import type { IPiece } from '@/entities/piece/model/Piece';
+
+const props = defineProps<{
+    piece: IPiece
+}>();
+</script>
+
 <style scoped>
-/* Styles for chess pieces */
 .piece {
     height: 70%;
     width: 70%;

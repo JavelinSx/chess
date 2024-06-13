@@ -1,17 +1,20 @@
 <template>
-    <div :class="['square', squareClass]" @click="test(square)">
-        <Piece v-if="square.piece !== null" :piece="square.piece" />
+    <div :class="['square', squareClass]" @click="handleClick(square)">
+        <Piece v-if="square.piece" :piece="square.piece" />
     </div>
 </template>
 
 <script setup lang="ts">
 import { PropType, computed } from 'vue';
-import { ISquare, IPiece } from '@/entities/piece/model/Piece';
+import { ISquare } from '@/entities/piece/model/Piece';
 import Piece from '@/entities/piece/ui/Piece.vue';
+import { useChessStore } from '@/stores/chess/chessStore';
+
+const chessStore = useChessStore();
 
 const props = defineProps({
     square: {
-        type: [Object, null] as PropType<ISquare>, // Обновление типизации для обработки null
+        type: [Object, null] as PropType<ISquare>,
         required: true,
     },
     rowIndex: {
@@ -27,9 +30,10 @@ const props = defineProps({
 const squareClass = computed(() => {
     return (props.rowIndex + props.colIndex) % 2 === 0 ? 'white-square' : 'black-square';
 });
-const test = (piece: IPiece | ISquare) => {
-    console.log(piece)
-}
+
+const handleClick = (square: ISquare) => {
+    chessStore.handleSquareClick(square);
+};
 </script>
 
 <style scoped>

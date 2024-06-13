@@ -1,8 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  modules: ['@unocss/nuxt', '@pinia/nuxt'],
-  css: ['@/app/global.css', '@unocss/reset/tailwind.css'],
+  modules: ['@pinia/nuxt'],
 
   imports: {
     dirs: [
