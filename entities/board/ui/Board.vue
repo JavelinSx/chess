@@ -1,11 +1,23 @@
 <template>
+    <div class="white-piece-reset">
+        <div class="piece-wrapper" v-for="piece in whitePieceReset">
+            <Piece :piece="piece"></Piece>
+        </div>
+    </div>
+
     <div class="board" @mousemove="handleMouseMove">
         <template v-for="(row, rowIndex) in board" :key="rowIndex">
             <Square v-for="(square, colIndex) in row" :key="colIndex" :square="square" :rowIndex="rowIndex"
                 :colIndex="colIndex" />
         </template>
-        <div v-if="chessStore.selectedPiece?.piece" :style="pieceStyle" class="piece-mouse">
-            <Piece :piece="chessStore.selectedPiece.piece" />
+        <div v-if="chessStore.selectedPiece" :style="pieceStyle" class="piece-mouse">
+            <Piece :piece="chessStore.selectedPiece" />
+        </div>
+    </div>
+
+    <div class="black-piece-reset">
+        <div class="piece-wrapper" v-for="piece in blackPieceReset">
+            <Piece :piece="piece"></Piece>
         </div>
     </div>
 </template>
@@ -20,12 +32,13 @@ const chessStore = useChessStore();
 chessStore.initializeBoard();
 
 const board = computed(() => chessStore.board);
-
+const whitePieceReset = chessStore.whitePiecesReset
+const blackPieceReset = chessStore.blackPiecesReset
 const mouseMove = ref({ x: 0, y: 0 });
 let animationFrameId: number | null = null;
 
 const handleMouseMove = (e: MouseEvent) => {
-    if (chessStore.selectedPiece?.piece) {
+    if (chessStore.selectedPiece) {
         if (animationFrameId !== null) {
             cancelAnimationFrame(animationFrameId);
         }
@@ -39,12 +52,12 @@ const handleMouseMove = (e: MouseEvent) => {
 };
 
 watch(mouseMove, (newVal) => {
-    if (chessStore.selectedPiece?.piece) {
+    if (chessStore.selectedPiece) {
         chessStore.mouseMove = newVal;
     }
 });
 
-const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 520}px; top:${chessStore.mouseMove.y - 230}px; position: absolute; pointer-events: none; transform: translate(-50%,-50%)`));
+const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 720}px; top:${chessStore.mouseMove.y - 370}px; position: absolute; pointer-events: none; transform: translate(-50%,-50%)`));
 </script>
 
 <style scoped>
@@ -63,11 +76,30 @@ const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 520}px; top:
 }
 
 .piece-mouse {
-    width: 50px;
+    width: 40px;
     height: 50px;
     display: flex;
     justify-content: center;
     align-items: center;
     pointer-events: none;
+}
+
+.black-piece-reset {
+    display: flex;
+    flex-direction: row;
+    height: 50px;
+    padding: 20px;
+}
+
+.white-piece-reset {
+    display: flex;
+    flex-direction: row;
+    height: 50px;
+    padding: 20px;
+}
+
+.piece-wrapper {
+    width: 40px;
+
 }
 </style>

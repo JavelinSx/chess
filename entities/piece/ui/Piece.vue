@@ -1,9 +1,9 @@
 <template>
-    <div class="piece" :class="[props.piece.color, props.piece.type]" />
+    <img :src="props.piece.icon" class="piece" :class="[props.piece.color, props.piece.type]" />
 </template>
 
 <script setup lang="ts">
-import type { IPiece } from '@/entities/piece/model/Piece';
+import type { IPiece } from '@/types';
 
 const props = defineProps<{
     piece: IPiece
@@ -12,20 +12,14 @@ const props = defineProps<{
 
 <style scoped>
 .piece {
-    height: 70%;
-    width: 70%;
+    height: 35px;
+    width: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.white {
-    border: 1px solid black;
-    background-color: rgb(224, 224, 220);
-}
+.white {}
 
-.black {
-    border: 1px solid white;
-    background-color: rgb(70, 70, 70);
-}
+.black {}
 </style>

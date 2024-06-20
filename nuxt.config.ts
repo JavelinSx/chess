@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: false },
   modules: ['@pinia/nuxt'],
 
   imports: {
@@ -21,5 +21,4 @@ export default defineNuxtConfig({
       // Auto-import all components from shared directory.
     },
   ],
-
-})
+});

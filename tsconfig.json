@@ -14,5 +14,6 @@
     "forceConsistentCasingInFileNames": true,
     "types": ["node", "lodash"]
   },
+
   "exclude": ["node_modules", ".nuxt", "dist"]
 }

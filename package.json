@@ -20,7 +20,7 @@
     "@nuxt/devtools": "latest",
     "@types/lodash": "^4.17.5",
     "eslint": "^9.1.1",
-    "nuxt": "^3.11.2",
+    "nuxt": "^3.12.2",
     "typescript": "^5.4.5"
   }
 }

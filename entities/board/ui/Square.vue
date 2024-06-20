@@ -1,20 +1,21 @@
 <template>
     <div :class="['square', squareClass]" @click="handleClick(square)">
-        <Piece v-if="square.piece" :piece="square.piece" />
+        <Piece v-if="square.state.type" :piece="square.state" />
     </div>
 </template>
 
 <script setup lang="ts">
 import { PropType, computed } from 'vue';
-import { ISquare } from '@/entities/piece/model/Piece';
+import type { ISquare } from '@/types';
 import Piece from '@/entities/piece/ui/Piece.vue';
 import { useChessStore } from '@/stores/chess/chessStore';
-
+import { isSameColor, isSameSquare } from '@/shared/helpers/boardLogic';
+import { validLogicMove } from '@/shared/helpers/validLogicMove';
 const chessStore = useChessStore();
 
 const props = defineProps({
     square: {
-        type: [Object, null] as PropType<ISquare>,
+        type: Object as PropType<ISquare>,
         required: true,
     },
     rowIndex: {
@@ -32,7 +33,20 @@ const squareClass = computed(() => {
 });
 
 const handleClick = (square: ISquare) => {
-    chessStore.handleSquareClick(square);
+    const selectedPiece = chessStore.selectedPiece;
+    const board = chessStore.board;
+
+    if (!selectedPiece) {
+        chessStore.selectPiece(square);
+    } else {
+        const isValidMove = validLogicMove(board, square, selectedPiece);
+
+        if (isSameSquare(selectedPiece, square) || isSameColor(selectedPiece, square) || !isValidMove) {
+            chessStore.resetSelection();
+        } else {
+            chessStore.dropPiece(square);
+        }
+    }
 };
 </script>
 
