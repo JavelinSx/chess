@@ -13,7 +13,7 @@ export interface IPiece {
   type: 'pawn' | 'tower' | 'horse' | 'bishop' | 'queen' | 'king' | null;
   color: 'white' | 'black' | null;
   position: IPosition;
-  icon: string;
+  icon?: string;
 }
 export interface IPosition {
   x: number;

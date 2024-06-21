@@ -7,7 +7,8 @@
 
     <div class="board" @mousemove="handleMouseMove">
         <template v-for="(row, rowIndex) in board" :key="rowIndex">
-            <Square v-for="(square, colIndex) in row" :key="colIndex" :square="square" :rowIndex="rowIndex"
+            <Square :class="chessStore.setSquarePossibleMove({ x: colIndex, y: rowIndex }) ? '' : ''"
+                v-for="(square, colIndex) in row" :key="colIndex" :square="square" :rowIndex="rowIndex"
                 :colIndex="colIndex" />
         </template>
         <div v-if="chessStore.selectedPiece" :style="pieceStyle" class="piece-mouse">
