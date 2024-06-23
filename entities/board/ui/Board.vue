@@ -21,6 +21,11 @@
             <Piece :piece="piece"></Piece>
         </div>
     </div>
+    <div>
+        <h2 v-if="stateCheck">Шах</h2>
+        <h2 v-if="stateCheckMate">Мат</h2>
+    </div>
+
 </template>
 
 <script setup lang="ts">
@@ -31,7 +36,8 @@ import Piece from '@/entities/piece/ui/Piece.vue';
 
 const chessStore = useChessStore();
 chessStore.initializeBoard();
-
+const stateCheck = computed(() => chessStore.stateCheck)
+const stateCheckMate = computed(() => chessStore.stateCheckMate)
 const board = computed(() => chessStore.board);
 const whitePieceReset = chessStore.whitePiecesReset
 const blackPieceReset = chessStore.blackPiecesReset

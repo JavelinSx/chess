@@ -14,6 +14,7 @@ export interface IPiece {
   color: 'white' | 'black' | null;
   position: IPosition;
   icon?: string;
+  blockingMove?: true | false;
 }
 export interface IPosition {
   x: number;

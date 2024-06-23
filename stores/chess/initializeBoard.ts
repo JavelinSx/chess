@@ -16,6 +16,7 @@ import queenWhite from '../../shared/chess-img/queen-white.png';
 
 import towerWhite from '../../shared/chess-img/tower-white.png';
 import towerBlack from '../../shared/chess-img/tower-black.png';
+
 // Function to create an empty board with coordinates for each square
 function createEmptyBoard(): ISquare[][] {
   const board: ISquare[][] = [];
@@ -38,54 +39,64 @@ function createEmptyBoard(): ISquare[][] {
   return board;
 }
 
-// Function to set pieces on the board
-function setPieces(board: ISquare[][], pieces: IPiece[]): void {
-  pieces.forEach((piece) => {
-    board[piece.position.y][piece.position.x].state = piece;
-  });
-}
-
-export function initializeBoard(): ISquare[][] {
+export function initializeBoard(): { board: ISquare[][]; whiteKing: IPiece; blackKing: IPiece } {
   const board = createEmptyBoard();
 
   const pieces: IPiece[] = [
     // White pieces
-    { type: 'horse', color: 'white', position: { x: 1, y: 0 }, icon: horseWhite },
-    { type: 'tower', color: 'white', position: { x: 0, y: 0 }, icon: towerWhite },
-    { type: 'bishop', color: 'white', position: { x: 2, y: 0 }, icon: bishopWhite },
-    { type: 'queen', color: 'white', position: { x: 3, y: 0 }, icon: queenWhite },
-    { type: 'king', color: 'white', position: { x: 4, y: 0 }, icon: kingWhite },
-    { type: 'bishop', color: 'white', position: { x: 5, y: 0 }, icon: bishopWhite },
-    { type: 'horse', color: 'white', position: { x: 6, y: 0 }, icon: horseWhite },
-    { type: 'tower', color: 'white', position: { x: 7, y: 0 }, icon: towerWhite },
-    { type: 'pawn', color: 'white', position: { x: 0, y: 1 }, icon: pawnWhite },
-    { type: 'pawn', color: 'white', position: { x: 1, y: 1 }, icon: pawnWhite },
-    { type: 'pawn', color: 'white', position: { x: 2, y: 1 }, icon: pawnWhite },
-    { type: 'pawn', color: 'white', position: { x: 3, y: 1 }, icon: pawnWhite },
-    { type: 'pawn', color: 'white', position: { x: 4, y: 1 }, icon: pawnWhite },
-    { type: 'pawn', color: 'white', position: { x: 5, y: 1 }, icon: pawnWhite },
-    { type: 'pawn', color: 'white', position: { x: 6, y: 1 }, icon: pawnWhite },
-    { type: 'pawn', color: 'white', position: { x: 7, y: 1 }, icon: pawnWhite },
+    { type: 'horse', color: 'white', position: { x: 1, y: 0 }, icon: horseWhite, blockingMove: false },
+    { type: 'tower', color: 'white', position: { x: 0, y: 0 }, icon: towerWhite, blockingMove: false },
+    { type: 'bishop', color: 'white', position: { x: 2, y: 0 }, icon: bishopWhite, blockingMove: false },
+    { type: 'queen', color: 'white', position: { x: 3, y: 0 }, icon: queenWhite, blockingMove: false },
+    { type: 'king', color: 'white', position: { x: 4, y: 0 }, icon: kingWhite, blockingMove: false },
+    { type: 'bishop', color: 'white', position: { x: 5, y: 0 }, icon: bishopWhite, blockingMove: false },
+    { type: 'horse', color: 'white', position: { x: 6, y: 0 }, icon: horseWhite, blockingMove: false },
+    { type: 'tower', color: 'white', position: { x: 7, y: 0 }, icon: towerWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 0, y: 1 }, icon: pawnWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 1, y: 1 }, icon: pawnWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 2, y: 1 }, icon: pawnWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 3, y: 1 }, icon: pawnWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 4, y: 1 }, icon: pawnWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 5, y: 1 }, icon: pawnWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 6, y: 1 }, icon: pawnWhite, blockingMove: false },
+    { type: 'pawn', color: 'white', position: { x: 7, y: 1 }, icon: pawnWhite, blockingMove: false },
 
     // Black pieces
-    { type: 'tower', color: 'black', position: { x: 0, y: 7 }, icon: towerBlack },
-    { type: 'horse', color: 'black', position: { x: 1, y: 7 }, icon: horseBlack },
-    { type: 'bishop', color: 'black', position: { x: 2, y: 7 }, icon: bishopBlack },
-    { type: 'queen', color: 'black', position: { x: 3, y: 7 }, icon: queenBlack },
-    { type: 'king', color: 'black', position: { x: 4, y: 7 }, icon: kingBlack },
-    { type: 'bishop', color: 'black', position: { x: 5, y: 7 }, icon: bishopBlack },
-    { type: 'horse', color: 'black', position: { x: 6, y: 7 }, icon: horseBlack },
-    { type: 'tower', color: 'black', position: { x: 7, y: 7 }, icon: towerBlack },
-    { type: 'pawn', color: 'black', position: { x: 0, y: 6 }, icon: pawnBlack },
-    { type: 'pawn', color: 'black', position: { x: 1, y: 6 }, icon: pawnBlack },
-    { type: 'pawn', color: 'black', position: { x: 2, y: 6 }, icon: pawnBlack },
-    { type: 'pawn', color: 'black', position: { x: 3, y: 6 }, icon: pawnBlack },
-    { type: 'pawn', color: 'black', position: { x: 4, y: 6 }, icon: pawnBlack },
-    { type: 'pawn', color: 'black', position: { x: 5, y: 6 }, icon: pawnBlack },
-    { type: 'pawn', color: 'black', position: { x: 6, y: 6 }, icon: pawnBlack },
-    { type: 'pawn', color: 'black', position: { x: 7, y: 6 }, icon: pawnBlack },
+    { type: 'tower', color: 'black', position: { x: 0, y: 7 }, icon: towerBlack, blockingMove: false },
+    { type: 'horse', color: 'black', position: { x: 1, y: 7 }, icon: horseBlack, blockingMove: false },
+    { type: 'bishop', color: 'black', position: { x: 2, y: 7 }, icon: bishopBlack, blockingMove: false },
+    { type: 'queen', color: 'black', position: { x: 3, y: 7 }, icon: queenBlack, blockingMove: false },
+    { type: 'king', color: 'black', position: { x: 4, y: 7 }, icon: kingBlack, blockingMove: false },
+    { type: 'bishop', color: 'black', position: { x: 5, y: 7 }, icon: bishopBlack, blockingMove: false },
+    { type: 'horse', color: 'black', position: { x: 6, y: 7 }, icon: horseBlack, blockingMove: false },
+    { type: 'tower', color: 'black', position: { x: 7, y: 7 }, icon: towerBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 0, y: 6 }, icon: pawnBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 1, y: 6 }, icon: pawnBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 2, y: 6 }, icon: pawnBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 3, y: 6 }, icon: pawnBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 4, y: 6 }, icon: pawnBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 5, y: 6 }, icon: pawnBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 6, y: 6 }, icon: pawnBlack, blockingMove: false },
+    { type: 'pawn', color: 'black', position: { x: 7, y: 6 }, icon: pawnBlack, blockingMove: false },
   ];
 
-  setPieces(board, pieces);
-  return board;
+  let whiteKing: IPiece | null = null;
+  let blackKing: IPiece | null = null;
+
+  pieces.forEach((piece) => {
+    board[piece.position.y][piece.position.x].state = piece;
+    if (piece.type === 'king') {
+      if (piece.color === 'white') {
+        whiteKing = piece;
+      } else {
+        blackKing = piece;
+      }
+    }
+  });
+
+  if (!whiteKing || !blackKing) {
+    throw new Error('Both kings must be present on the board');
+  }
+
+  return { board, whiteKing, blackKing };
 }

@@ -9,9 +9,9 @@ import { PropType, computed } from 'vue';
 import type { ISquare, IPiece } from '@/types';
 import Piece from '@/entities/piece/ui/Piece.vue';
 import { useChessStore } from '@/stores/chess/chessStore';
+import { getPossibleMoves } from '@/shared/helpers';
 import { isSameColor, isSameSquare } from '@/shared/helpers/boardLogic';
-import { getPossibleMoves } from '@/shared/helpers/getPossibleMoves';
-import { executeCastling } from '@/shared/helpers/castlingLogic';
+import { executeCastling } from '@/shared/helpers';
 
 const chessStore = useChessStore();
 
@@ -42,6 +42,7 @@ const isPossibleMove = computed(() => {
 
 // Обработчик клика по клетке
 const handleClick = (square: ISquare) => {
+    console.log('Клик по клетке:', square);
     const selectedPiece = chessStore.selectedPiece;
     const board = chessStore.board;
 
@@ -56,13 +57,20 @@ const handleClick = (square: ISquare) => {
 
 // Функция для выбора фигуры
 const handlePieceSelection = (square: ISquare) => {
+    if (square.state.type && square.state.blockingMove) {
+        console.log(`Фигура на клетке (${square.state.position.x}, ${square.state.position.y}) заблокирована для хода.`);
+        return; // Не позволяем выбрать фигуру, если она заблокирована для хода
+    }
+
     chessStore.selectPiece(square);
     if (chessStore.selectedPiece) {
         const board = chessStore.board;
         const getStateMoveKing = chessStore.stateMoveKing;
         const getStateMoveTower = chessStore.stateMoveTower;
         const getStateCheck = chessStore.stateCheck;
-        const possibleMoves = getPossibleMoves(board, chessStore.selectedPiece, getStateMoveKing, getStateMoveTower, getStateCheck);
+        const king = chessStore.whoMoveNow === 'white' ? chessStore.whiteKing : chessStore.blackKing;
+        const possibleMoves = getPossibleMoves(board, chessStore.selectedPiece, getStateMoveKing, getStateMoveTower, getStateCheck, king);
+        console.log(`Возможные ходы для выбранной фигуры (${chessStore.selectedPiece.type}):`, possibleMoves);
         chessStore.setPossibleMove(possibleMoves);
     }
 };
@@ -75,6 +83,7 @@ const handlePieceMove = (square: ISquare, selectedPiece: IPiece, board: ISquare[
 
     if (isSameSquare(selectedPiece, square) || isSameColor(selectedPiece, square) || !isValidMove) {
         // Сбрасываем выбор, если кликнули на ту же клетку или на клетку с фигурой того же цвета, или ход невалиден
+        console.log('Невалидный ход или клик на ту же клетку. Сбрасываем выбор.');
         chessStore.resetSelection();
     } else {
         // Проверка и выполнение рокировки
@@ -82,6 +91,7 @@ const handlePieceMove = (square: ISquare, selectedPiece: IPiece, board: ISquare[
             handleCastlingMove(square, selectedPiece, board);
         }
         // Выполнение хода
+        console.log(`Выполняем ход ${selectedPiece.type} (${selectedPiece.position.x}, ${selectedPiece.position.y}) на (${square.state.position.x}, ${square.state.position.y})`);
         chessStore.dropPiece(square);
         chessStore.resetPossibleMove();
     }

@@ -107,20 +107,23 @@ export const validLogicMove = (
   stateCheck: boolean
 ): boolean => {
   const piece = from.type;
-  switch (piece) {
-    case 'pawn':
-      return pawnLogicMove(board, to, from);
-    case 'bishop':
-      return bishopLogicMove(board, to, from);
-    case 'king':
-      return kingLogicMove(board, to, from, stateKing, stateTower, stateCheck);
-    case 'horse':
-      return horseLogicMove(board, to, from);
-    case 'queen':
-      return queenLogicMove(board, to, from);
-    case 'tower':
-      return towerLogicMove(board, to, from);
-    default:
-      return false;
-  }
+  const isValid = (function () {
+    switch (piece) {
+      case 'pawn':
+        return pawnLogicMove(board, to, from);
+      case 'bishop':
+        return bishopLogicMove(board, to, from);
+      case 'king':
+        return kingLogicMove(board, to, from, stateKing, stateTower, stateCheck);
+      case 'horse':
+        return horseLogicMove(board, to, from);
+      case 'queen':
+        return queenLogicMove(board, to, from);
+      case 'tower':
+        return towerLogicMove(board, to, from);
+      default:
+        return false;
+    }
+  })();
+  return isValid;
 };
