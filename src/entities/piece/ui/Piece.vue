@@ -1,11 +1,11 @@
 <template>
-    <img :src="props.piece.icon" class="piece" :class="[props.piece.color, props.piece.type]" />
+    <img :src="piece.icon" class="piece" :class="[piece.color, piece.type]" />
 </template>
 
 <script setup lang="ts">
-import type { IPiece } from '@/types';
+import { IPiece } from '@/types/chess/types';
 
-const props = defineProps<{
+defineProps<{
     piece: IPiece
 }>();
 </script>
@@ -18,8 +18,4 @@ const props = defineProps<{
     justify-content: center;
     align-items: center;
 }
-
-.white {}
-
-.black {}
 </style>

@@ -1,4 +1,4 @@
-import { ISquare, IPiece, IEmptySquare } from '@/types';
+import { ISquare, IPiece, IEmptySquare } from '@/types/chess/types';
 import pawnBlack from '../../shared/chess-img/pawn-black.png';
 import pawnWhite from '../../shared/chess-img/pawn-white.png';
 

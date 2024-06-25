@@ -1,4 +1,4 @@
-import { ISquare, IPiece, IPosition } from '@/types';
+import { IPosition, ISquare, IPiece } from '@/types/chess/types';
 import { validLogicMove } from './moveLogic';
 import { isInCheck } from './checkCheck';
 import { copyBoard } from './copyBoard';

@@ -1,7 +1,15 @@
 import { defineStore } from 'pinia';
-import { ISquare, IPiece, IPosition } from '@/types';
+import { ISquare, IPosition, IPiece } from '@/types/chess/types';
 import { initializeBoard } from './initializeBoard';
-import { getPossibleMoves, isInCheck, setBlockingMoves, resetStates, copyBoard } from '@/shared/helpers';
+import {
+  getPossibleMoves,
+  isInCheck,
+  setBlockingMoves,
+  resetStates,
+  copyBoard,
+  executeCastling,
+} from '@/shared/helpers/chessLogic';
+import { isSameColor, isSameSquare } from '@/shared/helpers/chessLogic';
 
 interface ChessState {
   board: ISquare[][];
@@ -23,6 +31,8 @@ interface ChessState {
   stateCheckMate: boolean;
   blockingMove: boolean | null;
   attackCoordinates: IPosition[] | null;
+  castlingWhite: boolean;
+  castlingBlack: boolean;
 }
 
 export const useChessStore = defineStore('chess', {
@@ -48,6 +58,8 @@ export const useChessStore = defineStore('chess', {
       stateCheckMate: false,
       blockingMove: null,
       attackCoordinates: null,
+      castlingWhite: false,
+      castlingBlack: false,
     };
   },
   actions: {
@@ -73,7 +85,24 @@ export const useChessStore = defineStore('chess', {
     // Выбор фигуры
     selectPiece(square: ISquare) {
       if (square.state.type && square.state.color === this.whoMoveNow && !square.state.blockingMove) {
-        this.selectedPiece = square.state;
+        this.selectedPiece = square.state as IPiece;
+        this.calculatePossibleMoves();
+      }
+    },
+    //Вычисление возможных ходов
+    calculatePossibleMoves() {
+      if (this.selectedPiece) {
+        const board = this.board;
+        const king = this.whoMoveNow === 'white' ? this.whiteKing : this.blackKing;
+        const possibleMoves = getPossibleMoves(
+          board,
+          this.selectedPiece,
+          this.stateMoveKing,
+          this.stateMoveTower,
+          this.stateCheck,
+          king
+        );
+        this.setPossibleMove(possibleMoves);
       }
     },
     // Сброс фигуры на новую клетку
@@ -112,7 +141,6 @@ export const useChessStore = defineStore('chess', {
       if (selectPiece.type === 'tower') {
         this.stateMoveTower = true;
       }
-
       const oldSquare = this.board[oldPosition.y][oldPosition.x];
       oldSquare.state = { type: null, color: null, position: oldPosition };
     },
@@ -120,36 +148,33 @@ export const useChessStore = defineStore('chess', {
     capturePiece(dropSquare: ISquare) {
       if (dropSquare.state.type) {
         if (dropSquare.state.color === 'white') {
-          this.whitePiecesReset.push(dropSquare.state);
+          this.whitePiecesReset.push(dropSquare.state as IPiece);
         } else {
-          this.blackPiecesReset.push(dropSquare.state);
+          this.blackPiecesReset.push(dropSquare.state as IPiece);
         }
       }
     },
-    // Проверка шаха и мата
+    // Проверка состояния шаха и мата
     checkForCheckAndMate() {
       const king = this.whoMoveNow === 'white' ? this.whiteKing : this.blackKing;
-      console.log('Проверка шаха и мата');
       if (king) {
+        // Проверяем, находится ли король под шахом
         const attackCoords = isInCheck(this.board, king);
-        console.log('Атакующие координаты:', attackCoords);
         if (attackCoords.length) {
           this.stateCheck = true;
           this.attackCoordinates = attackCoords;
-          const blockingMoves = this.getBlockingMoves(king, attackCoords);
+          // Получаем ходы для блокировки шаха и ходы короля
+          const blockingMoves = this.getBlockingMoves(king);
           const kingMoves = this.getKingMoves(king);
-
-          console.log('Блокирующие ходы:', blockingMoves);
-          console.log('Ходы короля:', kingMoves);
 
           this.setPossibleMove([...blockingMoves, ...kingMoves]);
           this.blockingMove = true;
 
           setBlockingMoves(this.board, blockingMoves, king);
 
+          // Если нет блокирующих ходов и ходов короля, это мат
           if (blockingMoves.length === 0 && kingMoves.length === 0) {
             this.stateCheckMate = true;
-            console.log('Шах и мат');
           } else {
             this.stateCheckMate = false;
           }
@@ -160,13 +185,43 @@ export const useChessStore = defineStore('chess', {
         this.resetCheckStates();
       }
     },
-    // Получение блокирующих ходов
-    getBlockingMoves(king: IPiece, attackCoordinates: IPosition[]): IPosition[] {
-      const blockingMoves: IPosition[] = [];
+    // Перемещение выбранной фигуры на указанную клетку
+    handlePieceMove(square: ISquare) {
+      const selectedPiece = this.selectedPiece;
+      if (!selectedPiece) return;
 
+      const isValidMove = this.possibleMove.some(
+        (move) => move.x === square.state.position.x && move.y === square.state.position.y
+      );
+
+      if (isSameSquare(selectedPiece, square) || isSameColor(selectedPiece, square) || !isValidMove) {
+        this.resetSelection();
+      } else {
+        if (selectedPiece.type === 'king' && Math.abs(square.state.position.x - selectedPiece.position.x) === 2) {
+          this.handleCastlingMove(square, selectedPiece);
+        }
+        this.dropPiece(square);
+        this.resetPossibleMove();
+      }
+    },
+    // Выполнение хода рокировки
+    handleCastlingMove(square: ISquare, selectedPiece: IPiece) {
+      const rookX = square.state.position.x === selectedPiece.position.x + 2 ? 7 : 0;
+      const rookY = selectedPiece.position.y;
+      const rook = this.board[rookY][rookX].state;
+      const king = selectedPiece;
+      if (rook.type) {
+        executeCastling(this.board, king, rook);
+      }
+    },
+    // Получение блокирующих ходов
+    getBlockingMoves(king: IPiece): IPosition[] {
+      const blockingMoves: IPosition[] = [];
+      // Проходим по всей доске
       for (let y = 0; y < 8; y++) {
         for (let x = 0; x < 8; x++) {
           const piece = this.board[y][x].state;
+          // Проверяем, совпадает ли цвет фигуры с цветом короля
           if (piece.color === king.color) {
             const possibleMoves = getPossibleMoves(
               this.board,
@@ -176,11 +231,14 @@ export const useChessStore = defineStore('chess', {
               this.stateCheck,
               king
             );
+            // Проходим все возможные ходы для фигуры
             for (const move of possibleMoves) {
+              // Создаем временную копию доски
               const tempBoard = copyBoard(this.board);
               const fromSquare = tempBoard[piece.position.y][piece.position.x];
               const toSquare = tempBoard[move.y][move.x];
 
+              // Выполняем перемещение фигуры на временной доске
               toSquare.state = { ...fromSquare.state, position: { x: move.x, y: move.y } };
               fromSquare.state = {
                 type: null,
@@ -188,15 +246,16 @@ export const useChessStore = defineStore('chess', {
                 position: { x: fromSquare.state.position.x, y: fromSquare.state.position.y },
               };
 
+              // Проверяем, находится ли король под шахом после этого хода
               const inCheck = isInCheck(tempBoard, king);
               if (!inCheck.length) {
+                // Если король не под шахом, добавляем этот ход в список блокирующих ходов
                 blockingMoves.push(move);
               }
             }
           }
         }
       }
-      console.log('Блокирующие ходы вычислены:', blockingMoves);
       return blockingMoves;
     },
     // Получение возможных ходов короля
@@ -209,11 +268,14 @@ export const useChessStore = defineStore('chess', {
         this.stateCheck,
         king
       );
+      // Проверяем каждый возможный ход короля
       const validKingMoves = kingMoves.filter((move) => {
+        // Создаем временную копию доски
         const tempBoard = copyBoard(this.board);
         const fromSquare = tempBoard[king.position.y][king.position.x];
         const toSquare = tempBoard[move.y][move.x];
 
+        // Выполняем перемещение короля на временной доске
         toSquare.state = { ...fromSquare.state, position: { x: move.x, y: move.y } };
         fromSquare.state = {
           type: null,
@@ -221,10 +283,11 @@ export const useChessStore = defineStore('chess', {
           position: { x: fromSquare.state.position.x, y: fromSquare.state.position.y },
         };
 
+        // Проверяем, находится ли король под шахом после этого хода
         const inCheck = isInCheck(tempBoard, { ...king, position: { x: move.x, y: move.y } });
+        // Возвращаем ходы, при которых король не под шахом
         return !inCheck.length;
       });
-      console.log('Возможные ходы короля:', validKingMoves);
       return validKingMoves;
     },
     // Сброс состояний шаха и мата
@@ -233,7 +296,6 @@ export const useChessStore = defineStore('chess', {
       this.attackCoordinates = null;
       this.blockingMove = false;
       this.stateCheckMate = false;
-      console.log('Сброс состояний шаха и мата');
       resetStates(this.board);
     },
     // Сброс возможных ходов
@@ -244,6 +306,7 @@ export const useChessStore = defineStore('chess', {
     resetSelection() {
       this.selectedPiece = null;
       this.droppedPiece = null;
+      this.possibleMove = [];
     },
   },
 });

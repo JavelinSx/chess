@@ -1,35 +1,52 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: false },
   modules: ['@pinia/nuxt', 'nuxt-lodash'],
 
   imports: {
-    dirs: [
-      'shared/*',
-      // Auto-import all files from shared directory. You can specify only need paths | https://nuxt.com/docs/guide/directory-structure/composables
-    ],
+    dirs: ['src/shared/**', 'src/entities/**', 'src/features/**', 'src/widgets/**'],
   },
 
   dir: {
-    pages: 'app/routes',
+    pages: 'src/pages',
   },
 
   components: [
     {
-      path: '~/shared',
+      path: '~/src/shared/ui',
       pathPrefix: false,
-      // Auto-import all components from shared directory.
+    },
+    {
+      path: '~/src/entities',
+      pathPrefix: false,
+    },
+    {
+      path: '~/src/features',
+      pathPrefix: false,
+    },
+    {
+      path: '~/src/widgets',
+      pathPrefix: false,
     },
   ],
+
   lodash: {
     prefix: '_',
     prefixSkip: ['string'],
     upperAfterPrefix: false,
     exclude: ['map'],
     alias: [
-      ['camelCase', 'stringToCamelCase'], // => stringToCamelCase
-      ['kebabCase', 'stringToKebab'], // => stringToKebab
-      ['isDate', 'isLodashDate'], // => _isLodashDate
+      ['camelCase', 'stringToCamelCase'],
+      ['kebabCase', 'stringToKebab'],
+      ['isDate', 'isLodashDate'],
     ],
+  },
+
+  alias: {
+    '@': '/src',
+  },
+
+  typescript: {
+    strict: true,
+    typeCheck: true,
   },
 });

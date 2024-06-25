@@ -1,5 +1,6 @@
 // shared/helpers/moveLogic.ts
-import { ISquare, IPiece } from '@/types';
+import { IPiece, ISquare } from '@/types/chess/types';
+
 import { isPathClear } from './pathClear';
 import { canCastle } from './castlingLogic';
 
@@ -56,12 +57,9 @@ export const kingLogicMove = (
 
   if (fromY === toY && (toX === fromX + 2 || toX === fromX - 2)) {
     const rookX = toX === fromX + 2 ? 7 : 0;
-    const rook = board[fromY][rookX].state.type;
-    if (
-      rook &&
-      rook === 'tower' &&
-      canCastle(board, from, board[fromY][rookX].state, stateKing, stateTower, stateCheck)
-    ) {
+    const rook = board[fromY][rookX].state;
+    const king = from;
+    if (rook.type && rook.type === 'tower' && canCastle(board, king, rook, stateKing, stateTower, stateCheck)) {
       return true;
     }
   }

@@ -1,6 +1,5 @@
 // shared/helpers/castlingLogic.ts
-import { ISquare, IPiece } from '@/types';
-import { isPathClear } from './pathClear';
+import { IPiece, ISquare } from '@/types/chess/types';
 
 export const canCastle = (
   board: ISquare[][],

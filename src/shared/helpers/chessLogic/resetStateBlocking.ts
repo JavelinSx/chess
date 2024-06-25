@@ -8,9 +8,6 @@ export const resetStates = (board: ISquare[][]): void => {
       const piece = board[y][x].state;
       if (piece.type) {
         piece.blockingMove = false;
-        console.log(
-          `Фигура ${piece.type} (${piece.position.x}, ${piece.position.y}) blockingMove: ${piece.blockingMove}`
-        );
       }
     }
   }

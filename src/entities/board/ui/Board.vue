@@ -5,7 +5,7 @@
         </div>
     </div>
 
-    <div class="board" @mousemove="handleMouseMove">
+    <div class="board" @mousemove="handleMouseMove" @mousedown="handleMouseDown">
         <template v-for="(row, rowIndex) in board" :key="rowIndex">
             <Square :class="chessStore.setSquarePossibleMove({ x: colIndex, y: rowIndex }) ? '' : ''"
                 v-for="(square, colIndex) in row" :key="colIndex" :square="square" :rowIndex="rowIndex"
@@ -31,32 +31,48 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useChessStore } from '@/stores/chess/chessStore';
-import Square from '@/entities/board/ui/Square.vue';
-import Piece from '@/entities/piece/ui/Piece.vue';
 
 const chessStore = useChessStore();
 chessStore.initializeBoard();
-const stateCheck = computed(() => chessStore.stateCheck)
-const stateCheckMate = computed(() => chessStore.stateCheckMate)
+
+const stateCheck = computed(() => chessStore.stateCheck);
+const stateCheckMate = computed(() => chessStore.stateCheckMate);
 const board = computed(() => chessStore.board);
-const whitePieceReset = chessStore.whitePiecesReset
-const blackPieceReset = chessStore.blackPiecesReset
+const whitePieceReset = chessStore.whitePiecesReset;
+const blackPieceReset = chessStore.blackPiecesReset;
 const mouseMove = ref({ x: 0, y: 0 });
 let animationFrameId: number | null = null;
 
 const handleMouseMove = (e: MouseEvent) => {
-    if (chessStore.selectedPiece) {
-        if (animationFrameId !== null) {
-            cancelAnimationFrame(animationFrameId);
-        }
-        animationFrameId = requestAnimationFrame(() => {
-            mouseMove.value = {
-                x: e.clientX,
-                y: e.clientY
-            };
-        });
+    if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
     }
+    animationFrameId = requestAnimationFrame(() => {
+        mouseMove.value = {
+            x: e.clientX,
+            y: e.clientY
+        };
+    });
 };
+
+const handleMouseDown = (e: MouseEvent) => {
+    mouseMove.value = {
+        x: e.clientX,
+        y: e.clientY
+    };
+};
+
+// Watch for changes in selectedPiece and update mouseMove accordingly
+watch(() => chessStore.selectedPiece, (newSelectedPiece) => {
+    if (newSelectedPiece) {
+        // Update mouseMove to current cursor position immediately
+        const event = window.event as MouseEvent;
+        mouseMove.value = {
+            x: event.clientX,
+            y: event.clientY
+        };
+    }
+});
 
 watch(mouseMove, (newVal) => {
     if (chessStore.selectedPiece) {
@@ -79,7 +95,7 @@ const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 720}px; top:
     align-content: center;
     width: min-content;
     position: relative;
-    /* Ensure the board is the positioning context */
+    border-radius: 10px;
 }
 
 .piece-mouse {
@@ -94,19 +110,23 @@ const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 720}px; top:
 .black-piece-reset {
     display: flex;
     flex-direction: row;
-    height: 50px;
-    padding: 20px;
+    height: 40px;
+    padding: 10px;
+    border: 1px solid black;
+    min-width: 300px;
+    margin-top: 30px;
+
 }
 
 .white-piece-reset {
     display: flex;
     flex-direction: row;
-    height: 50px;
-    padding: 20px;
+    height: 40px;
+    padding: 10px;
+    border: 1px solid black;
+    min-width: 300px;
+    margin-bottom: 30px;
 }
 
-.piece-wrapper {
-    width: 40px;
-
-}
+.piece-wrapper {}
 </style>

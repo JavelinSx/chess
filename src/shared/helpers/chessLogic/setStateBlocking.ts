@@ -14,9 +14,6 @@ export const setBlockingMoves = (board: ISquare[][], blockingMoves: IPosition[],
             (move) => move.x === piece.position.x && move.y === piece.position.y
           );
           piece.blockingMove = isBlockingMove;
-          console.log(
-            `Фигура ${piece.type} (${piece.position.x}, ${piece.position.y}) blockingMove: ${piece.blockingMove}`
-          );
         } else {
           piece.blockingMove = false;
         }
