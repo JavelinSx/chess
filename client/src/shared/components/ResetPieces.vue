@@ -1,6 +1,6 @@
 <template>
     <div class="white-piece-reset">
-        <div class="piece-wrapper" v-for="piece in pieceReset">
+        <div class="piece-wrapper">
             <Piece :piece="piece"></Piece>
         </div>
     </div>

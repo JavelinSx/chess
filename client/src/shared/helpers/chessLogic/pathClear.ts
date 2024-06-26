@@ -1,5 +1,5 @@
 // shared/helpers/pathClear.ts
-import { ISquare, IPiece } from '@/types';
+import { ISquare, IPiece } from '@/types/chess/types';
 
 export const isPathClear = (board: ISquare[][], from: IPiece, to: ISquare): boolean => {
   const { x: fromX, y: fromY } = from.position;

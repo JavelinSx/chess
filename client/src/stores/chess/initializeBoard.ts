@@ -1,21 +1,21 @@
 import { ISquare, IPiece, IEmptySquare } from '@/types/chess/types';
-import pawnBlack from '../../shared/chess-img/pawn-black.png';
-import pawnWhite from '../../shared/chess-img/pawn-white.png';
+import pawnBlack from '@/shared/images/chess-img/pawn-black.png';
+import pawnWhite from '@/shared/images/chess-img/pawn-white.png';
 
-import bishopBlack from '../../shared/chess-img/bishop-black.png';
-import bishopWhite from '../../shared/chess-img/bishop-white.png';
+import bishopBlack from '@/shared/images/chess-img/bishop-black.png';
+import bishopWhite from '@/shared/images/chess-img/bishop-white.png';
 
-import horseBlack from '../../shared/chess-img/horse-black.png';
-import horseWhite from '../../shared/chess-img/horse-white.png';
+import horseBlack from '@/shared/images/chess-img/horse-black.png';
+import horseWhite from '@/shared/images/chess-img/horse-white.png';
 
-import kingBlack from '../../shared/chess-img/king-black.png';
-import kingWhite from '../../shared/chess-img/king-white.png';
+import kingBlack from '@/shared/images/chess-img/king-black.png';
+import kingWhite from '@/shared/images/chess-img/king-white.png';
 
-import queenBlack from '../../shared/chess-img/queen-black.png';
-import queenWhite from '../../shared/chess-img/queen-white.png';
+import queenBlack from '@/shared/images/chess-img/queen-black.png';
+import queenWhite from '@/shared/images/chess-img/queen-white.png';
 
-import towerWhite from '../../shared/chess-img/tower-white.png';
-import towerBlack from '../../shared/chess-img/tower-black.png';
+import towerWhite from '@/shared/images/chess-img/tower-white.png';
+import towerBlack from '@/shared/images/chess-img/tower-black.png';
 
 // Function to create an empty board with coordinates for each square
 function createEmptyBoard(): ISquare[][] {

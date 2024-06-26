@@ -7,7 +7,6 @@
 
 <script setup lang="ts">
 import Board from '@/entities/board/ui/Board.vue';
-
 </script>
 
 <style scoped>

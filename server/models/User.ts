@@ -66,10 +66,6 @@ const UserSchema: Schema = new Schema(
       type: Boolean,
       default: false,
     },
-    winRate: {
-      type: Number,
-      default: 0,
-    },
   },
   {
     timestamps: true,

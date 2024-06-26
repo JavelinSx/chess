@@ -6,7 +6,7 @@ import { config } from '../config/config';
 
 // Функция для создания JWT токена
 const generateToken = (userId: string): string => {
-  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: '1d' });
+  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: '30d' });
 };
 
 export const register = async (req: Request, res: Response) => {

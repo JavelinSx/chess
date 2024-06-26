@@ -1,4 +1,4 @@
-import { ISquare, IPiece, IPosition } from '@/types';
+import { ISquare, IPiece, IPosition } from '@/types/chess/types';
 
 export const setBlockingMoves = (board: ISquare[][], blockingMoves: IPosition[], king: IPiece): void => {
   console.log('Установка blockingMove для фигур');
