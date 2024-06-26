@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  lila:
+    build: .
+    ports:
+      - '9663:9663'
+    environment:
+      - LILA_ENV=prod
+      - LILA_BASEURL=http://localhost:9663
+    depends_on:
+      - mongo
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+  mongo:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
