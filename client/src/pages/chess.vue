@@ -1,12 +1,14 @@
 <template>
     <div class="chess">
-        <h1>Игра в шахматы</h1>
         <Board />
     </div>
 </template>
 
 <script setup lang="ts">
-import Board from '@/entities/board/ui/Board.vue';
+import Board from '~/entities/board/ui/Board.vue';
+definePageMeta({
+    middleware: ["auth"]
+})
 </script>
 
 <style scoped>

@@ -1,5 +1,5 @@
 // shared/helpers/moveLogic.ts
-import { IPiece, ISquare } from '@/types/chess/types';
+import type { IPiece, ISquare } from '~/types/chess/types';
 
 import { isPathClear } from './pathClear';
 import { canCastle } from './castlingLogic';

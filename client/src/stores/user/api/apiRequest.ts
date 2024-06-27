@@ -1,4 +1,4 @@
-import { API_BASE_URL } from '@/config/api';
+import { API_BASE_URL } from '~/config/api';
 import { useCookie } from 'nuxt/app';
 export interface ApiResponse<T> {
   data: T | null;
@@ -27,17 +27,18 @@ export async function apiRequest<T>(
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
+    credentials: 'include', // Добавьте эту строку
   };
 
   try {
     const response = await fetch(url, config);
-    const data = await response.json();
+    const responseData = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || 'An error occurred');
+      throw new Error(responseData.message || 'An error occurred');
     }
 
-    return { data };
+    return { data: responseData as T };
   } catch (error) {
     if (error instanceof Error) {
       return { data: null, error: error.message };

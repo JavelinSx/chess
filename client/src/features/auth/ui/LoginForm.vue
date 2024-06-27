@@ -2,14 +2,14 @@
     <form @submit.prevent="handleSubmit" class="chess-form">
         <input v-model="email" type="email" placeholder="Email" required>
         <input v-model="password" type="password" placeholder="Password" required>
-        <button type="submit">Login</button>
+        <button type="submit">Войти</button>
         <p v-if="userStore.error" class="error-message">{{ userStore.error }}</p>
     </form>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useUserStore } from '@/stores/user/userStore'
+import { useUserStore } from '~/stores/user/userStore'
 import { navigateTo } from 'nuxt/app'
 
 const userStore = useUserStore()

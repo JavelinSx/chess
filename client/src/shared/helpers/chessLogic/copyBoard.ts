@@ -1,4 +1,4 @@
-import { ISquare } from '@/types/chess/types';
+import type { ISquare } from '~/types/chess/types';
 
 // Utility function to create a deep copy of the board
 export const copyBoard = (board: ISquare[][]): ISquare[][] => {

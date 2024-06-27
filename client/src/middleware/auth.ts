@@ -1,25 +1,24 @@
 // middleware/auth.ts
-import { useUserStore } from '@/stores/user/userStore';
-import { useCookie, navigateTo } from 'nuxt/app';
+import { useUserStore } from '~/stores/user/userStore';
+import { navigateTo } from 'nuxt/app';
 import { defineNuxtRouteMiddleware } from 'nuxt/app';
 
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware(async (to) => {
   const userStore = useUserStore();
-  const token = useCookie('token');
 
-  if (!token.value) {
-    return navigateTo('/login');
-  }
-
-  try {
-    // Здесь нужно добавить логику проверки JWT
-    // Например, проверка срока действия токена или его валидности
-    // Если токен недействителен, выбросить ошибку
-    if (!userStore.verifyToken(token.value)) {
-      throw new Error('Invalid token');
+  if (!userStore.isAuthenticated) {
+    try {
+      await userStore.checkAuth();
+      // Если checkAuth() прошел успешно, пользователь аутентифицирован
+      // Позволяем продолжить навигацию на запрошенную страницу
+      return;
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      // Перенаправляем на /auth только если проверка аутентификации не удалась
+      return navigateTo('/auth');
     }
-  } catch (error) {
-    userStore.logout();
-    return navigateTo('/login');
   }
+
+  // Если пользователь уже аутентифицирован, позволяем продолжить навигацию
+  return;
 });

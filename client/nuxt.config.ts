@@ -1,13 +1,6 @@
 export default defineNuxtConfig({
   devtools: { enabled: false },
-  modules: ['@pinia/nuxt', 'nuxt-lodash', '@pinia-plugin-persistedstate/nuxt'],
-  pinia: {
-    autoImports: [
-      // automatically imports `defineStore`
-      'defineStore', // import { defineStore } from 'pinia'
-      ['defineStore', 'definePiniaStore'], // import { defineStore as definePiniaStore } from 'pinia'
-    ],
-  },
+  modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt'],
   piniaPersistedstate: {
     cookieOptions: {
       sameSite: 'strict',
@@ -15,49 +8,39 @@ export default defineNuxtConfig({
     storage: 'localStorage',
   },
   imports: {
-    dirs: ['src/shared/**', 'src/entities/**', 'src/features/**', 'src/widgets/**'],
+    dirs: ['shared/**', 'entities/**', 'features/**', 'widgets/**'],
   },
+  srcDir: 'src/',
   dir: {
-    pages: 'src/pages',
+    pages: 'pages',
   },
   components: [
     {
-      path: '~/src/shared/ui',
+      path: '~/shared/ui',
       pathPrefix: false,
     },
     {
-      path: '~/src/entities',
+      path: '~/entities',
       pathPrefix: false,
     },
     {
-      path: '~/src/features',
+      path: '~/features',
       pathPrefix: false,
     },
     {
-      path: '~/src/widgets',
+      path: '~/widgets',
       pathPrefix: false,
     },
   ],
-  css: ['@/assets/global.scss'],
+  css: ['~/assets/global.scss'],
   vite: {
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: '@import "@/assets/variables.scss";',
+          additionalData: '@import "~/assets/variables.scss";',
         },
       },
     },
-  },
-  lodash: {
-    prefix: '_',
-    prefixSkip: ['string'],
-    upperAfterPrefix: false,
-    exclude: ['map'],
-    alias: [
-      ['camelCase', 'stringToCamelCase'],
-      ['kebabCase', 'stringToKebab'],
-      ['isDate', 'isLodashDate'],
-    ],
   },
   alias: {
     '@': '/src',
@@ -65,11 +48,20 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true,
-    tsConfig: {
-      compilerOptions: {
-        strict: true,
-        types: ['@pinia/nuxt'],
+    shim: false,
+  },
+  nitro: {
+    devProxy: {
+      '/api': {
+        target: 'http://localhost:3001', // URL вашего сервера
+        changeOrigin: true,
       },
     },
   },
-}); // Временно используем 'as any' для обхода проблем с типизацией
+
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3001',
+    },
+  },
+});

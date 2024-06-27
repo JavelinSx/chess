@@ -1,4 +1,4 @@
-import { ISquare } from '@/types/chess/types';
+import type { ISquare } from '~/types/chess/types';
 
 export const resetStates = (board: ISquare[][]): void => {
   console.log('Сброс состояния blockingMove для всех фигур');

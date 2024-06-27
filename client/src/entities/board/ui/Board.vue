@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { useChessStore } from '@/stores/chess/chessStore';
+import { useChessStore } from '~/stores/chess/chessStore';
 
 const chessStore = useChessStore();
 chessStore.initializeBoard();
@@ -83,7 +83,7 @@ watch(mouseMove, (newVal) => {
 const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 720}px; top:${chessStore.mouseMove.y - 370}px; position: absolute; pointer-events: none; transform: translate(-50%,-50%)`));
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
@@ -115,7 +115,7 @@ const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 720}px; top:
     border: 1px solid black;
     min-width: 300px;
     margin-top: 30px;
-
+    background-color: $secondary-color;
 }
 
 .white-piece-reset {
@@ -126,6 +126,7 @@ const pieceStyle = computed(() => (`left:${chessStore.mouseMove.x - 720}px; top:
     border: 1px solid black;
     min-width: 300px;
     margin-bottom: 30px;
+    background-color: $secondary-color;
 }
 
 .piece-wrapper {}

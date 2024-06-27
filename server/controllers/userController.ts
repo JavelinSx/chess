@@ -36,6 +36,14 @@ export const register = async (req: Request, res: Response) => {
     // Создаем JWT токен
     const token = generateToken(savedUser._id.toString());
 
+    // Устанавливаем httpOnly куку
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Используйте HTTPS в продакшне
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+      sameSite: 'lax',
+    });
+
     res.status(201).json({
       message: 'User registered successfully',
       token,
@@ -69,9 +77,17 @@ export const login = async (req: Request, res: Response) => {
     // Создаем JWT токен
     const token = generateToken(user._id.toString());
 
+    // Устанавливаем httpOnly куку
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Используйте HTTPS в продакшне
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+      sameSite: 'lax',
+    });
+
     res.json({
       message: 'Login successful',
-      token,
+      token: token,
       user: {
         id: user._id.toString(),
         username: user.username,
@@ -80,6 +96,33 @@ export const login = async (req: Request, res: Response) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error });
+  }
+};
+
+export const logout = (req: Request, res: Response) => {
+  res.clearCookie('token');
+  res.json({ message: 'Logged out successfully' });
+};
+
+export const checkAuth = async (req: Request, res: Response) => {
+  try {
+    const user = req.user as IUser;
+
+    if (!user) {
+      return res.status(401).json({ isAuthenticated: false });
+    }
+
+    res.json({
+      isAuthenticated: true,
+      user: {
+        id: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        // Другие необходимые поля
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error checking authentication', error });
   }
 };
 
@@ -102,6 +145,65 @@ export const getProfile = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error fetching profile', error });
   }
 };
-export const updateProfile = async (req: Request, res: Response) => {};
-export const getStats = async (req: Request, res: Response) => {};
+
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const user = req.user as IUser;
+    const { username, email } = req.body;
+
+    // Проверяем, не занят ли новый email другим пользователем
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+    }
+
+    // Обновляем поля пользователя
+    user.username = username || user.username;
+    user.email = email || user.email;
+
+    // Если нужно обновить пароль
+    // if (password) {
+    //   const salt = await bcrypt.genSalt(10);
+    //   user.password = await bcrypt.hash(password, salt);
+    // }
+
+    // Сохраняем обновленного пользователя
+    const updatedUser = await user.save();
+
+    res.json({
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser._id.toString(),
+        username: updatedUser.username,
+        email: updatedUser.email,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating profile', error });
+  }
+};
+
+export const getStats = async (req: Request, res: Response) => {
+  try {
+    const user = req.user as IUser;
+
+    // Вычисляем дополнительные статистические данные
+    const totalGames = user.gamesPlayed;
+    const winRate = totalGames > 0 ? (user.gamesWon / totalGames) * 100 : 0;
+
+    res.json({
+      username: user.username,
+      rating: user.rating,
+      gamesPlayed: user.gamesPlayed,
+      gamesWon: user.gamesWon,
+      gamesLost: user.gamesLost,
+      gamesDraw: user.gamesDraw,
+      winRate: winRate.toFixed(2) + '%',
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching stats', error });
+  }
+};
 // Реализации других функций...

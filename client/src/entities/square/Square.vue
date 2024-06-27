@@ -5,11 +5,12 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, computed } from 'vue';
-import type { ISquare } from '@/types/chess/types';
+import { computed } from 'vue';
+import type { PropType } from '#imports';
+import type { ISquare } from '~/types/chess/types';
 
-import Piece from '@/entities/piece/ui/Piece.vue';
-import { useChessStore } from '@/stores/chess/chessStore';
+import Piece from '~/entities/piece/ui/Piece.vue';
+import { useChessStore } from '~/stores/chess/chessStore';
 
 const chessStore = useChessStore();
 

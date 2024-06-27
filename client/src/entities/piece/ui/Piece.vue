@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { IPiece } from '@/types/chess/types';
+import type { IPiece } from '~/types/chess/types';
 
 defineProps<{
     piece: IPiece

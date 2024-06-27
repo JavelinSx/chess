@@ -1,11 +1,11 @@
 <template>
     <div class="auth-page">
         <div class="auth-container">
-            <h1 class="auth-title">{{ isLogin ? 'Login' : 'Register' }}</h1>
+            <h1 class="auth-title">{{ isLogin ? 'Войти' : 'Создать аккаунт' }}</h1>
             <LoginForm v-if="isLogin" />
             <RegisterForm v-else />
             <p class="auth-toggle">
-                {{ isLogin ? "Don't have an account?" : "Already have an account?" }}
+                {{ isLogin ? "У вас нет аккаунта?" : "У вас уже есть аккаунт?" }}
                 <a href="#" @click.prevent="toggleForm">
                     {{ isLogin ? 'Register' : 'Login' }}
                 </a>
@@ -17,24 +17,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/features/auth/model/useAuthStore'
-import LoginForm from '@/features/auth/ui/LoginForm.vue'
-import RegisterForm from '@/features/auth/ui/RegisterForm.vue'
+import { useUserStore } from '~/stores/user/userStore'
+import LoginForm from '~/features/auth/ui/LoginForm.vue'
+import RegisterForm from '~/features/auth/ui/RegisterForm.vue'
 
 const router = useRouter()
-const authStore = useAuthStore()
+const userStore = useUserStore()
 const isLogin = ref(true)
 
 const toggleForm = () => {
     isLogin.value = !isLogin.value
 }
 
-const onAuthSuccess = () => {
-    router.push('/') // Redirect to home page after successful auth
-}
-
 // Redirect if user is already authenticated
-if (authStore.isAuthenticated) {
+if (userStore.isAuthenticated) {
     router.push('/')
 }
 </script>

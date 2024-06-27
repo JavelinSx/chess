@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ISquare, IPosition, IPiece } from '@/types/chess/types';
+import type { ISquare, IPosition, IPiece } from '~/types/chess/types';
 import { initializeBoard } from './initializeBoard';
 import {
   getPossibleMoves,
@@ -8,8 +8,8 @@ import {
   resetStates,
   copyBoard,
   executeCastling,
-} from '@/shared/helpers/chessLogic';
-import { isSameColor, isSameSquare } from '@/shared/helpers/chessLogic';
+} from '~/shared/helpers/chessLogic';
+import { isSameColor, isSameSquare } from '~/shared/helpers/chessLogic';
 
 interface ChessState {
   board: ISquare[][];

@@ -6,6 +6,7 @@ body {
   margin: 0;
   padding: 0;
   color: $text-color;
+  background: repeating-conic-gradient($secondary-color 0% 25%, $background-color 0% 50%) 50% / 50px 50px;
 }
 
 .chess-button {

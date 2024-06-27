@@ -1,4 +1,4 @@
-import { IPiece, ISquare, IPosition } from '@/types/chess/types';
+import type { IPiece, ISquare, IPosition } from '~/types/chess/types';
 import { validLogicMove } from './moveLogic';
 
 export const isInCheck = (board: ISquare[][], king: IPiece): IPosition[] => {

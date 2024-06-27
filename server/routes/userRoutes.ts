@@ -10,6 +10,12 @@ router.post('/register', userController.register);
 // Вход пользователя
 router.post('/login', userController.login);
 
+// Выход пользователя
+router.post('/logout', userController.logout);
+
+// Проверка токена
+router.get('/check-auth', authMiddleware, userController.checkAuth);
+
 // Получить профиль пользователя
 router.get('/profile', authMiddleware, userController.getProfile);
 

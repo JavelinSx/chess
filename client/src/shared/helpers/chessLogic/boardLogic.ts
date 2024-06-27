@@ -1,4 +1,4 @@
-import { IPiece, ISquare } from '@/types/chess/types';
+import type { IPiece, ISquare } from '~/types/chess/types';
 
 export const isSameColor = (selectPiece: IPiece, dropPiece: ISquare): boolean => {
   if (selectPiece.type && dropPiece.state.type) {

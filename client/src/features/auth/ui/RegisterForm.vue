@@ -3,14 +3,14 @@
         <input v-model="username" type="text" placeholder="Nickname" required>
         <input v-model="email" type="email" placeholder="Email" required>
         <input v-model="password" type="password" placeholder="Password" required>
-        <button type="submit">Register</button>
+        <button type="submit">Регистрация</button>
         <p v-if="userStore.error" class="error-message">{{ userStore.error }}</p>
     </form>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useUserStore } from '@/stores/user/userStore'
+import { useUserStore } from '~/stores/user/userStore'
 import { navigateTo } from 'nuxt/app';
 
 const userStore = useUserStore()
