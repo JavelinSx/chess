@@ -1,6 +1,10 @@
 import { Document } from 'mongoose';
-
+export interface UserProfileResponse {
+  username: string | undefined;
+  email: string | undefined;
+}
 export interface IUser extends Document {
+  _id: string;
   username: string;
   email: string;
   password: string;

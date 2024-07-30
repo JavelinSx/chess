@@ -9,7 +9,9 @@
 </template>
 
 <script setup lang="ts">
-// Здесь может быть общая логика приложения
+
+
+
 </script>
 
 <style>

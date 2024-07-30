@@ -1,11 +1,14 @@
 import { useAuthStore } from '../store/auth';
 
-export default defineNuxtRouteMiddleware((to, from) => {
+export default defineNuxtRouteMiddleware((to) => {
   const authStore = useAuthStore();
 
+  // Список публичных маршрутов
+  const publicRoutes = ['/login', '/register'];
+
   // Проверяем, требует ли маршрут аутентификации
-  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    // Если пользователь не аутентифицирован, перенаправляем на страницу входа
+  if (!publicRoutes.includes(to.path) && !authStore.isAuthenticated) {
+    // Если пользователь не аутентифицирован и пытается получить доступ к защищенному маршруту
     return navigateTo('/login');
   }
 
