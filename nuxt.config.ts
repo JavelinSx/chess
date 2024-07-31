@@ -7,6 +7,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.API_BASE,
+      mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/chess_game',
     },
     private: {
       mongodbUri: process.env.MONGODB_URI,

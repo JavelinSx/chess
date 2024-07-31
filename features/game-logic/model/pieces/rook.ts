@@ -2,6 +2,7 @@
 
 import type { MoveValidationParams } from './types';
 
+// features/game-logic/model/pieces/rook.ts
 export function isValidRookMove({ board, from, to }: MoveValidationParams): boolean {
   const [fromRow, fromCol] = from;
   const [toRow, toCol] = to;
@@ -13,10 +14,15 @@ export function isValidRookMove({ board, from, to }: MoveValidationParams): bool
   const rowStep = fromRow === toRow ? 0 : (toRow - fromRow) / Math.abs(toRow - fromRow);
   const colStep = fromCol === toCol ? 0 : (toCol - fromCol) / Math.abs(toCol - fromCol);
 
-  for (let i = 1; i < Math.max(Math.abs(toRow - fromRow), Math.abs(toCol - fromCol)); i++) {
-    if (board[fromRow + i * rowStep][fromCol + i * colStep]) {
+  let currentRow = fromRow + rowStep;
+  let currentCol = fromCol + colStep;
+
+  while (currentRow !== toRow || currentCol !== toCol) {
+    if (board[currentRow][currentCol] !== null) {
       return false;
     }
+    currentRow += rowStep;
+    currentCol += colStep;
   }
 
   return true;

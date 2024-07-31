@@ -1,7 +1,6 @@
 import { H3Event } from 'h3';
 import { updateUserStatus, getUserById } from '~/server/services/user.service';
-
-const clients = new Map<string, H3Event>();
+import { sseConnections } from '~/server/utils/SSEconnection';
 
 export default defineEventHandler(async (event) => {
   const userId = event.context.auth?.userId;
@@ -16,12 +15,16 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Cache-Control', 'no-cache');
   setHeader(event, 'Connection', 'keep-alive');
 
-  clients.set(userId, event);
+  sseConnections.addConnection(userId, event);
+
+  // Обновляем статус пользователя при подключении
+  await updateUserStatus(userId, true, false);
+  await broadcastStatusUpdate(userId, true, false);
 
   await sendEvent(event, JSON.stringify({ type: 'connected' }));
 
   const closeHandler = () => {
-    clients.delete(userId);
+    sseConnections.removeConnection(userId);
     updateUserStatus(userId, false, false).then(() => {
       broadcastStatusUpdate(userId, false, false);
     });
@@ -55,7 +58,7 @@ export const sendGameInvitation = async (fromInviteId: string, toInviteId: strin
     fromInviteName: inviter.username,
   });
 
-  const inviteeEvent = clients.get(toInviteId);
+  const inviteeEvent = sseConnections.getConnection(toInviteId);
   if (inviteeEvent) {
     await sendEvent(inviteeEvent, message);
   } else {
@@ -63,7 +66,7 @@ export const sendGameInvitation = async (fromInviteId: string, toInviteId: strin
   }
 };
 
-async function broadcastStatusUpdate(userId: string, isOnline: boolean, isGame: boolean) {
+export async function broadcastStatusUpdate(userId: string, isOnline: boolean, isGame: boolean) {
   const user = await getUserById(userId);
   if (!user) {
     console.error('User not found for status update');
@@ -78,7 +81,7 @@ async function broadcastStatusUpdate(userId: string, isOnline: boolean, isGame: 
     isGame,
   });
 
-  for (const [clientId, clientEvent] of clients) {
+  for (const [clientId, clientEvent] of sseConnections.getAllConnections()) {
     if (clientId !== userId) {
       await sendEvent(clientEvent, message);
     }
@@ -91,7 +94,7 @@ async function sendEvent(event: H3Event, data: string) {
 
 export async function sendMessageToUsers(userIds: string[], message: string) {
   for (const userId of userIds) {
-    const clientEvent = clients.get(userId);
+    const clientEvent = sseConnections.getConnection(userId);
     if (clientEvent) {
       await sendEvent(clientEvent, message);
     }

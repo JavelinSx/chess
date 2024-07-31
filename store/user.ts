@@ -117,6 +117,10 @@ export const useUserStore = defineStore('user', {
       const router = useRouter();
       router.push(`/game/${gameId}`);
     },
+
+    updateAllUsers(users: IUser[]) {
+      this.usersList = users;
+    },
   },
   persist: {
     storage: persistedState.localStorage,

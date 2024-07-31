@@ -1,45 +1,54 @@
 // features/game-logic/model/game-state.ts
 
-import type { ChessBoard, ChessPiece, PieceColor, PieceType } from '~/entities/game/model/board.model';
+import type { ChessBoard, PieceColor } from '~/entities/game/model/board.model';
 import type { Position } from './pieces/types';
-import { isValidMove, makeMove } from './chess-logic';
+import type { GameState, CastlingRights } from './chess-logic';
+import {
+  isValidMove,
+  makeMove,
+  isCapture,
+  isPawnMove,
+  isPawnDoubleMove,
+  getEnPassantTarget,
+  updateCastlingRights,
+  updatePositionsHistory,
+  isDraw,
+} from './chess-logic';
 
-// Функция для поиска позиции короля на доске
-function findKing(board: ChessBoard, color: PieceColor): Position | null {
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const piece = board[row][col];
-      if (piece && piece.type === 'king' && piece.color === color) {
-        return [row, col];
-      }
-    }
-  }
-  return null;
+export function isCheckmate(board: ChessBoard, color: PieceColor, gameState: GameState): boolean {
+  if (!isKingInCheck(board, color, gameState)) return false;
+
+  return !hasLegalMoves(board, color, gameState);
 }
 
-// Функция для проверки, находится ли король под шахом
-export function isInCheck(board: ChessBoard, color: PieceColor): boolean {
-  const kingPosition = findKing(board, color);
-  if (!kingPosition) return false;
+export function isStalemate(board: ChessBoard, color: PieceColor, gameState: GameState): boolean {
+  if (isKingInCheck(board, color, gameState)) return false;
 
-  const oppositeColor: PieceColor = color === 'white' ? 'black' : 'white';
+  return !hasLegalMoves(board, color, gameState);
+}
 
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
-      const piece = board[row][col];
-      if (piece && piece.color === oppositeColor) {
-        if (isValidMove(board, [row, col], kingPosition, oppositeColor)) {
-          return true;
+function hasLegalMoves(board: ChessBoard, color: PieceColor, gameState: GameState): boolean {
+  for (let fromRow = 0; fromRow < 8; fromRow++) {
+    for (let fromCol = 0; fromCol < 8; fromCol++) {
+      const piece = board[fromRow][fromCol];
+      if (piece && piece.color === color) {
+        for (let toRow = 0; toRow < 8; toRow++) {
+          for (let toCol = 0; toCol < 8; toCol++) {
+            if (isValidMove(board, [fromRow, fromCol], [toRow, toCol], color, gameState)) {
+              const newBoard = makeMove(board, [fromRow, fromCol], [toRow, toCol]);
+              if (!isKingInCheck(newBoard, color, gameState)) {
+                return true;
+              }
+            }
+          }
         }
       }
     }
   }
-
   return false;
 }
 
-// Функция для генерации всех возможных ходов для данной позиции
-export function generateAllMoves(board: ChessBoard, color: PieceColor): [Position, Position][] {
+export function generateAllMoves(board: ChessBoard, color: PieceColor, gameState: GameState): [Position, Position][] {
   const moves: [Position, Position][] = [];
 
   for (let fromRow = 0; fromRow < 8; fromRow++) {
@@ -48,7 +57,7 @@ export function generateAllMoves(board: ChessBoard, color: PieceColor): [Positio
       if (piece && piece.color === color) {
         for (let toRow = 0; toRow < 8; toRow++) {
           for (let toCol = 0; toCol < 8; toCol++) {
-            if (isValidMove(board, [fromRow, fromCol], [toRow, toCol], color)) {
+            if (isValidMove(board, [fromRow, fromCol], [toRow, toCol], color, gameState)) {
               moves.push([
                 [fromRow, fromCol],
                 [toRow, toCol],
@@ -63,52 +72,87 @@ export function generateAllMoves(board: ChessBoard, color: PieceColor): [Positio
   return moves;
 }
 
-// Функция для проверки мата
-export function isCheckmate(board: ChessBoard, color: PieceColor): boolean {
-  if (!isInCheck(board, color)) return false;
+export function updateGameState(
+  gameState: GameState,
+  board: ChessBoard,
+  from: Position,
+  to: Position,
+  newBoard: ChessBoard,
+  nextTurn: PieceColor
+): GameState {
+  const [fromRow, fromCol] = from;
+  const [toRow, toCol] = to;
+  const movingPiece = board[fromRow][fromCol];
 
-  const allMoves = generateAllMoves(board, color);
+  const newGameState: GameState = {
+    ...gameState,
+    moveCount: gameState.moveCount + 1,
+    halfMoveClock: isCapture(board, to) || isPawnMove(board, from) ? 0 : gameState.halfMoveClock + 1,
+    enPassantTarget: isPawnDoubleMove(board, from, to) ? getEnPassantTarget(from, to) : null,
+    castlingRights: updateCastlingRights(gameState.castlingRights, board, from, to),
+    currentTurn: nextTurn,
+    positions: updatePositionsHistory(gameState.positions, newBoard),
+  };
 
-  for (const [from, to] of allMoves) {
-    const newBoard = makeMove(board, from, to);
-    if (!isInCheck(newBoard, color)) {
-      return false;
-    }
+  // Обновляем статус игры и победителя
+  if (isCheckmate(newBoard, nextTurn, newGameState)) {
+    newGameState.status = 'completed';
+    newGameState.winner = gameState.currentTurn;
+  } else if (isStalemate(newBoard, nextTurn, newGameState)) {
+    newGameState.status = 'completed';
+    newGameState.winner = null;
+  } else if (isDraw(newBoard, newGameState)) {
+    newGameState.status = 'completed';
+    newGameState.winner = null;
+  } else {
+    newGameState.status = 'active';
+    newGameState.winner = null;
   }
 
-  return true;
+  return newGameState;
 }
 
-// Функция для проверки пата
-export function isStalemate(board: ChessBoard, color: PieceColor): boolean {
-  if (isInCheck(board, color)) return false;
+export function isKingInCheck(board: ChessBoard, color: PieceColor, gameState: GameState): boolean {
+  const kingPosition = findKing(board, color);
+  if (!kingPosition) return false;
 
-  const allMoves = generateAllMoves(board, color);
-
-  if (allMoves.length === 0) {
-    return true;
-  }
-
-  for (const [from, to] of allMoves) {
-    const newBoard = makeMove(board, from, to);
-    if (!isInCheck(newBoard, color)) {
-      return false;
+  const oppositeColor = color === 'white' ? 'black' : 'white';
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (piece && piece.color === oppositeColor) {
+        if (isValidMove(board, [row, col], kingPosition, oppositeColor, gameState)) {
+          return true;
+        }
+      }
     }
   }
+  return false;
+}
 
-  return true;
+export function findKing(board: ChessBoard, color: PieceColor): Position | null {
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      const piece = board[row][col];
+      if (piece && piece.type === 'king' && piece.color === color) {
+        return [row, col];
+      }
+    }
+  }
+  return null;
 }
 
 // Функция для проверки окончания игры
 export function isGameOver(
   board: ChessBoard,
-  currentTurn: PieceColor
+  currentTurn: PieceColor,
+  gameState: GameState
 ): {
   isOver: boolean;
-  result: 'checkmate' | 'stalemate' | 'ongoing';
+  result: 'checkmate' | 'stalemate' | 'draw' | 'ongoing';
   winner: PieceColor | null;
 } {
-  if (isCheckmate(board, currentTurn)) {
+  if (isCheckmate(board, currentTurn, gameState)) {
     return {
       isOver: true,
       result: 'checkmate',
@@ -116,10 +160,18 @@ export function isGameOver(
     };
   }
 
-  if (isStalemate(board, currentTurn)) {
+  if (isStalemate(board, currentTurn, gameState)) {
     return {
       isOver: true,
       result: 'stalemate',
+      winner: null,
+    };
+  }
+
+  if (isDraw(board, gameState)) {
+    return {
+      isOver: true,
+      result: 'draw',
       winner: null,
     };
   }

@@ -8,15 +8,19 @@
                 <chess-piece v-if="piece" :piece="piece" />
             </div>
         </div>
+
     </div>
+    <button @click="handleForcedEndGame" class="forfeit-button">Exit Game</button>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
 import ChessPiece from './ChessPiece.vue';
 import type { ChessBoard, PieceColor } from '~/entities/game/model/board.model';
+import { useGameStore } from '~/store/game';
 
-const props = defineProps<{
+defineProps<{
     board: ChessBoard;
     currentTurn: PieceColor;
 }>();
@@ -25,7 +29,21 @@ const emit = defineEmits<{
     (e: 'move', from: [number, number], to: [number, number]): void;
 }>();
 
+const gameStore = useGameStore();
+console.log('Game Store:', gameStore); // Добавьте эту строку для отладки
+const { currentGame, error } = storeToRefs(gameStore);
 const selectedCell = ref<[number, number] | null>(null);
+
+const handleForcedEndGame = async () => {
+    try {
+        console.log('Attempting to end game...'); // Добавьте эту строку
+        await gameStore.forcedEndGame();
+        console.log('Game ended successfully'); // Добавьте эту строку
+        navigateTo('/')
+    } catch (error) {
+        console.error('Error ending game:', error);
+    }
+};
 
 function handleCellClick(row: number, col: number) {
     if (!selectedCell.value) {
@@ -37,6 +55,10 @@ function handleCellClick(row: number, col: number) {
         selectedCell.value = null;
     }
 }
+
+onUnmounted(() => {
+    gameStore.resetError();
+});
 </script>
 
 <style scoped>

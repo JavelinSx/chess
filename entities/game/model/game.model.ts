@@ -3,6 +3,13 @@
 import type { ChessBoard, PieceColor } from './board.model';
 import { initializeBoard } from './board.model';
 
+export interface CastlingRights {
+  whiteKingSide: boolean;
+  whiteQueenSide: boolean;
+  blackKingSide: boolean;
+  blackQueenSide: boolean;
+}
+
 export interface ChessGame {
   id: string;
   board: ChessBoard;
@@ -12,12 +19,17 @@ export interface ChessGame {
     black: string | null;
   };
   status: 'waiting' | 'active' | 'completed';
-  winner: string | null;
+  winner: PieceColor | null;
   inviterId: string;
-  inviteeId: string | null;
+  inviteeId: string;
+  moveCount: number;
+  halfMoveClock: number;
+  enPassantTarget: [number, number] | null;
+  positions: string[];
+  castlingRights: CastlingRights;
 }
 
-export function initializeGame(id: string, inviterId: string, inviteeId: string | null): ChessGame {
+export function initializeGame(id: string, inviterId: string, inviteeId: string): ChessGame {
   return {
     id,
     board: initializeBoard(),
@@ -30,5 +42,15 @@ export function initializeGame(id: string, inviterId: string, inviteeId: string 
     winner: null,
     inviterId,
     inviteeId,
+    moveCount: 0,
+    halfMoveClock: 0,
+    enPassantTarget: null,
+    positions: [],
+    castlingRights: {
+      whiteKingSide: true,
+      whiteQueenSide: true,
+      blackKingSide: true,
+      blackQueenSide: true,
+    },
   };
 }

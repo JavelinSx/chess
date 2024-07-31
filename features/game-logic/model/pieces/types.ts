@@ -1,6 +1,6 @@
 // features/game-logic/model/pieces/types.ts
-
 import type { ChessBoard, PieceColor } from '~/entities/game/model/board.model';
+import type { GameState } from '../chess-logic';
 
 export type Position = [number, number];
 
@@ -9,4 +9,5 @@ export interface MoveValidationParams {
   from: Position;
   to: Position;
   color: PieceColor;
+  gameState: GameState;
 }

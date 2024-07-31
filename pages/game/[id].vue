@@ -9,7 +9,6 @@
             </div>
             <template v-else>
                 <p>Game Status: {{ gameStore.currentGame.status }}</p>
-                <p>Board data: {{ JSON.stringify(gameStore.currentGame.board) }}</p>
                 <chess-board :board="gameStore.currentGame.board" :current-turn="gameStore.currentGame.currentTurn"
                     @move="makeMove" />
                 <div>
@@ -29,7 +28,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useGameStore } from '~/features/game-logic/model/game.store';
+import { useGameStore } from '~/store/game';
 import ChessBoard from '~/entities/game/ui/ChessBoard.vue';
 
 const route = useRoute();

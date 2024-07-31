@@ -1,16 +1,13 @@
 // server/services/game.service.ts
-import type { ChessBoard } from '~/entities/game/model/board.model';
+
+import Game from '~/server/db/models/game.model';
 import type { ChessGame } from '~/entities/game/model/game.model';
-import type { PieceColor } from '~/entities/game/model/board.model';
-import type { PieceType } from '~/entities/game/model/board.model';
-
-// Это временное хранилище для игр. В реальном приложении вы бы использовали базу данных.
-const games: Record<string, ChessGame> = {};
-
+import type { ChessBoard } from '~/entities/game/model/board.model';
+import type { PieceType, PieceColor } from '~/entities/game/model/board.model';
+import { updateUserStatus } from './user.service';
 export async function createGame(inviterId: string, inviteeId: string): Promise<ChessGame> {
-  const gameId = generateUniqueId();
-  const newGame: ChessGame = {
-    id: gameId,
+  const newGame = new Game({
+    id: generateUniqueId(),
     board: initializeBoard(),
     currentTurn: 'white',
     players: {
@@ -21,32 +18,51 @@ export async function createGame(inviterId: string, inviteeId: string): Promise<
     winner: null,
     inviterId,
     inviteeId,
-  };
+  });
 
-  games[gameId] = newGame;
-  return newGame;
+  await newGame.save();
+  return newGame.toObject();
 }
 
 export async function getGameFromDatabase(gameId: string): Promise<ChessGame | null> {
-  return games[gameId] || null;
+  const game = await Game.findOne({ id: gameId });
+  return game ? game.toObject() : null;
 }
 
 export async function saveGameToDatabase(game: ChessGame): Promise<void> {
-  games[game.id] = game;
+  await Game.findOneAndUpdate({ id: game.id }, game, { new: true });
 }
 
 export async function updateGameStatus(gameId: string, status: 'waiting' | 'active' | 'completed'): Promise<void> {
-  const game = games[gameId];
-  if (game) {
-    game.status = status;
-  }
+  await Game.findOneAndUpdate({ id: gameId }, { status });
 }
 
 export async function setPlayerColor(gameId: string, userId: string, color: PieceColor): Promise<void> {
-  const game = games[gameId];
-  if (game) {
-    game.players[color] = userId;
+  await Game.findOneAndUpdate({ id: gameId }, { [`players.${color}`]: userId });
+}
+
+export async function forcedEndGame(gameId: string, userId: string) {
+  const game = await Game.findById(gameId);
+  if (!game) {
+    throw new Error('Game not found');
   }
+
+  const winner = game.players.white === userId ? game.players.black : game.players.white;
+  const loser = userId;
+  const opponentId = winner;
+
+  game.status = 'completed';
+  game.winner = winner as PieceColor;
+  await game.save();
+
+  // Обновляем статусы обоих игроков
+  await updateUserStatus(winner as PieceColor, false, false);
+  await updateUserStatus(loser, false, false);
+
+  // Удаляем игру из БД
+  await Game.findByIdAndDelete(gameId);
+
+  return { winner, loser, opponentId };
 }
 
 function generateUniqueId(): string {

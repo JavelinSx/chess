@@ -16,4 +16,8 @@ export const gameApi = {
   async makeMove(gameId: string, from: [number, number], to: [number, number]): Promise<ApiResponse<ChessGame>> {
     return apiRequest<ChessGame>('/game/move', 'POST', { gameId, from, to });
   },
+
+  async forcedEndGame(gameId: string): Promise<ApiResponse<{ message: string }>> {
+    return apiRequest<{ message: string }>('/game/forfeit', 'POST', { gameId });
+  },
 };

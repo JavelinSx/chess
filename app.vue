@@ -1,8 +1,6 @@
 <template>
     <div>
-        <!-- Здесь может быть ваш общий layout, например, header и footer -->
         <NuxtLayout>
-            <!-- NuxtPage рендерит текущую страницу -->
             <NuxtPage />
         </NuxtLayout>
     </div>
@@ -10,7 +8,8 @@
 
 <script setup lang="ts">
 
-
+import { useSSE } from '~/composables/useSSE';
+useSSE()
 
 </script>
 
