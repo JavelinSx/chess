@@ -2,7 +2,8 @@
 
 import type { MoveValidationParams } from './types';
 
-export function isValidBishopMove({ board, from, to }: MoveValidationParams): boolean {
+export function isValidBishopMove({ game, from, to }: MoveValidationParams): boolean {
+  const { board } = game;
   const [fromRow, fromCol] = from;
   const [toRow, toCol] = to;
 

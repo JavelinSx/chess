@@ -1,9 +1,11 @@
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt'],
   css: ['~/app/styles/global.css'],
+
   nitro: {
     plugins: ['~/server/db/index.ts'],
   },
+
   runtimeConfig: {
     public: {
       apiBase: process.env.API_BASE,
@@ -16,4 +18,5 @@ export default defineNuxtConfig({
   },
 
   ssr: false,
+  compatibilityDate: '2024-08-07',
 });

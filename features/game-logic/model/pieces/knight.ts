@@ -2,7 +2,7 @@
 
 import type { MoveValidationParams } from './types';
 
-export function isValidKnightMove({ from, to }: MoveValidationParams): boolean {
+export function isValidKnightMove({ game, from, to }: MoveValidationParams): boolean {
   const [fromRow, fromCol] = from;
   const [toRow, toCol] = to;
 

@@ -8,7 +8,8 @@
                 <span v-if="user.isOnline" class="text-green">Online</span>
                 <span v-else class="text-gray">Offline</span>
                 <span v-if="user.isGame" class="text-blue">In Game</span>
-                <button v-if="user.isOnline && !user.isGame" @click="inviteToGame(user._id)">
+                <button v-if="user.isOnline && !user.isGame && user._id !== currentUserId"
+                    @click="inviteToGame(user._id)">
                     Invite to game
                 </button>
             </li>
@@ -17,10 +18,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useUserStore } from '~/store/user';
 
 const userStore = useUserStore();
 const usersList = computed(() => userStore.usersList);
+const currentUserId = computed(() => userStore.user?._id);
 
 function inviteToGame(inviteeId: string) {
     userStore.sendGameInvitation(inviteeId);

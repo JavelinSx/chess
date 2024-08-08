@@ -1,9 +1,7 @@
-// server/api/game/move.post.ts
-
 import { getGameFromDatabase, saveGameToDatabase } from '~/server/services/game.service';
-import { performMove } from '~/features/game-logic/model/chess-logic';
-import { broadcastGameUpdate } from '~/server/api/sse/game-moves';
-
+import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
+import { sseManager } from '~/server/utils/SSEManager';
+import type { GameResult } from '~/server/types/game';
 export default defineEventHandler(async (event) => {
   const { gameId, from, to } = await readBody(event);
   const userId = event.context.auth?.userId;
@@ -35,16 +33,26 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const { newBoard, updatedGame } = performMove(game, from, to);
+    const updatedGame = performMove(game, from, to);
+    await saveGameToDatabase(updatedGame);
 
-    // Update game with new state
-    Object.assign(game, updatedGame);
+    console.log('Move performed, updated game:', updatedGame);
 
-    await saveGameToDatabase(game);
-    await broadcastGameUpdate(gameId, game);
+    // Отправка обновления через SSE
+    await sseManager.broadcastGameUpdate(gameId, updatedGame);
 
-    return { data: game, error: null };
+    // Проверка на завершение игры
+    if (updatedGame.status === 'completed') {
+      const result: GameResult = {
+        winner: updatedGame.winner,
+        reason: updatedGame.winner ? 'checkmate' : 'draw',
+      };
+      await sseManager.sendGameEndNotification(gameId, result);
+    }
+
+    return { data: updatedGame, error: null };
   } catch (error) {
+    console.error('Error performing move:', error);
     throw createError({
       statusCode: 400,
       statusMessage: error instanceof Error ? error.message : 'Invalid move',

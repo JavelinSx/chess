@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
-import type { IUser } from '~/server/types/user';
+import type { ClientUser } from '~/server/types/user';
 import { userApi } from '~/shared/api/user';
 import { gameApi } from '~/shared/api/game';
 
 export const useUserStore = defineStore('user', {
   state: () => ({
-    user: null as IUser | null,
-    usersList: [] as IUser[],
+    user: null as ClientUser | null,
+    usersList: [] as ClientUser[],
     currentInvitation: null as { fromInviteId: string; fromInviteName: string } | null,
   }),
   getters: {
@@ -25,7 +25,7 @@ export const useUserStore = defineStore('user', {
     currentGameId: (state) => state.user?.currentGameId,
   },
   actions: {
-    setUser(user: IUser) {
+    setUser(user: ClientUser) {
       this.user = user;
     },
     clearUser() {
@@ -46,7 +46,11 @@ export const useUserStore = defineStore('user', {
       try {
         const response = await userApi.getUsersList();
         if (response.data) {
-          this.usersList = response.data;
+          this.usersList = response.data.map((user) => ({
+            ...user,
+            isOnline: !!user.isOnline,
+            isGame: !!user.isGame,
+          }));
         } else if (response.error) {
           console.error('Failed to fetch users list:', response.error);
         }
@@ -90,8 +94,6 @@ export const useUserStore = defineStore('user', {
       try {
         const response = await gameApi.acceptInvitation(this.currentInvitation.fromInviteId);
         if (response.data && response.data.gameId) {
-          const router = useRouter();
-          router.push(`/game/${response.data.gameId}`);
           this.currentInvitation = null;
         } else if (response.error) {
           console.error('Failed to accept game invitation:', response.error);
@@ -117,8 +119,12 @@ export const useUserStore = defineStore('user', {
       const router = useRouter();
       router.push(`/game/${gameId}`);
     },
-
-    updateAllUsers(users: IUser[]) {
+    updateUserStats(stats: Partial<ClientUser>) {
+      if (this.user) {
+        this.user = { ...this.user, ...stats };
+      }
+    },
+    updateAllUsers(users: ClientUser[]) {
       this.usersList = users;
     },
   },

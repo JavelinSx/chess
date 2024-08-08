@@ -7,9 +7,9 @@
 </template>
 
 <script setup lang="ts">
+import { useUserSSE } from '~/composables/useUserSSE';
 
-import { useSSE } from '~/composables/useSSE';
-useSSE()
+useUserSSE();
 
 </script>
 

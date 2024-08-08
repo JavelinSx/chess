@@ -1,5 +1,6 @@
 import type { ApiResponse } from '~/server/types/auth';
-import type { UserProfileResponse, IUser } from '~/server/types/user';
+import type { UserProfileResponse } from '~/server/types/user';
+import type { ClientUser } from '~/server/types/user';
 import { apiRequest } from './api';
 
 export const userApi = {
@@ -7,8 +8,8 @@ export const userApi = {
     return apiRequest<UserProfileResponse>('/users/update-profile', 'POST', { id, username, email });
   },
 
-  async getUsersList(): Promise<ApiResponse<IUser[]>> {
-    return apiRequest<IUser[]>('/users/list', 'GET');
+  async getUsersList(): Promise<ApiResponse<ClientUser[]>> {
+    return apiRequest<ClientUser[]>('/users/list', 'GET');
   },
 
   async updateUserStatus(

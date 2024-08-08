@@ -24,6 +24,14 @@ const gameSchema = new mongoose.Schema<ChessGame>(
       blackKingSide: { type: Boolean, default: true },
       blackQueenSide: { type: Boolean, default: true },
     },
+    isCheck: { type: Boolean, default: false },
+    checkingPieces: { type: [[Number]], default: [] },
+    isCheckmate: { type: Boolean, default: false },
+    isStalemate: { type: Boolean, default: false },
+    capturedPieces: {
+      white: { type: [String], default: [] },
+      black: { type: [String], default: [] },
+    },
   },
   { timestamps: true }
 );

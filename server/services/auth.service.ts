@@ -1,11 +1,11 @@
 import jwt from 'jsonwebtoken';
 import User from '../db/models/user.model';
 import type { AuthResponse } from '~/server/types/auth';
-import { sendStatusUpdate } from '~/server/api/sse/user-status';
+import { sseManager } from '~/server/utils/SSEManager';
 
 export const registerUser = async (username: string, email: string, password: string): Promise<AuthResponse> => {
   const user = new User({ username, email, password, isOnline: true });
-  await sendStatusUpdate(user._id.toString(), true, false);
+  await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
   await user.save();
   const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' });
 
@@ -26,7 +26,7 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
   user.isOnline = true;
 
   console.log('Sending status update');
-  await sendStatusUpdate(user._id.toString(), true, false);
+  await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
 
   console.log('Saving user');
   await user.save();
@@ -40,5 +40,5 @@ export const loginUser = async (email: string, password: string): Promise<AuthRe
 
 export const logoutUser = async (userId: string): Promise<void> => {
   await User.findByIdAndUpdate(userId, { isOnline: false });
-  await sendStatusUpdate(userId, false, false);
+  await sseManager.sendUserStatusUpdate(userId, { isOnline: true, isGame: false });
 };

@@ -4,7 +4,9 @@ import Game from '~/server/db/models/game.model';
 import type { ChessGame } from '~/entities/game/model/game.model';
 import type { ChessBoard } from '~/entities/game/model/board.model';
 import type { PieceType, PieceColor } from '~/entities/game/model/board.model';
+import type { GameResult } from '../types/game';
 import { updateUserStatus } from './user.service';
+import { sseManager } from '~/server/utils/SSEManager';
 export async function createGame(inviterId: string, inviteeId: string): Promise<ChessGame> {
   const newGame = new Game({
     id: generateUniqueId(),
@@ -42,7 +44,7 @@ export async function setPlayerColor(gameId: string, userId: string, color: Piec
 }
 
 export async function forcedEndGame(gameId: string, userId: string) {
-  const game = await Game.findById(gameId);
+  const game = await Game.findOne({ id: gameId });
   if (!game) {
     throw new Error('Game not found');
   }
@@ -56,11 +58,18 @@ export async function forcedEndGame(gameId: string, userId: string) {
   await game.save();
 
   // Обновляем статусы обоих игроков
-  await updateUserStatus(winner as PieceColor, false, false);
+  await updateUserStatus(winner as string, false, false);
   await updateUserStatus(loser, false, false);
 
+  // Отправляем обновление о завершении игры
+  const gameResult: GameResult = {
+    winner: winner,
+    reason: 'forfeit',
+  };
+  await sseManager.sendGameEndNotification(gameId, gameResult);
+
   // Удаляем игру из БД
-  await Game.findByIdAndDelete(gameId);
+  await Game.findOneAndDelete({ id: gameId });
 
   return { winner, loser, opponentId };
 }

@@ -1,6 +1,8 @@
 // entities/game/model/game.model.ts
 
 import type { ChessBoard, PieceColor } from './board.model';
+import type { Position } from '~/features/game-logic/model/pieces/types';
+import type { PieceType } from './board.model';
 import { initializeBoard } from './board.model';
 
 export interface CastlingRights {
@@ -27,6 +29,14 @@ export interface ChessGame {
   enPassantTarget: [number, number] | null;
   positions: string[];
   castlingRights: CastlingRights;
+  isCheck: boolean;
+  checkingPieces: Position[];
+  capturedPieces: {
+    white: PieceType[];
+    black: PieceType[];
+  };
+  isCheckmate: boolean;
+  isStalemate: boolean;
 }
 
 export function initializeGame(id: string, inviterId: string, inviteeId: string): ChessGame {
@@ -52,5 +62,13 @@ export function initializeGame(id: string, inviterId: string, inviteeId: string)
       blackKingSide: true,
       blackQueenSide: true,
     },
+    isCheck: false,
+    checkingPieces: [],
+    capturedPieces: {
+      white: [],
+      black: [],
+    },
+    isCheckmate: false,
+    isStalemate: false,
   };
 }

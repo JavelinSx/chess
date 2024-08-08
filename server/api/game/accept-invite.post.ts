@@ -1,7 +1,8 @@
 // server/api/game/accept-invite.post.ts
 
-import { sendMessageToUsers } from '~/server/api/sse/user-status';
+import { sseManager } from '~/server/utils/SSEManager';
 import { createGame, setPlayerColor, updateGameStatus } from '~/server/services/game.service';
+import { updateUserStatus } from '~/server/services/user.service';
 
 export default defineEventHandler(async (event) => {
   const { inviterId } = await readBody(event);
@@ -22,10 +23,13 @@ export default defineEventHandler(async (event) => {
   await setPlayerColor(game.id, inviteeId, isWhite ? 'black' : 'white');
 
   await updateGameStatus(game.id, 'active');
+  if (game.players.white && game.players.black) {
+    await updateUserStatus(game.players.white, true, true);
+    await updateUserStatus(game.players.black, true, true);
+  }
 
-  // Отправляем уведомление обоим игрокам о начале игры
-  const gameStartMessage = JSON.stringify({ type: 'game_start', gameId: game.id });
-  await sendMessageToUsers([inviterId, inviteeId], gameStartMessage);
+  // Отправляем уведомление о начале игры через пользовательский SSE канал
+  await sseManager.sendGameStartNotification(game.id, [inviterId, inviteeId]);
 
   return { data: { gameId: game.id }, error: null };
 });

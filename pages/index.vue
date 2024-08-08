@@ -22,24 +22,31 @@ import { useAuthStore } from '~/store/auth';
 import UserList from '~/features/user-list/UserList.vue';
 import GameInvitationModal from '~/features/invite-modal/GameInvitationModal.vue';
 
+
 const userStore = useUserStore();
 const authStore = useAuthStore();
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const user = computed(() => userStore.user);
+const intervalId = ref<number | null>(null);
+
+const setupUserListInterval = () => {
+    intervalId.value = setInterval(() => userStore.fetchUsersList(), 30000) as unknown as number;
+};
 
 onMounted(async () => {
     if (authStore.isAuthenticated) {
+
         await userStore.fetchUsersList();
         await userStore.updateUserStatus(true, false);
-        // Добавьте периодическое обновление списка пользователей
-        const intervalId = setInterval(() => userStore.fetchUsersList(), 30000); // каждые 30 секунд
-        onUnmounted(() => clearInterval(intervalId));
+        setupUserListInterval();
     }
 });
 
-onBeforeUnmount(async () => {
+onUnmounted(() => {
     if (authStore.isAuthenticated) {
-        await userStore.updateUserStatus(false, false);
+        if (intervalId.value !== null) {
+            clearInterval(intervalId.value);
+        }
     }
 });
 

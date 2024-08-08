@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useAuth } from '~/client/composables/useAuth';
+import { useAuth } from '~/composables/useAuth';
 
 const username = ref('');
 const email = ref('');

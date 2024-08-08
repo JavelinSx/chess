@@ -12,6 +12,7 @@ export const useAuth = () => {
         method: 'POST',
         body: { username, email, password },
       });
+      console.log('hello');
       // После успешной регистрации, перенаправляем на страницу входа
       router.push('/login');
     } catch (error) {
