@@ -17,7 +17,7 @@ export const profileUpdate = async (id: string, username: string, email: string)
 };
 
 export const getUsersList = async (): Promise<IUser[]> => {
-  return User.find({}, 'username isOnline isGame');
+  return User.find({});
 };
 
 export const updateUserStatus = async (userId: string, isOnline: boolean, isGame: boolean): Promise<void> => {

@@ -1,11 +1,14 @@
 export default defineNuxtConfig({
-  modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt'],
+  modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui'],
   css: ['~/app/styles/global.css'],
 
   nitro: {
     plugins: ['~/server/db/index.ts'],
   },
-
+  components: {
+    global: true,
+    dirs: ['~/features'],
+  },
   runtimeConfig: {
     public: {
       apiBase: process.env.API_BASE,

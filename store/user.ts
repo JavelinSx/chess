@@ -8,6 +8,11 @@ export const useUserStore = defineStore('user', {
     user: null as ClientUser | null,
     usersList: [] as ClientUser[],
     currentInvitation: null as { fromInviteId: string; fromInviteName: string } | null,
+    filterOptions: {
+      onlineOnly: false,
+      sortCriteria: 'rating' as 'rating' | 'isGame' | 'gamesPlayed',
+      sortDirection: 'desc' as 'asc' | 'desc',
+    },
   }),
   getters: {
     _id: (state) => state.user?._id,
@@ -23,6 +28,53 @@ export const useUserStore = defineStore('user', {
     isGame: (state) => state.user?.isGame,
     winRate: (state) => state.user?.winRate,
     currentGameId: (state) => state.user?.currentGameId,
+    filteredUsersList: (state): ClientUser[] => {
+      console.log('Starting filteredUsersList getter');
+      console.log('Current filter options:', state.filterOptions);
+
+      // Исключаем текущего пользователя из списка
+      let filteredList = state.usersList.filter((user) => user._id !== state.user?._id);
+
+      const isFree = (user: ClientUser) => user.isOnline && !user.isGame;
+
+      if (state.filterOptions.sortCriteria === 'isGame') {
+        // Для фильтрации Free оставляем только онлайн пользователей, которые не в игре
+        filteredList = filteredList.filter((user) => isFree(user));
+      } else if (state.filterOptions.onlineOnly) {
+        filteredList = filteredList.filter((user) => user.isOnline);
+      }
+
+      const sortByRating = (a: ClientUser, b: ClientUser) =>
+        state.filterOptions.sortDirection === 'asc' ? a.rating - b.rating : b.rating - a.rating;
+
+      let result: ClientUser[];
+
+      if (state.filterOptions.sortCriteria === 'isGame') {
+        // Для Free пользователей сортируем только по рейтингу
+        result = [...filteredList].sort(sortByRating);
+      } else if (state.filterOptions.sortCriteria === 'rating') {
+        result = [...filteredList].sort(sortByRating);
+      } else if (state.filterOptions.sortCriteria === 'gamesPlayed') {
+        result = [...filteredList].sort((a, b) => {
+          return state.filterOptions.sortDirection === 'asc'
+            ? a.gamesPlayed - b.gamesPlayed
+            : b.gamesPlayed - a.gamesPlayed;
+        });
+      } else {
+        result = filteredList;
+      }
+
+      console.log(
+        'Sorted list:',
+        result.map(
+          (user) =>
+            `${user.username} (isOnline: ${user.isOnline}, isGame: ${user.isGame}, isFree: ${isFree(user)}, rating: ${
+              user.rating
+            })`
+        )
+      );
+      return result;
+    },
   },
   actions: {
     setUser(user: ClientUser) {
@@ -30,6 +82,14 @@ export const useUserStore = defineStore('user', {
     },
     clearUser() {
       this.user = null;
+    },
+    setUsersList(users: ClientUser[]) {
+      console.log('Setting usersList:', users);
+      this.usersList = users;
+    },
+    updateFilterOptions(options: Partial<typeof this.filterOptions>) {
+      console.log('Updating filter options:', options);
+      this.filterOptions = { ...this.filterOptions, ...options };
     },
     async updateProfile(username: string, email: string) {
       if (!this.user) {
@@ -65,7 +125,6 @@ export const useUserStore = defineStore('user', {
         this.user.isGame = isGame;
       }
     },
-
     updateUserInList(userId: string, isOnline: boolean, isGame: boolean) {
       const userIndex = this.usersList.findIndex((u) => u._id === userId);
       if (userIndex !== -1) {
@@ -76,7 +135,6 @@ export const useUserStore = defineStore('user', {
         };
       }
     },
-
     async sendGameInvitation(toInviteId: string) {
       const response = await userApi.sendGameInvitation(toInviteId);
       if (response.error) {
@@ -90,7 +148,6 @@ export const useUserStore = defineStore('user', {
         console.error('No current invitation to accept');
         return;
       }
-
       try {
         const response = await gameApi.acceptInvitation(this.currentInvitation.fromInviteId);
         if (response.data && response.data.gameId) {
@@ -104,15 +161,12 @@ export const useUserStore = defineStore('user', {
         console.error('Error accepting game invitation:', error);
       }
     },
-
     rejectGameInvitation() {
-      // Здесь можно добавить логику для отклонения приглашения, если это необходимо
       this.currentInvitation = null;
     },
     handleGameInvitation(fromInviteId: string, fromInviteName: string) {
       this.currentInvitation = { fromInviteId, fromInviteName };
     },
-
     async handleGameStart(gameId: string) {
       navigateTo(`/game/${gameId}`);
     },
@@ -127,6 +181,5 @@ export const useUserStore = defineStore('user', {
   },
   persist: {
     storage: persistedState.localStorage,
-    paths: ['user'],
   },
 });

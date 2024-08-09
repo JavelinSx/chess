@@ -77,4 +77,7 @@ export const useGameStore = defineStore('game', {
       this.error = null;
     },
   },
+  persist: {
+    storage: persistedState.localStorage,
+  },
 });

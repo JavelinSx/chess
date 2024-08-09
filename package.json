@@ -25,6 +25,7 @@
   "devDependencies": {
     "@nuxt/devtools": "latest",
     "@nuxt/test-utils": "^3.14.0",
+    "@nuxt/ui": "^2.18.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mongoose": "^5.11.97",

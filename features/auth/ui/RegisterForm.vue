@@ -1,39 +1,53 @@
 <template>
-    <form class="auth-form">
-        <h2 class="auth-form__title">Register</h2>
-        <BaseInput id="username" label="Username" v-model="username" placeholder="Enter your username" required
-            @error="handleError" class="auth-form__input" />
-        <BaseInput id="email" label="Email" type="email" v-model="email" placeholder="Enter your email" required
-            @error="handleError" class="auth-form__input" />
-        <BaseInput id="password" label="Password" type="password" v-model="password" placeholder="Enter your password"
-            :minLength="8" required @error="handleError" class="auth-form__input" />
-        <BaseButton server-action @click="handleRegister" class="auth-form__submit">
-            Register
-        </BaseButton>
-    </form>
+    <UCard class="auth-form">
+        <UForm :state="formState" @submit="handleRegister" class="flex flex-col gap-4">
+            <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+
+            <UFormGroup label="Username" name="username">
+                <UInput v-model="formState.username" type="text" placeholder="Enter your username"
+                    autocomplete="username" size="lg" required />
+            </UFormGroup>
+
+            <UFormGroup label="Email" name="email">
+                <UInput v-model="formState.email" type="email" placeholder="Enter your email" autocomplete="email"
+                    size="lg" required />
+            </UFormGroup>
+
+            <UFormGroup label="Password" name="password">
+                <UInput v-model="formState.password" type="password" placeholder="Enter your password"
+                    autocomplete="new-password" required :minlength="8" size="lg" />
+            </UFormGroup>
+
+            <UButton type="submit" color="primary" block :loading="isLoading" class="mt-3 mb-6 h-11 text-base">
+                Register
+            </UButton>
+        </UForm>
+    </UCard>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-import BaseInput from '~/shared/ui/BaseInput.vue';
-import BaseButton from '~/shared/ui/Button.vue';
 
-const username = ref('');
-const email = ref('');
-const password = ref('');
-const { register } = useAuth();
+const authStore = useAuth();
+const isLoading = ref(false);
 
-const handleError = (error: string) => {
-    console.log('Input error:', error);
-};
+const formState = reactive({
+    username: '',
+    email: '',
+    password: '',
+});
 
 const handleRegister = async () => {
+    isLoading.value = true;
     try {
-        await register(username.value, email.value, password.value);
+        await authStore.register(formState.username, formState.email, formState.password);
         navigateTo('/login');
     } catch (error) {
         console.error('Registration error:', error);
+        // Здесь можно добавить обработку ошибок, например, показать уведомление пользователю
+    } finally {
+        isLoading.value = false;
     }
 };
 </script>
@@ -42,46 +56,5 @@ const handleRegister = async () => {
 .auth-form {
     max-width: 400px;
     margin: 2rem auto;
-    padding: 2rem;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
-    @media (max-width: 480px) {
-        padding: 1.5rem;
-        margin: 1rem auto;
-    }
-
-    &__title {
-        font-size: 1.5rem;
-        color: #2c3e50;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-
-    &__input {
-        margin-bottom: 1rem;
-    }
-
-    &__submit {
-        width: 100%;
-        padding: 0.75rem;
-        background-color: #27ae60;
-        color: #ffffff;
-        border: none;
-        border-radius: 4px;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-
-        &:hover {
-            background-color: #219653;
-        }
-
-        &:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(39, 174, 96, 0.5);
-        }
-    }
 }
 </style>

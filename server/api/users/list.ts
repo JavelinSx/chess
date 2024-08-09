@@ -2,7 +2,7 @@ import { getUsersList } from '~/server/services/user.service';
 import type { ApiResponse } from '~/server/types/auth';
 import type { IUser } from '~/server/types/user';
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
   try {
     const users = await getUsersList();
     return {
