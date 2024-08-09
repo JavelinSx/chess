@@ -27,8 +27,6 @@ export async function apiRequest<T>(
       headers,
     });
 
-    console.log('API response:', response);
-
     if (!response || typeof response !== 'object' || (!('data' in response) && !('error' in response))) {
       throw new Error('Invalid response structure');
     }

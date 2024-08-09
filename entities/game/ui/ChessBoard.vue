@@ -77,51 +77,34 @@ const handleForcedEndGame = async () => {
 };
 
 const handleCellClick = (row: number, col: number) => {
-    console.log(`Cell clicked: [${row}, ${col}]`);
-    console.log('Current game state:', props.game);
+
     if (!selectedCell.value) {
         const clickedPiece = props.board[row][col];
-        console.log('Clicked piece:', clickedPiece);
 
         if (clickedPiece?.color === props.currentTurn) {
             selectedCell.value = [row, col];
-            console.log('Selected cell:', selectedCell.value);
-
             // Получаем возможные ходы для выбранной фигуры
             validMoves.value = getValidMoves(props.game, selectedCell.value);
-            console.log('Valid moves:', validMoves.value);
-        } else {
-            console.log('Cannot select this piece: wrong color or empty cell');
         }
     } else {
         const from = selectedCell.value;
         const to: Position = [row, col];
-        console.log(`Attempting move from [${from}] to [${to}]`);
-
         // Проверяем, что ход входит в список допустимых ходов
         const isValidMove = validMoves.value.some(move => move[0] === row && move[1] === col);
-        console.log('Is valid move:', isValidMove);
 
         if (isValidMove) {
             // Проверяем, что это не "ход" на ту же позицию
             if (from[0] !== to[0] || from[1] !== to[1]) {
                 try {
-                    console.log('Emitting move event');
                     emit('move', from, to);
                 } catch (error) {
-                    console.error('Error performing move:', error);
-                }
-            } else {
-                console.log('Cannot move to the same position');
-            }
-        } else {
-            console.log('Invalid move: not in the list of valid moves');
-        }
 
+                }
+            }
+        }
         // Сбрасываем выбор и валидные ходы
         selectedCell.value = null;
         validMoves.value = [];
-        console.log('Reset selection and valid moves');
     }
 };
 watch(() => props.game, () => {

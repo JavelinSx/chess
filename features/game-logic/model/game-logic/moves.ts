@@ -60,8 +60,5 @@ export function getValidMoves(game: ChessGame, from: Position): Position[] {
       }
     }
   }
-  if (piece?.type === 'king') {
-    console.log(`Valid moves for ${piece.type} at [${fromRow}, ${fromCol}]:`, validMoves);
-  }
   return validMoves;
 }

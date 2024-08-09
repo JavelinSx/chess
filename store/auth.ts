@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { useCookie } from '#app';
-import type { AuthResponse, ApiResponse } from '~/server/types/auth';
+import type { AuthData, ApiResponse } from '~/server/types/auth';
 import { authApi } from '~/shared/api/auth';
 import { useUserStore } from './user';
 
@@ -42,15 +42,13 @@ export const useAuthStore = defineStore('auth', {
       });
       authCookie.value = token;
     },
-    setAuthData(response: ApiResponse<AuthResponse>) {
+    setAuthData(response: ApiResponse<AuthData>) {
       if (response.data) {
         const userStore = useUserStore();
         userStore.setUser(response.data.user);
         this.setToken(response.data.token);
       } else if (response.error) {
         this.error = response.error;
-      } else {
-        this.error = 'Invalid response structure';
       }
     },
   },

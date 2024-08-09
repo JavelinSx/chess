@@ -36,20 +36,13 @@ export function isCheckmate(game: ChessGame): boolean {
 }
 
 export function isStalemate(game: ChessGame): boolean {
-  console.log('Checking stalemate. Current turn:', game.currentTurn);
-  console.log('Board state:', JSON.stringify(game.board, null, 2));
-
   const { inCheck, checkingPieces } = isKingInCheck(game);
-  console.log('Is king in check:', inCheck);
-  console.log('Checking pieces:', checkingPieces);
 
   if (inCheck) {
-    console.log('Not stalemate: King is in check');
     return false;
   }
 
   const hasLegalMove = hasLegalMoves(game);
-  console.log('Has legal moves:', hasLegalMove);
 
   return !hasLegalMove;
 }

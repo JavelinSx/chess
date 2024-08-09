@@ -1,6 +1,6 @@
+import type { ApiResponse, AuthData } from '~/server/types/auth';
+import { useAuthStore } from '~/store/auth';
 import { useUserStore } from '~/store/user';
-import { useAuthStore } from '../store/auth';
-import type { LoginResponse } from '~/server/types/auth.js';
 export const useAuth = () => {
   const authStore = useAuthStore();
   const userStore = useUserStore();
@@ -8,41 +8,53 @@ export const useAuth = () => {
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      await $fetch('/api/auth/register', {
+      const response = await $fetch<ApiResponse<AuthData>>('/api/auth/register', {
         method: 'POST',
         body: { username, email, password },
       });
-      console.log('hello');
-      // После успешной регистрации, перенаправляем на страницу входа
-      router.push('/login');
+
+      if (response.data) {
+        navigateTo('/login');
+      } else if (response.error) {
+        throw new Error(response.error);
+      }
     } catch (error) {
-      // Обработка ошибки регистрации
       console.error('Registration error:', error);
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
-      const { user, token } = await $fetch<LoginResponse>('/api/auth/login', {
+      const response = await $fetch<ApiResponse<AuthData>>('/api/auth/login', {
         method: 'POST',
         body: { email, password },
       });
-      userStore.setUser(user);
-      authStore.setToken(token);
-      // После успешного входа, перенаправляем на главную страницу
-      router.push('/');
+
+      if (response.data) {
+        const { user, token } = response.data;
+        userStore.setUser(user);
+        authStore.setToken(token);
+      } else if (response.error) {
+        throw new Error(response.error);
+      }
     } catch (error) {
-      // Обработка ошибки входа
       console.error('Login error:', error);
     }
   };
 
   const logout = async () => {
     try {
-      await $fetch('/api/auth/logout', { method: 'POST' });
-      authStore.logout();
-      // После выхода, перенаправляем на страницу входа
-      router.push('/login');
+      const response = await $fetch<ApiResponse<{ message: string }>>('/api/auth/logout', {
+        method: 'POST',
+      });
+
+      if (response.data) {
+        authStore.logout();
+        userStore.clearUser();
+        navigateTo('/login');
+      } else if (response.error) {
+        throw new Error(response.error);
+      }
     } catch (error) {
       console.error('Logout error:', error);
     }

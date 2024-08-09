@@ -20,21 +20,22 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { useAuthStore } from '~/store/auth'
-
+import { useAuthStore } from '~/store/auth';
+import { useUserStore } from '~/store/user';
+const userStore = useUserStore()
 const authStore = useAuthStore()
 const error = ref('')
 const success = ref(false)
 
 const profile = reactive({
-    username: authStore.user?.username || '',
-    email: authStore.user?.email || '',
+    username: userStore.user?.username || '',
+    email: userStore.user?.email || '',
     // Добавьте другие поля профиля
 })
 
 const updateProfile = async () => {
     try {
-        await authStore.updateProfile(profile)
+        await userStore.updateProfile(profile.username, profile.email)
         success.value = true
         error.value = ''
     } catch (err) {

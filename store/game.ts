@@ -16,13 +16,10 @@ export const useGameStore = defineStore('game', {
         const response = await gameApi.getGame(gameId);
         if (response.data) {
           this.currentGame = response.data;
-          console.log('Fetched game:', this.currentGame);
         } else if (response.error) {
           this.error = response.error;
-          console.error('Failed to fetch game:', response.error);
         }
       } catch (error) {
-        console.error('Failed to fetch game:', error);
         this.error = 'Failed to fetch game';
         this.currentGame = null;
       }
@@ -37,23 +34,18 @@ export const useGameStore = defineStore('game', {
     },
 
     async makeMove(from: Position, to: Position) {
-      console.log(`Store: Making move from [${from}] to [${to}]`);
       if (!this.currentGame) {
         throw new Error('No active game');
       }
 
       try {
         const response = await gameApi.makeMove(this.currentGame.id, from, to);
-        console.log('Move API response:', response);
         if (response.data) {
           this.currentGame = response.data;
-          console.log('Updated game state:', this.currentGame);
         } else if (response.error) {
           this.error = response.error;
-          console.error('Failed to make move:', response.error);
         }
       } catch (error) {
-        console.error('Failed to make move:', error);
         this.error = 'Failed to make move';
       }
     },
@@ -77,7 +69,6 @@ export const useGameStore = defineStore('game', {
       }
     },
     handleGameEnd(result: any) {
-      console.log('Game ended:', result);
       this.currentGame = null;
       // Здесь можно добавить логику для отображения результата игры
       // например, показать модальное окно с результатом

@@ -36,8 +36,6 @@ export default defineEventHandler(async (event) => {
     const updatedGame = performMove(game, from, to);
     await saveGameToDatabase(updatedGame);
 
-    console.log('Move performed, updated game:', updatedGame);
-
     // Отправка обновления через SSE
     await sseManager.broadcastGameUpdate(gameId, updatedGame);
 

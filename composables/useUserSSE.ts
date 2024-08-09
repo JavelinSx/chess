@@ -10,16 +10,12 @@ export function useUserSSE(): UserSSEReturn {
   const eventSource = ref<EventSource | null>(null);
 
   const setupSSE = () => {
-    console.log('Setting up user SSE connection');
     eventSource.value = new EventSource('/api/sse/user-status');
 
-    eventSource.value.onopen = (event) => {
-      console.log('User SSE connection opened:', event);
-    };
+    eventSource.value.onopen = (event) => {};
 
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log('Received user SSE message:', data);
 
       switch (data.type) {
         case 'status_update':
@@ -50,7 +46,6 @@ export function useUserSSE(): UserSSEReturn {
   };
 
   const closeSSE = () => {
-    console.log('Closing user SSE connection');
     if (eventSource.value) {
       eventSource.value.close();
       eventSource.value = null;

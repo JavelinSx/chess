@@ -21,9 +21,7 @@ export const getUsersList = async (): Promise<IUser[]> => {
 };
 
 export const updateUserStatus = async (userId: string, isOnline: boolean, isGame: boolean): Promise<void> => {
-  console.log('Updating user status in database');
   await User.findByIdAndUpdate(userId, { isOnline, isGame });
-  console.log('User status updated in database');
 
   await sseManager.sendUserStatusUpdate(userId, { isOnline, isGame });
 

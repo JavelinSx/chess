@@ -110,14 +110,11 @@ export const useUserStore = defineStore('user', {
       this.currentInvitation = null;
     },
     handleGameInvitation(fromInviteId: string, fromInviteName: string) {
-      console.log(`Received game invitation from ${fromInviteName}`);
       this.currentInvitation = { fromInviteId, fromInviteName };
     },
 
     async handleGameStart(gameId: string) {
-      console.log(`Game ${gameId} started`);
-      const router = useRouter();
-      router.push(`/game/${gameId}`);
+      navigateTo(`/game/${gameId}`);
     },
     updateUserStats(stats: Partial<ClientUser>) {
       if (this.user) {
