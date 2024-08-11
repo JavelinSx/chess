@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { useCookie } from '#app';
 import type { IUser } from '~/server/types/user';
-
+import { authApi } from '~/shared/api/api';
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as IUser | null,
@@ -11,33 +11,36 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!state.user,
   },
   actions: {
+    async register(email: string, password: string) {
+      const { data, error } = await authApi.register(email, password);
+      if (error) throw new Error(error);
+      if (data) {
+        this.setUser(data.user);
+        this.setToken(data.token);
+      }
+    },
+
     async login(email: string, password: string) {
-      const response = await $fetch<{ user: IUser; token: string }>('/api/auth/login', {
-        method: 'POST',
-        body: { email, password },
-      });
-      this.setUser(response.user);
-      const authCookie = useCookie('auth_token');
-      authCookie.value = response.token;
+      const { data, error } = await authApi.login(email, password);
+      if (error) throw new Error(error);
+      if (data) {
+        this.setUser(data.user);
+        this.setToken(data.token);
+      }
     },
-    async register(username: string, email: string, password: string) {
-      const response = await $fetch<{ user: IUser; token: string }>('/api/auth/register', {
-        method: 'POST',
-        body: { username, email, password },
-      });
-      this.setUser(response.user);
-      const authCookie = useCookie('auth_token');
-      authCookie.value = response.token;
+
+    async logout() {
+      const { error } = await authApi.logout();
+      if (error) throw new Error(error);
+      this.setUser(null);
+      this.setToken(null);
     },
-    logout() {
-      this.user = null;
-      const authCookie = useCookie('auth_token');
-      authCookie.value = null;
-    },
-    setUser(user: IUser) {
+
+    setUser(user: IUser | null) {
       this.user = user;
     },
-    setToken(token: string) {
+
+    setToken(token: string | null) {
       this.token = token;
     },
   },
