@@ -1,4 +1,4 @@
-import type { UserProfileResponse } from '../types/user';
+import type { ClientUser, UserProfileResponse } from '../types/user';
 import type { IUser } from '../types/user';
 import User from '../db/models/user.model';
 import { sseManager } from '~/server/utils/SSEManager';
@@ -16,7 +16,7 @@ export const profileUpdate = async (id: string, username: string, email: string)
   };
 };
 
-export const getUsersList = async (): Promise<IUser[]> => {
+export const getUsersList = async (): Promise<ClientUser[]> => {
   return User.find({});
 };
 
@@ -75,7 +75,24 @@ export async function syncAllUsersStatus() {
     }
   }
 }
+export async function getUsersCount(): Promise<number> {
+  return await User.countDocuments();
+}
 
+export async function getUsersWithPagination(
+  page: number,
+  perPage: number
+): Promise<{ users: ClientUser[]; totalCount: number }> {
+  const skip = (page - 1) * perPage;
+  const users = await User.find().skip(skip).limit(perPage).lean();
+
+  const totalCount = await getUsersCount();
+
+  return {
+    users: users,
+    totalCount,
+  };
+}
 if (import.meta.client) {
   setInterval(syncAllUsersStatus, 6000);
 }

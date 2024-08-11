@@ -5,7 +5,7 @@ import type { UserStatus } from './UserSSEManager';
 import { InvitationSSEManager } from './InvitationSSEManager';
 import { GameSSEManager } from './GameSSEManager';
 import type { GameResult } from '../types/game';
-import type { IUser } from '~/server/types/user';
+import type { ClientUser, IUser } from '~/server/types/user';
 import type { ChessGame } from '~/entities/game/model/game.model';
 
 export class SSEManager {
@@ -38,7 +38,7 @@ export class SSEManager {
     await this.userManager.sendUserStatusUpdate(userId, status);
   }
 
-  async broadcastUserListUpdate(users: IUser[]) {
+  async broadcastUserListUpdate(users: ClientUser[]) {
     await this.userManager.broadcastUserListUpdate(users);
   }
 

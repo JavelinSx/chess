@@ -1,6 +1,6 @@
 <!-- pages/index.vue -->
 <template>
-    <div>
+    <div class="flex flex-col items-center justify-center gap-4">
         <h1>Welcome to Chess Game</h1>
         <p v-if="isAuthenticated">
             Hello, {{ user?.username }}!

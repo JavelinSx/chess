@@ -23,6 +23,7 @@ export function useUserSSE(): UserSSEReturn {
           break;
         case 'user_list_update':
           userStore.updateAllUsers(data.users);
+          console.log(data.users);
           break;
         case 'stats_update':
           userStore.updateUserStats(data.stats);

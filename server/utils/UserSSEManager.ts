@@ -1,6 +1,6 @@
 // server/utils/UserSSEManager.ts
 import { H3Event } from 'h3';
-import type { IUser } from '~/server/types/user';
+import type { ClientUser, IUser } from '~/server/types/user';
 
 export interface UserStatus {
   isOnline: boolean;
@@ -36,15 +36,10 @@ export class UserSSEManager {
     }
   }
 
-  async broadcastUserListUpdate(users: IUser[]) {
+  async broadcastUserListUpdate(users: ClientUser[]) {
     const message = JSON.stringify({
       type: 'user_list_update',
-      users: users.map((user) => ({
-        _id: user._id,
-        username: user.username,
-        isOnline: user.isOnline,
-        isGame: user.isGame,
-      })),
+      users: users,
     });
 
     for (const event of this.userConnections.values()) {

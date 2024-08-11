@@ -4,16 +4,22 @@ import { userApi } from '~/shared/api/user';
 import { gameApi } from '~/shared/api/game';
 
 export const useUserStore = defineStore('user', {
-  state: () => ({
-    user: null as ClientUser | null,
-    usersList: [] as ClientUser[],
-    currentInvitation: null as { fromInviteId: string; fromInviteName: string } | null,
-    filterOptions: {
-      onlineOnly: false,
-      sortCriteria: 'rating' as 'rating' | 'isGame' | 'gamesPlayed',
-      sortDirection: 'desc' as 'asc' | 'desc',
-    },
-  }),
+  state: () => {
+    console.log('Initializing user store');
+    return {
+      user: null as ClientUser | null,
+      usersList: [] as ClientUser[],
+      currentInvitation: null as { fromInviteId: string; fromInviteName: string } | null,
+      filterOptions: {
+        onlineOnly: false,
+        sortCriteria: 'rating' as 'rating' | 'isGame' | 'gamesPlayed',
+        sortDirection: 'desc' as 'asc' | 'desc',
+      },
+      searchQuery: '',
+      currentPage: 1,
+      itemsPerPage: 10,
+    };
+  },
   getters: {
     _id: (state) => state.user?._id,
     username: (state) => state.user?.username,
@@ -28,52 +34,55 @@ export const useUserStore = defineStore('user', {
     isGame: (state) => state.user?.isGame,
     winRate: (state) => state.user?.winRate,
     currentGameId: (state) => state.user?.currentGameId,
-    filteredUsersList: (state): ClientUser[] => {
-      console.log('Starting filteredUsersList getter');
-      console.log('Current filter options:', state.filterOptions);
-
-      // Исключаем текущего пользователя из списка
+    filteredUsersList(state): ClientUser[] {
       let filteredList = state.usersList.filter((user) => user._id !== state.user?._id);
 
+      // Функция для определения, является ли пользователь "свободным"
       const isFree = (user: ClientUser) => user.isOnline && !user.isGame;
 
+      // Применяем фильтр "только онлайн" или "free", в зависимости от критерия сортировки
       if (state.filterOptions.sortCriteria === 'isGame') {
-        // Для фильтрации Free оставляем только онлайн пользователей, которые не в игре
-        filteredList = filteredList.filter((user) => isFree(user));
+        filteredList = filteredList.filter(isFree);
       } else if (state.filterOptions.onlineOnly) {
         filteredList = filteredList.filter((user) => user.isOnline);
       }
 
-      const sortByRating = (a: ClientUser, b: ClientUser) =>
-        state.filterOptions.sortDirection === 'asc' ? a.rating - b.rating : b.rating - a.rating;
-
-      let result: ClientUser[];
-
-      if (state.filterOptions.sortCriteria === 'isGame') {
-        // Для Free пользователей сортируем только по рейтингу
-        result = [...filteredList].sort(sortByRating);
-      } else if (state.filterOptions.sortCriteria === 'rating') {
-        result = [...filteredList].sort(sortByRating);
-      } else if (state.filterOptions.sortCriteria === 'gamesPlayed') {
-        result = [...filteredList].sort((a, b) => {
-          return state.filterOptions.sortDirection === 'asc'
-            ? a.gamesPlayed - b.gamesPlayed
-            : b.gamesPlayed - a.gamesPlayed;
-        });
-      } else {
-        result = filteredList;
+      // Применяем поисковый запрос
+      if (state.searchQuery) {
+        const query = state.searchQuery.toLowerCase();
+        filteredList = filteredList.filter((user) => user.username.toLowerCase().includes(query));
       }
 
-      console.log(
-        'Sorted list:',
-        result.map(
-          (user) =>
-            `${user.username} (isOnline: ${user.isOnline}, isGame: ${user.isGame}, isFree: ${isFree(user)}, rating: ${
-              user.rating
-            })`
-        )
-      );
+      // Сортировка
+      const sortProperty = state.filterOptions.sortCriteria === 'isGame' ? 'rating' : state.filterOptions.sortCriteria;
+      filteredList.sort((a, b) => {
+        if (state.filterOptions.sortCriteria === 'isGame') {
+          // Если сортируем по "free", то свободные пользователи всегда идут первыми
+          if (isFree(a) !== isFree(b)) {
+            return isFree(a) ? -1 : 1;
+          }
+        }
+        // Для всех остальных случаев сортируем по выбранному критерию
+        const aValue = a[sortProperty] as number;
+        const bValue = b[sortProperty] as number;
+        return state.filterOptions.sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      });
+
+      return filteredList;
+    },
+    paginatedUsers(state): ClientUser[] {
+      const start = (state.currentPage - 1) * state.itemsPerPage;
+      const end = start + state.itemsPerPage;
+
+      const result = this.filteredUsersList.slice(start, end);
+
       return result;
+    },
+    totalPages(state): number {
+      return Math.ceil(this.filteredUsersList.length / state.itemsPerPage);
+    },
+    totalUsers(): number {
+      return this.filteredUsersList.length;
     },
   },
   actions: {
@@ -84,11 +93,20 @@ export const useUserStore = defineStore('user', {
       this.user = null;
     },
     setUsersList(users: ClientUser[]) {
-      console.log('Setting usersList:', users);
       this.usersList = users;
     },
+    setSearchQuery(query: string) {
+      this.searchQuery = query;
+    },
+    setCurrentPage(page: number) {
+      this.currentPage = page;
+    },
+    setItemsPerPage(count: number) {
+      console.log('Setting itemsPerPage to:', count);
+      this.itemsPerPage = count;
+      this.currentPage = 1;
+    },
     updateFilterOptions(options: Partial<typeof this.filterOptions>) {
-      console.log('Updating filter options:', options);
       this.filterOptions = { ...this.filterOptions, ...options };
     },
     async updateProfile(username: string, email: string) {
@@ -177,9 +195,11 @@ export const useUserStore = defineStore('user', {
     },
     updateAllUsers(users: ClientUser[]) {
       this.usersList = users;
+      console.log('hello');
     },
   },
   persist: {
     storage: persistedState.localStorage,
+    paths: ['user'], // Сохраняем только данные пользователя
   },
 });

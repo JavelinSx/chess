@@ -18,8 +18,13 @@ export interface IUser extends Document {
   isGame: boolean;
   winRate: number;
   currentGameId?: string;
+}
+
+export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
+
+export type UserModel = IUser & IUserMethods;
 
 export interface ClientUser {
   _id: string;
