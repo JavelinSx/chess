@@ -25,13 +25,14 @@
                 <p>&copy; {{ new Date().getFullYear() }} Chess App. All rights reserved.</p>
             </UContainer>
         </footer>
+        <GameInvitationModal />
     </div>
 </template>
 
 <script setup lang="ts">
 import { useAuthStore } from '../store/auth';
 import { useUserStore } from '~/store/user';
-
+import GameInvitationModal from '~/features/invite-modal/GameInvitationModal.vue';
 const authStore = useAuthStore();
 const userStore = useUserStore();
 

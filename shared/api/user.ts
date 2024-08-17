@@ -23,8 +23,4 @@ export const userApi = {
   ): Promise<ApiResponse<{ success: boolean }>> {
     return apiRequest<{ success: boolean }>('/user/update-status', 'POST', { userId, isOnline, isGame });
   },
-
-  async sendGameInvitation(toInviteId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId });
-  },
 };

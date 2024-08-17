@@ -1,12 +1,13 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useUserStore } from '~/store/user';
-
+import { useInvitationStore } from '~/store/invitation';
 interface UserSSEReturn {
   closeSSE: () => void;
 }
 
 export function useUserSSE(): UserSSEReturn {
   const userStore = useUserStore();
+  const invitationStore = useInvitationStore();
   const eventSource = ref<EventSource | null>(null);
 
   const setupSSE = () => {
@@ -28,7 +29,7 @@ export function useUserSSE(): UserSSEReturn {
           userStore.updateUserStats(data.stats);
           break;
         case 'game_invitation':
-          userStore.handleGameInvitation(data.fromInviteId, data.fromInviteName);
+          invitationStore.handleGameInvitation(data.fromInviteId, data.fromInviteName);
           break;
         case 'game_start':
           navigateTo(`/game/${data.gameId}`);

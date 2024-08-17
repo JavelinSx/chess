@@ -9,15 +9,6 @@ export const useUserStore = defineStore('user', {
     return {
       user: null as ClientUser | null,
       usersList: [] as ClientUser[],
-      currentInvitation: null as { fromInviteId: string; fromInviteName: string } | null,
-      filterOptions: {
-        onlineOnly: false,
-        sortCriteria: 'rating' as 'rating' | 'isGame' | 'gamesPlayed',
-        sortDirection: 'desc' as 'asc' | 'desc',
-      },
-      searchQuery: '',
-      currentPage: 1,
-      itemsPerPage: 10,
     };
   },
   getters: {
@@ -34,56 +25,6 @@ export const useUserStore = defineStore('user', {
     isGame: (state) => state.user?.isGame,
     winRate: (state) => state.user?.winRate,
     currentGameId: (state) => state.user?.currentGameId,
-    filteredUsersList(state): ClientUser[] {
-      let filteredList = state.usersList.filter((user) => user._id !== state.user?._id);
-
-      // Функция для определения, является ли пользователь "свободным"
-      const isFree = (user: ClientUser) => user.isOnline && !user.isGame;
-
-      // Применяем фильтр "только онлайн" или "free", в зависимости от критерия сортировки
-      if (state.filterOptions.sortCriteria === 'isGame') {
-        filteredList = filteredList.filter(isFree);
-      } else if (state.filterOptions.onlineOnly) {
-        filteredList = filteredList.filter((user) => user.isOnline);
-      }
-
-      // Применяем поисковый запрос
-      if (state.searchQuery) {
-        const query = state.searchQuery.toLowerCase();
-        filteredList = filteredList.filter((user) => user.username.toLowerCase().includes(query));
-      }
-
-      // Сортировка
-      const sortProperty = state.filterOptions.sortCriteria === 'isGame' ? 'rating' : state.filterOptions.sortCriteria;
-      filteredList.sort((a, b) => {
-        if (state.filterOptions.sortCriteria === 'isGame') {
-          // Если сортируем по "free", то свободные пользователи всегда идут первыми
-          if (isFree(a) !== isFree(b)) {
-            return isFree(a) ? -1 : 1;
-          }
-        }
-        // Для всех остальных случаев сортируем по выбранному критерию
-        const aValue = a[sortProperty] as number;
-        const bValue = b[sortProperty] as number;
-        return state.filterOptions.sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-      });
-
-      return filteredList;
-    },
-    paginatedUsers(state): ClientUser[] {
-      const start = (state.currentPage - 1) * state.itemsPerPage;
-      const end = start + state.itemsPerPage;
-
-      const result = this.filteredUsersList.slice(start, end);
-
-      return result;
-    },
-    totalPages(state): number {
-      return Math.ceil(this.filteredUsersList.length / state.itemsPerPage);
-    },
-    totalUsers(): number {
-      return this.filteredUsersList.length;
-    },
   },
   actions: {
     setUser(user: ClientUser) {
@@ -109,19 +50,6 @@ export const useUserStore = defineStore('user', {
     },
     setUsersList(users: ClientUser[]) {
       this.usersList = users;
-    },
-    setSearchQuery(query: string) {
-      this.searchQuery = query;
-    },
-    setCurrentPage(page: number) {
-      this.currentPage = page;
-    },
-    setItemsPerPage(count: number) {
-      this.itemsPerPage = count;
-      this.currentPage = 1;
-    },
-    updateFilterOptions(options: Partial<typeof this.filterOptions>) {
-      this.filterOptions = { ...this.filterOptions, ...options };
     },
     async updateProfile(username: string, email: string) {
       if (!this.user) {
@@ -166,38 +94,6 @@ export const useUserStore = defineStore('user', {
           isGame,
         };
       }
-    },
-    async sendGameInvitation(toInviteId: string) {
-      const response = await userApi.sendGameInvitation(toInviteId);
-      if (response.error) {
-        console.error('Failed to send game invitation:', response.error);
-      } else if (response.data && response.data.success) {
-        console.log('Game invitation sent successfully');
-      }
-    },
-    async acceptGameInvitation() {
-      if (!this.currentInvitation) {
-        console.error('No current invitation to accept');
-        return;
-      }
-      try {
-        const response = await gameApi.acceptInvitation(this.currentInvitation.fromInviteId);
-        if (response.data && response.data.gameId) {
-          this.currentInvitation = null;
-        } else if (response.error) {
-          console.error('Failed to accept game invitation:', response.error);
-        } else {
-          console.error('Unexpected response structure:', response);
-        }
-      } catch (error) {
-        console.error('Error accepting game invitation:', error);
-      }
-    },
-    rejectGameInvitation() {
-      this.currentInvitation = null;
-    },
-    handleGameInvitation(fromInviteId: string, fromInviteName: string) {
-      this.currentInvitation = { fromInviteId, fromInviteName };
     },
     async handleGameStart(gameId: string) {
       navigateTo(`/game/${gameId}`);

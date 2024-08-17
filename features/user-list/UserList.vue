@@ -12,65 +12,37 @@
             <SortingPlayers />
         </template>
         <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <li v-if="paginatedUsers.length > 0" v-for="user in paginatedUsers" :key="user._id">
+            <li v-if="paginationStore.paginatedUsers.length > 0" v-for="user in paginationStore.paginatedUsers"
+                :key="user._id">
                 <UserCard :user="user" :current-user-id="currentUserId" @invite="inviteToGame" />
             </li>
             <div class="col-span-3 text-center mt-10 mb-10" v-else> Players not found </div>
         </ul>
-        <div class="mt-4 flex justify-center" v-if="paginatedUsers.length > 0">
-            <UPagination v-model="currentPage" :total="totalUsers" :per-page="itemsPerPage" :ui="{}">
-                <template #prev="{ onClick }">
-                    <UTooltip text="Previous page">
-                        <UButton icon="i-heroicons-arrow-small-left-20-solid" color="primary" @click="onClick"
-                            class="mr-2" />
-                    </UTooltip>
-                </template>
-                <template #next="{ onClick }">
-                    <UTooltip text="Next page">
-                        <UButton icon="i-heroicons-arrow-small-right-20-solid" color="primary" @click="onClick"
-                            class="ml-2" />
-                    </UTooltip>
-                </template>
-            </UPagination>
-        </div>
-        <div class="mt-2 text-sm text-gray-500">
-            Page {{ currentPage }} of {{ totalPages }}
-            ({{ paginatedUsers.length }} users shown, {{ totalUsers }} total)
-        </div>
+        <Pagination />
     </UCard>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useUserStore } from '~/store/user';
+import { usePaginationStore } from '~/store/pagination';
+import { useInvitationStore } from '~/store/invitation';
 import SortingPlayers from './SortingPlayers.vue';
 import UserCard from '../user/ui/UserCard.vue';
+import Pagination from './Pagination.vue';
 
 const userStore = useUserStore();
+const paginationStore = usePaginationStore();
+const invitationStore = useInvitationStore();
+
 const currentUserId = computed(() => userStore.user?._id);
 
-const paginatedUsers = computed(() => userStore.paginatedUsers);
-const totalUsers = computed(() => userStore.totalUsers);
-const totalPages = computed(() => userStore.totalPages);
-const itemsPerPage = computed(() => userStore.itemsPerPage);
-const currentPage = computed({
-    get: () => userStore.currentPage,
-    set: (value) => userStore.setCurrentPage(value),
-});
-
 function inviteToGame(inviteeId: string) {
-    userStore.sendGameInvitation(inviteeId);
+    invitationStore.sendGameInvitation(inviteeId);
 }
 
 onMounted(async () => {
-    console.log('UserList mounted');
-    console.log('Initial itemsPerPage:', userStore.itemsPerPage);
     await userStore.fetchUsersList();
-    console.log('After fetchUsersList');
-    console.log('itemsPerPage:', userStore.itemsPerPage);
-    console.log('Total users:', totalUsers.value);
-    console.log('Paginated users:', paginatedUsers.value.length);
-    console.log('Total pages:', totalPages.value);
 });
 </script>
 

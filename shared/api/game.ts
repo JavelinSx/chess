@@ -7,7 +7,9 @@ export const gameApi = {
   async acceptInvitation(inviterId: string): Promise<ApiResponse<{ gameId: string }>> {
     return apiRequest<{ gameId: string }>('/game/accept-invite', 'POST', { inviterId });
   },
-
+  async sendInvitation(toInviteId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId });
+  },
   async getGame(gameId: string): Promise<ApiResponse<ChessGame>> {
     return apiRequest<ChessGame>(`/game/${gameId}`, 'GET');
   },

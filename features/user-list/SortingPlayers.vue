@@ -5,14 +5,16 @@
         <USelect v-model="sortCriteria" :options="sortOptions" placeholder="Sort by" class="w-full sm:w-auto" />
         <UButton @click="toggleSortDirection" icon="i-heroicons-arrows-up-down" />
         <UCheckbox v-model="onlineOnly" label="Online only" />
+        <USelect v-model="itemsPerPage" :options="itemsPerPageOptions" label="Items per page"
+            class="w-full sm:w-auto" />
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useUserStore } from '~/store/user';
+import { usePaginationStore } from '~/store/pagination';
 
-const userStore = useUserStore();
+const paginationStore = usePaginationStore();
 
 const sortOptions = [
     { label: 'Rating', value: 'rating' },
@@ -20,23 +22,34 @@ const sortOptions = [
     { label: 'Free Players', value: 'isGame' },
 ];
 
+const itemsPerPageOptions = [
+    { label: '10', value: 10 },
+    { label: '20', value: 20 },
+    { label: '50', value: 50 },
+];
+
 const searchQuery = computed({
-    get: () => userStore.searchQuery,
-    set: (value) => userStore.setSearchQuery(value),
+    get: () => paginationStore.searchQuery,
+    set: (value) => paginationStore.setSearchQuery(value),
 });
 
 const sortCriteria = computed({
-    get: () => userStore.filterOptions.sortCriteria,
-    set: (value) => userStore.updateFilterOptions({ sortCriteria: value }),
+    get: () => paginationStore.filterOptions.sortCriteria,
+    set: (value) => paginationStore.updateFilterOptions({ sortCriteria: value }),
 });
 
 const onlineOnly = computed({
-    get: () => userStore.filterOptions.onlineOnly,
-    set: (value) => userStore.updateFilterOptions({ onlineOnly: value }),
+    get: () => paginationStore.filterOptions.onlineOnly,
+    set: (value) => paginationStore.updateFilterOptions({ onlineOnly: value }),
+});
+
+const itemsPerPage = computed({
+    get: () => paginationStore.itemsPerPage,
+    set: (value) => paginationStore.setItemsPerPage(value),
 });
 
 function toggleSortDirection() {
-    const newDirection = userStore.filterOptions.sortDirection === 'asc' ? 'desc' : 'asc';
-    userStore.updateFilterOptions({ sortDirection: newDirection });
+    const newDirection = paginationStore.filterOptions.sortDirection === 'asc' ? 'desc' : 'asc';
+    paginationStore.updateFilterOptions({ sortDirection: newDirection });
 }
 </script>

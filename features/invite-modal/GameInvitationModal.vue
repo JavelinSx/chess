@@ -1,29 +1,49 @@
-<!-- features/invite-modal/GameInvitationModal.vue -->
 <template>
-    <div class="game-invitation-modal">
-        <h2>Game Invitation</h2>
-        <p>{{ userStore.currentInvitation?.fromInviteName }} invites you to play a game!</p>
-        <button @click="acceptInvitation">Accept</button>
-        <button @click="rejectInvitation">Reject</button>
-    </div>
+    <UModal v-model="isOpen">
+        <UCard>
+            <template #header>
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Game Invitation</h3>
+                    <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="closeModal" />
+                </div>
+            </template>
+            <p class="mb-4">
+                <span class="font-semibold">{{ invitationStore.currentInvitation?.fromInviteName }}</span> invites you
+                to play a
+                game!
+            </p>
+            <template #footer>
+                <div class="flex justify-end space-x-2">
+                    <UButton color="gray" @click="rejectInvitation">Decline</UButton>
+                    <UButton color="primary" @click="acceptInvitation">Accept</UButton>
+                </div>
+            </template>
+        </UCard>
+    </UModal>
 </template>
 
 <script setup lang="ts">
-import { useUserStore } from '~/store/user';
+import { useInvitationStore } from '~/store/invitation';
+import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
 
-const userStore = useUserStore();
+const invitationStore = useInvitationStore();
+const { currentInvitation } = storeToRefs(invitationStore);
+
+const isOpen = computed({
+    get: () => !!currentInvitation.value,
+    set: () => { },
+});
 
 function acceptInvitation() {
-    userStore.acceptGameInvitation();
+    invitationStore.acceptGameInvitation();
 }
 
 function rejectInvitation() {
-    userStore.rejectGameInvitation();
+    invitationStore.rejectGameInvitation();
+}
+
+function closeModal() {
+    invitationStore.rejectGameInvitation();
 }
 </script>
-
-<style scoped>
-.game-invitation-modal {
-    /* Добавьте стили для модального окна */
-}
-</style>

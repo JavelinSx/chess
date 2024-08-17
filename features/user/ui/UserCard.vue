@@ -20,8 +20,7 @@
                     {{ user.isOnline ? 'Online' : 'Offline' }}
                 </UBadge>
                 <UBadge v-if="user.isGame" color="blue" class="w-20 flex justify-center h-8">In Game</UBadge>
-                <UButton v-if="user.isOnline && !user.isGame && user._id !== currentUserId"
-                    @click="$emit('invite', user._id)" color="violet" variant="solid" size="sm"
+                <UButton v-if="canInvite" @click="inviteToGame" color="violet" variant="solid" size="sm"
                     class="w-20 flex justify-center">
                     Invite
                 </UButton>
@@ -32,11 +31,22 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useInvitationStore } from '~/store/invitation';
+
+const invitationStore = useInvitationStore();
 
 const props = defineProps<{
     user: any;
     currentUserId: string | undefined;
 }>();
+
+const canInvite = computed(() => {
+    return props.user.isOnline && !props.user.isGame && props.user._id !== props.currentUserId;
+});
+
+function inviteToGame() {
+    invitationStore.sendGameInvitation(props.user._id);
+}
 
 const emit = defineEmits<{
     (e: 'invite', id: string): void;
@@ -51,7 +61,4 @@ function calculateWinRate(user: any) {
     return ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1);
 }
 
-const canInvite = computed(() => {
-    return props.user.isOnline && !props.user.isGame && props.user._id !== props.currentUserId;
-});
 </script>
