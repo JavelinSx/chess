@@ -5,7 +5,11 @@ import { apiRequest } from './api';
 
 export const userApi = {
   async profileUpdate(id: string, username: string, email: string): Promise<ApiResponse<UserProfileResponse>> {
-    return apiRequest<UserProfileResponse>('/users/update-profile', 'POST', { id, username, email });
+    return apiRequest<UserProfileResponse>('/user/profile-update', 'POST', { id, username, email });
+  },
+
+  async profileGet(id: string): Promise<ApiResponse<UserProfileResponse>> {
+    return apiRequest<UserProfileResponse>(`/user/profile?id=${id}`, 'GET');
   },
 
   async getUsersList(): Promise<ApiResponse<ClientUser[]>> {
@@ -17,7 +21,7 @@ export const userApi = {
     isOnline: boolean,
     isGame: boolean
   ): Promise<ApiResponse<{ success: boolean }>> {
-    return apiRequest<{ success: boolean }>('/users/update-status', 'POST', { userId, isOnline, isGame });
+    return apiRequest<{ success: boolean }>('/user/update-status', 'POST', { userId, isOnline, isGame });
   },
 
   async sendGameInvitation(toInviteId: string): Promise<ApiResponse<{ success: boolean }>> {

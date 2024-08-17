@@ -89,6 +89,21 @@ export const useUserStore = defineStore('user', {
     setUser(user: ClientUser) {
       this.user = user;
     },
+    async getUser(id: string) {
+      try {
+        const response = await userApi.profileGet(id);
+        if (response.data) {
+          this.user = response.data;
+          return response.data;
+        } else if (response.error) {
+          console.error('Error fetching user:', response.error);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error in getUser:', error);
+        return null;
+      }
+    },
     clearUser() {
       this.user = null;
     },
@@ -102,7 +117,6 @@ export const useUserStore = defineStore('user', {
       this.currentPage = page;
     },
     setItemsPerPage(count: number) {
-      console.log('Setting itemsPerPage to:', count);
       this.itemsPerPage = count;
       this.currentPage = 1;
     },
@@ -195,7 +209,6 @@ export const useUserStore = defineStore('user', {
     },
     updateAllUsers(users: ClientUser[]) {
       this.usersList = users;
-      console.log('hello');
     },
   },
   persist: {

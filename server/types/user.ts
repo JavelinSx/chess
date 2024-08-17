@@ -1,7 +1,19 @@
 import { Document } from 'mongoose';
 export interface UserProfileResponse {
-  username: string | undefined;
-  email: string | undefined;
+  _id: string;
+  username: string;
+  email: string;
+  password: string;
+  rating: number;
+  gamesPlayed: number;
+  gamesWon: number;
+  gamesLost: number;
+  gamesDraw: number;
+  lastLogin: Date;
+  isOnline: boolean;
+  isGame: boolean;
+  winRate: number;
+  currentGameId?: string;
 }
 export interface IUser extends Document {
   _id: string;

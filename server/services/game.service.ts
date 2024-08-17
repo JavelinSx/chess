@@ -5,8 +5,11 @@ import type { ChessGame } from '~/entities/game/model/game.model';
 import type { ChessBoard } from '~/entities/game/model/board.model';
 import type { PieceType, PieceColor } from '~/entities/game/model/board.model';
 import type { GameResult } from '../types/game';
-import { updateUserStatus } from './user.service';
+import { updateUserStatus, updateUserStats } from './user.service';
 import { sseManager } from '~/server/utils/SSEManager';
+import { getUsersList } from './user.service';
+import { getUserById } from './user.service';
+
 export async function createGame(inviterId: string, inviteeId: string): Promise<ChessGame> {
   const newGame = new Game({
     id: generateUniqueId(),
@@ -43,6 +46,45 @@ export async function setPlayerColor(gameId: string, userId: string, color: Piec
   await Game.findOneAndUpdate({ id: gameId }, { [`players.${color}`]: userId });
 }
 
+export async function endGame(gameId: string, result: GameResult) {
+  const game = await Game.findOne({ id: gameId });
+  if (!game) {
+    throw new Error('Game not found');
+  }
+
+  game.status = 'completed';
+  game.winner = result.winner;
+  game.loser = result.loser;
+  await game.save();
+
+  const whitePlayer = game.players.white as string;
+  const blackPlayer = game.players.black as string;
+
+  // Обновляем статистику обоих игроков
+  await updateUserStats(whitePlayer, result.winner === 'white' ? 'win' : result.winner === 'black' ? 'loss' : 'draw');
+  await updateUserStats(blackPlayer, result.winner === 'black' ? 'win' : result.winner === 'white' ? 'loss' : 'draw');
+
+  // Получаем обновленные данные игроков
+  const updatedWhitePlayer = await getUserById(whitePlayer);
+  const updatedBlackPlayer = await getUserById(blackPlayer);
+
+  // Отправляем обновления игрокам
+  if (updatedWhitePlayer && updatedBlackPlayer) {
+    await sseManager.sendUserUpdate(whitePlayer, updatedWhitePlayer);
+    await sseManager.sendUserUpdate(blackPlayer, updatedBlackPlayer);
+  }
+
+  // Отправляем уведомление о завершении игры
+  await sseManager.sendGameEndNotification(gameId, result);
+
+  // Обновляем список игроков для всех клиентов
+  const updatedUsersList = await getUsersList();
+  await sseManager.broadcastUserListUpdate(updatedUsersList);
+
+  return { whitePlayer: updatedWhitePlayer, blackPlayer: updatedBlackPlayer };
+}
+
+// Обновляем функцию forcedEndGame, чтобы использовать новую endGame
 export async function forcedEndGame(gameId: string, userId: string) {
   const game = await Game.findOne({ id: gameId });
   if (!game) {
@@ -51,29 +93,14 @@ export async function forcedEndGame(gameId: string, userId: string) {
 
   const winner = game.players.white === userId ? game.players.black : game.players.white;
   const loser = userId;
-  const opponentId = winner;
-
-  game.status = 'completed';
-  game.winner = winner as PieceColor;
-  await game.save();
-
-  // Обновляем статусы обоих игроков
-  await updateUserStatus(winner as string, false, false);
-  await updateUserStatus(loser, false, false);
-
-  // Отправляем обновление о завершении игры
-  const gameResult: GameResult = {
-    winner: winner,
+  const result: GameResult = {
+    winner,
+    loser,
     reason: 'forfeit',
   };
-  await sseManager.sendGameEndNotification(gameId, gameResult);
 
-  // Удаляем игру из БД
-  await Game.findOneAndDelete({ id: gameId });
-
-  return { winner, loser, opponentId };
+  return await endGame(gameId, result);
 }
-
 function generateUniqueId(): string {
   return Date.now().toString();
 }
@@ -90,10 +117,11 @@ function initializeBoard(): ChessBoard {
   }
 
   // Расставляем остальные фигуры
-  const pieces: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+  const piecesBlack: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+  const piecesWhite: PieceType[] = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook'];
   for (let i = 0; i < 8; i++) {
-    board[0][i] = { type: pieces[i], color: 'white' };
-    board[7][i] = { type: pieces[i], color: 'black' };
+    board[0][i] = { type: piecesBlack[i], color: 'white' };
+    board[7][i] = { type: piecesWhite[i], color: 'black' };
   }
 
   return board;

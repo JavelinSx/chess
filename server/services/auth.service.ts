@@ -8,7 +8,7 @@ export const registerUser = async (
 ): Promise<ApiResponse<AuthData>> => {
   try {
     const user = new User({ username, email, password, isOnline: true });
-    await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
+    await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' });
     return { data: { user: user.toObject(), token }, error: null };
@@ -26,7 +26,7 @@ export const loginUser = async (email: string, password: string): Promise<ApiRes
     user.isOnline = true;
     await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
     await user.save();
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '30d' });
     return { data: { user: user.toObject(), token }, error: null };
   } catch (error) {
     return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };

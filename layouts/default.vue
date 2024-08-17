@@ -40,7 +40,7 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const navLinks = computed(() => [
     { label: 'Home', to: '/' },
     ...(isAuthenticated.value
-        ? [{ label: 'Profile', to: '/profile' }]
+        ? [{ label: 'Profile', to: `/profile/${userStore.user?._id}` }]
         : [
             { label: 'Login', to: '/login' },
             { label: 'Register', to: '/register' },

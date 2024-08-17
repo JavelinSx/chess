@@ -12,6 +12,7 @@ const gameSchema = new mongoose.Schema<ChessGame>(
     },
     status: { type: String, enum: ['waiting', 'active', 'completed'], required: true },
     winner: { type: String, ref: 'User', default: null },
+    loser: { type: String, ref: 'User', default: null },
     inviterId: { type: String, ref: 'User', required: true },
     inviteeId: { type: String, ref: 'User', required: true },
     moveCount: { type: Number, default: 0 },

@@ -23,7 +23,6 @@ export function useUserSSE(): UserSSEReturn {
           break;
         case 'user_list_update':
           userStore.updateAllUsers(data.users);
-          console.log(data.users);
           break;
         case 'stats_update':
           userStore.updateUserStats(data.stats);
@@ -42,7 +41,7 @@ export function useUserSSE(): UserSSEReturn {
     eventSource.value.onerror = (error) => {
       console.error('User SSE error:', error);
       closeSSE();
-      setTimeout(setupSSE, 5000); // Попытка переподключения через 5 секунд
+      setTimeout(setupSSE, 20000); // Попытка переподключения через 5 секунд
     };
   };
 

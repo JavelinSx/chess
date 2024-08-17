@@ -74,6 +74,9 @@ export class SSEManager {
   async sendGameEndNotification(gameId: string, result: GameResult) {
     await this.gameManager.sendGameEndNotification(gameId, result);
   }
+  async sendUserUpdate(userId: string, userData: ClientUser) {
+    await this.userManager.sendUserUpdate(userId, userData);
+  }
 }
 
 export const sseManager = new SSEManager();

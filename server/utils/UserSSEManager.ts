@@ -35,7 +35,18 @@ export class UserSSEManager {
       );
     }
   }
-
+  async sendUserUpdate(userId: string, userData: ClientUser) {
+    const event = this.userConnections.get(userId);
+    if (event) {
+      await this.sendEvent(
+        event,
+        JSON.stringify({
+          type: 'user_update',
+          user: userData,
+        })
+      );
+    }
+  }
   async broadcastUserListUpdate(users: ClientUser[]) {
     const message = JSON.stringify({
       type: 'user_list_update',

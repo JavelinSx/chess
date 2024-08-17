@@ -21,7 +21,8 @@ export interface ChessGame {
     black: string | null;
   };
   status: 'waiting' | 'active' | 'completed';
-  winner: PieceColor | null;
+  winner: string | null;
+  loser: string | null;
   inviterId: string;
   inviteeId: string;
   moveCount: number;
@@ -50,6 +51,7 @@ export function initializeGame(id: string, inviterId: string, inviteeId: string)
     },
     status: 'waiting',
     winner: null,
+    loser: null,
     inviterId,
     inviteeId,
     moveCount: 0,
