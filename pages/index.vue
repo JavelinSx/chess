@@ -11,18 +11,19 @@
         </p>
 
         <UserList v-if="isAuthenticated" />
-        <GameInvitationModal v-if="userStore.currentInvitation" />
+        <GameInvitationModal v-if="invitationStore.currentInvitation" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { onMounted } from 'vue';
 import { useUserStore } from '~/store/user';
 import { useAuthStore } from '~/store/auth';
+import { useInvitationStore } from '~/store/invitation';
 import UserList from '~/features/user-list/UserList.vue';
 import GameInvitationModal from '~/features/invite-modal/GameInvitationModal.vue';
 
-
+const invitationStore = useInvitationStore()
 const userStore = useUserStore();
 const authStore = useAuthStore();
 const isAuthenticated = computed(() => authStore.isAuthenticated);

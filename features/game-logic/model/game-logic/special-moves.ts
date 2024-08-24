@@ -29,10 +29,13 @@ export function isPawnMove(board: ChessBoard, from: Position): boolean {
   return piece?.type === 'pawn';
 }
 
-export function isPawnPromotion(board: ChessBoard, to: Position): boolean {
-  const [row, col] = to;
-  const piece = getPieceAt(board, to);
-  return piece?.type === 'pawn' && (row === 0 || row === 7);
+export function isPawnPromotion(board: ChessBoard, from: Position, to: Position): boolean {
+  const [fromRow, toRow] = [from[0], to[0]];
+  const piece = getPieceAt(board, from);
+
+  if (piece?.type !== 'pawn') return false;
+
+  return (piece.color === 'white' && toRow === 7) || (piece.color === 'black' && toRow === 0);
 }
 
 export function isEnPassant(game: ChessGame, from: Position, to: Position): boolean {
@@ -82,14 +85,23 @@ export function performCastling(board: ChessBoard, from: Position, to: Position)
   return newBoard;
 }
 
-export function promotePawn(board: ChessBoard, to: Position, promoteTo: PieceType): ChessBoard {
-  const newBoard = board.map((row) => [...row]);
+export function promotePawn(game: ChessGame, to: Position, promoteTo: PieceType): ChessGame {
+  const newBoard = game.board.map((row) => [...row]);
+  console.log(to, 'to');
   const [row, col] = to;
   const pawn = newBoard[row][col];
+  console.log(newBoard[row][col], 'board');
   if (pawn && pawn.type === 'pawn') {
     newBoard[row][col] = { ...pawn, type: promoteTo };
   }
-  return newBoard;
+  return {
+    ...game,
+    board: newBoard,
+    pendingPromotion: null,
+    currentTurn: game.currentTurn === 'white' ? 'black' : 'white',
+    moveCount: game.moveCount + 1,
+    halfMoveClock: 0, // Сброс при продвижении пешки
+  };
 }
 
 export function hasInsufficientMaterial(board: ChessBoard): boolean {

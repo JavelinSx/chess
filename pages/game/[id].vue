@@ -1,28 +1,33 @@
 <template>
-    <div class="game-page">
-        <h1>Chess Game</h1>
-        <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+    <UContainer class="py-8">
+        <h1 class="text-3xl font-bold mb-6 text-center">Chess Game</h1>
+        <UCard v-if="errorMessage" color="red" class="mb-4">
+            <p>{{ errorMessage }}</p>
+        </UCard>
         <template v-if="gameStore.currentGame">
-            <div v-if="gameStore.currentGame.status === 'waiting'">
-                Waiting for opponent to join...
-            </div>
+            <UCard v-if="gameStore.currentGame.status === 'waiting'" class="mb-4">
+                <p class="text-center">Waiting for opponent to join...</p>
+            </UCard>
             <template v-else>
-                <p>Game Status: {{ gameStore.currentGame.status }}</p>
+                <UCard class="mb-4">
+                    <p>Current turn: {{ gameStore.currentGame.currentTurn }}</p>
+                </UCard>
                 <chess-board :game="gameStore.currentGame" :board="gameStore.currentGame.board"
-                    :current-turn="gameStore.currentGame.currentTurn" @move="makeMove" />
-                <div>
-                    <p>Ваш цвет: {{ playerColor }}</p>
-                    <p>Ходит: {{ gameStore.currentGame.currentTurn }}</p>
+                    :current-turn="gameStore.currentGame.currentTurn" @move="makeMove" class="mb-4" />
+                <UCard>
+                    <p>Your color: {{ playerColor }}</p>
                     <p v-if="gameStore.currentGame.status === 'completed'">
                         Game over! Winner: {{ gameStore.currentGame.winner || 'Draw' }}
                     </p>
-                </div>
+                </UCard>
+                <captured-pieces :captured-pieces="gameStore.currentGame.capturedPieces" />
             </template>
         </template>
-        <div v-else-if="!errorMessage">
-            Loading game...
-        </div>
-    </div>
+        <UCard v-else-if="!errorMessage" class="mb-4">
+            <USkeleton class="h-64 w-full" />
+            <p class="text-center mt-2">Loading game...</p>
+        </UCard>
+    </UContainer>
 </template>
 
 <script setup lang="ts">
@@ -30,6 +35,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
 import ChessBoard from '~/entities/game/ui/ChessBoard.vue';
+import CapturedPieces from '~/features/game-logic/ui/CapturedPieces.vue';
 import { useGameSSE } from '~/composables/useGameSSE';
 
 const route = useRoute();
@@ -62,6 +68,7 @@ const playerColor = computed(() => {
 async function makeMove(from: [number, number], to: [number, number]) {
     console.log(`Making move from [${from}] to [${to}]`);
     try {
+
         await gameStore.makeMove(from, to);
     } catch (error) {
         console.error('Error making move:', error);
@@ -71,8 +78,14 @@ async function makeMove(from: [number, number], to: [number, number]) {
 </script>
 
 <style scoped>
-.error-message {
-    color: red;
-    font-weight: bold;
+.game-page {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .game-page {
+        padding: 1rem;
+    }
 }
 </style>

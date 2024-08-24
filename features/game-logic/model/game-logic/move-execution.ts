@@ -2,14 +2,7 @@ import type { ChessGame } from '~/entities/game/model/game.model';
 import type { Position } from '../pieces/types';
 import { makeMove, isCapture, getPieceAt } from './board';
 import { isKingInCheck, isCheckmate, isStalemate } from './check';
-import {
-  isPawnPromotion,
-  isEnPassant,
-  isCastling,
-  performEnPassant,
-  performCastling,
-  promotePawn,
-} from './special-moves';
+import { isPawnPromotion, isEnPassant, isCastling, performEnPassant, performCastling } from './special-moves';
 import { isPawnDoubleMove, getEnPassantTarget } from '../pieces/pawn';
 import { updatePositionsHistory } from './utils';
 
@@ -18,8 +11,12 @@ export function performMove(game: ChessGame, from: Position, to: Position): Ches
   const oppositeColor = game.currentTurn === 'white' ? 'black' : 'white';
 
   // Handle special moves
-  if (isPawnPromotion(newBoard, to)) {
-    newBoard = promotePawn(newBoard, to, 'queen'); // Default to queen promotion
+  if (isPawnPromotion(newBoard, from, to)) {
+    return {
+      ...game,
+      board: newBoard,
+      pendingPromotion: { from, to, promoteTo: null },
+    };
   } else if (isEnPassant(game, from, to)) {
     newBoard = performEnPassant(game.board, from, to);
   } else if (isCastling(game, from, to)) {

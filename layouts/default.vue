@@ -7,15 +7,19 @@
                     <UButton v-for="link in navLinks" :key="link.to" :to="link.to" color="gray" variant="ghost">
                         {{ link.label }}
                     </UButton>
+
                     <UButton v-if="isAuthenticated" @click="logout" color="gray" variant="ghost">
                         Logout
                     </UButton>
                 </div>
             </nav>
         </UContainer>
-
-        <main class="flex-grow">
-            <UContainer class="py-8">
+        <UButton v-if="isAuthenticated && activeGameId" :to="`/game/${activeGameId}`" color="primary" variant="soft"
+            class="w-80 text-center self-center">
+            Return to Game
+        </UButton>
+        <main class="flex-grow w-100">
+            <UContainer class="py-8 max-w-[570px] md:max-w-[770px]">
                 <slot />
             </UContainer>
         </main>
@@ -25,18 +29,25 @@
                 <p>&copy; {{ new Date().getFullYear() }} Chess App. All rights reserved.</p>
             </UContainer>
         </footer>
-        <GameInvitationModal />
     </div>
 </template>
 
 <script setup lang="ts">
 import { useAuthStore } from '../store/auth';
 import { useUserStore } from '~/store/user';
-import GameInvitationModal from '~/features/invite-modal/GameInvitationModal.vue';
+import { useGameStore } from '~/store/game';
+import { computed } from 'vue';
+
 const authStore = useAuthStore();
 const userStore = useUserStore();
+const gameStore = useGameStore();
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
+
+const activeGameId = computed(() => {
+    const currentGame = gameStore.currentGame;
+    return currentGame && currentGame.status === 'active' ? currentGame.id : null;
+});
 
 const navLinks = computed(() => [
     { label: 'Home', to: '/' },

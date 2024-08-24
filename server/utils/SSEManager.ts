@@ -7,7 +7,7 @@ import { GameSSEManager } from './GameSSEManager';
 import type { GameResult } from '../types/game';
 import type { ClientUser, IUser } from '~/server/types/user';
 import type { ChessGame } from '~/entities/game/model/game.model';
-
+import type { PendingPromotion } from '~/entities/game/model/game.model';
 export class SSEManager {
   private userManager: UserSSEManager;
   private invitationManager: InvitationSSEManager;
@@ -76,6 +76,9 @@ export class SSEManager {
   }
   async sendUserUpdate(userId: string, userData: ClientUser) {
     await this.userManager.sendUserUpdate(userId, userData);
+  }
+  async sendPawnPromotionEvent(gameId: string, promotionData: PendingPromotion) {
+    await this.gameManager.sendPawnPromotionEvent(gameId, promotionData);
   }
 }
 

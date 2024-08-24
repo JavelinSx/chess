@@ -1,6 +1,5 @@
-<!-- entities/game/ui/ChessPiece.vue -->
 <template>
-    <div class="chess-piece" :class="[piece.color, piece.type]">
+    <div v-if="piece" class="chess-piece" :class="piece.color">
         {{ getPieceSymbol(piece.type, piece.color) }}
     </div>
 </template>
@@ -9,10 +8,11 @@
 import type { ChessPiece } from '~/entities/game/model/board.model';
 
 const props = defineProps<{
-    piece: ChessPiece;
+    piece: ChessPiece | null;
 }>();
 
 function getPieceSymbol(type: string, color: string): string {
+    if (!type || !color) return '';
     const symbols = {
         king: color === 'white' ? '♔' : '♚',
         queen: color === 'white' ? '♕' : '♛',
@@ -25,19 +25,44 @@ function getPieceSymbol(type: string, color: string): string {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .chess-piece {
-    font-size: 2em;
-    cursor: pointer;
+    @apply text-2xl cursor-pointer;
+
+    &.white {
+        @apply text-white;
+        text-shadow:
+            -1px -1px 0 theme('colors.gray.800'),
+            1px -1px 0 theme('colors.gray.800'),
+            -1px 1px 0 theme('colors.gray.800'),
+            1px 1px 0 theme('colors.gray.800');
+    }
+
+    &.black {
+        @apply text-gray-900;
+        text-shadow:
+            -1px -1px 0 theme('colors.white'),
+            1px -1px 0 theme('colors.white'),
+            -1px 1px 0 theme('colors.white'),
+            1px 1px 0 theme('colors.white');
+    }
 }
 
-.white {
-    color: #fff;
-    text-shadow: 0 0 2px #000;
+@screen sm {
+    .chess-piece {
+        @apply text-3xl;
+    }
 }
 
-.black {
-    color: #000;
-    text-shadow: 0 0 2px #fff;
+@screen md {
+    .chess-piece {
+        @apply text-4xl;
+    }
+}
+
+@screen lg {
+    .chess-piece {
+        @apply text-5xl;
+    }
 }
 </style>

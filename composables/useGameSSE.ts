@@ -19,7 +19,11 @@ export function useGameSSE(gameId: string): GameSSEReturn {
 
       switch (data.type) {
         case 'game_update':
+          console.log(data.game.pendingPromotion);
           gameStore.updateGameState(data.game);
+          break;
+        case 'pawn_promotion':
+          gameStore.handlePawnPromotionEvent(data.data);
           break;
         case 'game_end':
           gameStore.handleGameEnd(data.result);

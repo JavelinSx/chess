@@ -1,20 +1,44 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
 import { isValidMove } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
 import { isDraw } from '~/features/game-logic/model/game-state/draw';
 import { makeMove, isCapture } from '~/features/game-logic/model/game-logic/board';
-import { isPawnMove, hasInsufficientMaterial } from '~/features/game-logic/model/game-logic/special-moves';
+import { isPawnMove, hasInsufficientMaterial, promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
 import { isPawnDoubleMove, getEnPassantTarget } from '~/features/game-logic/model/pieces/pawn';
 import { updateCastlingRights } from '~/features/game-logic/model/game-logic/castling';
 import { updatePositionsHistory } from '~/features/game-logic/model/game-logic/utils';
 import { isCheckmate, isStalemate } from '~/features/game-logic/model/game-logic/check';
 import { generateAllMoves } from '~/features/game-logic/model/game-state/move-generation';
-
 import type { ChessGame } from '../entities/game/model/game.model';
 import type { ChessBoard, ChessPiece } from '~/entities/game/model/board.model';
 import type { Position } from '~/features/game-logic/model/pieces/types';
 import { initializeGame } from '../entities/game/model/game.model';
+import Game from '~/server/db/models/game.model';
+// Мокаем SSEManager
+vi.mock('~/server/utils/SSEManager', () => ({
+  sseManager: {
+    broadcastGameUpdate: vi.fn(),
+  },
+}));
+
+// Мокаем модель Game
+vi.mock('~/server/db/models/game.model', () => {
+  const mockFindOne = vi.fn();
+  const mockFindOneAndUpdate = vi.fn();
+  return {
+    default: {
+      findOne: mockFindOne,
+      findOneAndUpdate: mockFindOneAndUpdate,
+    },
+  };
+});
+
+import { handlePawnPromotion } from '~/server/services/game.service';
+import { sseManager } from '~/server/utils/SSEManager';
+
+const mockFindOne = vi.mocked(Game.findOne);
+const mockFindOneAndUpdate = vi.mocked(Game.findOneAndUpdate);
 
 function createEmptyBoard(): ChessBoard {
   return Array(8)
@@ -48,6 +72,101 @@ function createTestGame(
 }
 
 describe('Chess Logic', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+  it('promotes a pawn correctly and updates game state', async () => {
+    // Создаем тестовую игру
+    const game = createTestGame([{ position: [0, 7], piece: { type: 'pawn', color: 'black' } }]);
+    game.id = 'test-game-id';
+    game.players = { white: 'player-456', black: 'player-123' };
+    game.currentTurn = 'black';
+    game.pendingPromotion = { from: [1, 7], to: [0, 7] };
+
+    // Мокаем поиск игры в базе данных
+    mockFindOne.mockResolvedValue(game);
+
+    // Проверяем состояние до продвижения
+    expect(game.board[0][7]).toEqual({ type: 'pawn', color: 'black' });
+    console.log('Initial game state:', JSON.stringify(game.board[0][7]));
+
+    // Выполняем продвижение
+    const pieceType = 'queen';
+    await handlePawnPromotion(game.id, [0, 7], pieceType, 'player-123');
+
+    // Проверяем, что игра была обновлена в базе данных
+    expect(mockFindOneAndUpdate).toHaveBeenCalledWith(
+      { id: game.id },
+      expect.objectContaining({
+        board: expect.any(Array),
+        pendingPromotion: null,
+        currentTurn: 'white',
+      })
+    );
+
+    // Получаем обновленную игру из мока
+    const updatedGame = mockFindOneAndUpdate.mock.calls[0][1];
+    if (updatedGame) {
+      // Проверяем состояние после продвижения
+      expect(updatedGame.board[0][7]).toEqual({ type: pieceType, color: 'black' });
+      console.log('Updated game state:', JSON.stringify(updatedGame.board[0][7]));
+
+      // Проверяем, что SSE было отправлено
+      expect(sseManager.broadcastGameUpdate).toHaveBeenCalledWith(game.id, expect.any(Object));
+
+      // Проверяем, что ход перешел к другому игроку
+      expect(updatedGame.currentTurn).toBe('white');
+
+      // Проверяем, что pendingPromotion был сброшен
+      expect(updatedGame.pendingPromotion).toBeNull();
+    } else {
+      console.log('error');
+    }
+  });
+
+  it('throws an error when trying to promote without pending promotion', async () => {
+    const game = createTestGame([{ position: [0, 7], piece: { type: 'pawn', color: 'black' } }]);
+    game.id = 'test-game-id';
+    game.players = { white: 'player-456', black: 'player-123' };
+    game.currentTurn = 'black';
+    game.pendingPromotion = null;
+
+    mockFindOne.mockResolvedValue(game);
+
+    await expect(handlePawnPromotion(game.id, [0, 7], 'queen', 'player-123')).rejects.toThrow('No pending promotion');
+
+    expect(sseManager.broadcastGameUpdate).not.toHaveBeenCalled();
+  });
+
+  it('throws an error when wrong player tries to promote', async () => {
+    const game = createTestGame([{ position: [0, 7], piece: { type: 'pawn', color: 'black' } }]);
+    game.id = 'test-game-id';
+    game.players = { white: 'player-456', black: 'player-123' };
+    game.currentTurn = 'black';
+    game.pendingPromotion = { from: [1, 7], to: [0, 7] };
+
+    mockFindOne.mockResolvedValue(game);
+
+    await expect(handlePawnPromotion(game.id, [0, 7], 'queen', 'wrong-player-id')).rejects.toThrow(
+      'Not your turn to promote'
+    );
+
+    expect(sseManager.broadcastGameUpdate).not.toHaveBeenCalled();
+  });
+
+  // ... остальные тесты ...
+
+  describe('Move Execution', () => {
+    // ... другие тесты ...
+
+    it('sets up pawn promotion', () => {
+      const game = createTestGame([{ position: [6, 0], piece: { type: 'pawn', color: 'white' } }]);
+      const updatedGame = performMove(game, [6, 0], [7, 0]);
+      expect(updatedGame.pendingPromotion).toEqual({ from: [6, 0], to: [7, 0] });
+      expect(updatedGame.board[7][0]?.type).toBe('pawn');
+    });
+  });
+
   describe('Piece Movement', () => {
     it('allows correct rook movement', () => {
       const game = createTestGame([{ position: [3, 3], piece: { type: 'rook', color: 'white' } }]);
@@ -293,10 +412,11 @@ describe('Chess Logic', () => {
       expect(updatedGame.moveCount).toBe(1);
     });
 
-    it('handles pawn promotion', () => {
+    it('sets up pawn promotion', () => {
       const game = createTestGame([{ position: [6, 0], piece: { type: 'pawn', color: 'white' } }]);
       const updatedGame = performMove(game, [6, 0], [7, 0]);
-      expect(updatedGame.board[7][0]?.type).toBe('queen');
+      expect(updatedGame.pendingPromotion).toEqual({ from: [6, 0], to: [7, 0] });
+      expect(updatedGame.board[7][0]?.type).toBe('pawn');
     });
   });
 
