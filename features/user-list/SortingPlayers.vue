@@ -23,9 +23,9 @@ const sortOptions = [
 ];
 
 const itemsPerPageOptions = [
-    { label: '10', value: 10 },
-    { label: '20', value: 20 },
-    { label: '50', value: 50 },
+    { label: '9', value: 9 },
+    { label: '18', value: 18 },
+    { label: '27', value: 27 },
 ];
 
 const searchQuery = computed({

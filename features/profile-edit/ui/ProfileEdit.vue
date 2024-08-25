@@ -5,7 +5,7 @@
         </template>
 
         <UForm :state="profile" @submit="updateProfile">
-            <UFormGroup label="Username" name="username">
+            <UFormGroup label="Username" name="username" class="mb-4">
                 <UInput v-model="profile.username" type="text" required />
             </UFormGroup>
 
@@ -28,7 +28,7 @@
             <h2 class="text-2xl font-bold">User Statistics</h2>
         </template>
 
-        <UDivider />
+        <UDivider class="mb-2" />
 
         <div class="grid grid-cols-2 gap-4">
             <div>
@@ -57,7 +57,7 @@
             </div>
         </div>
 
-        <UDivider />
+        <UDivider class="mb-2 mt-2" />
 
         <div>
             <h3 class="font-semibold">Last Login:</h3>

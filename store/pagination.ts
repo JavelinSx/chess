@@ -5,7 +5,7 @@ import type { ClientUser } from '~/server/types/user';
 export const usePaginationStore = defineStore('pagination', {
   state: () => ({
     currentPage: 1,
-    itemsPerPage: 10,
+    itemsPerPage: 9,
     searchQuery: '',
     filterOptions: {
       onlineOnly: false,

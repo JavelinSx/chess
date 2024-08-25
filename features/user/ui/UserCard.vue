@@ -1,10 +1,10 @@
 <!-- UserCard.vue -->
 <template>
     <div class="p-4 border rounded-lg">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full">
+        <div class="flex flex-col  items-start sm:items-center justify-between w-full">
             <!-- User Info Section -->
-            <div class="flex items-center space-x-4 mb-2 sm:mb-0">
-                <UAvatar :src="getUserAvatar(user)" :alt="user.username" />
+            <div class="flex items-center mb-2">
+                <UAvatar :src="getUserAvatar(user)" :alt="user.username" class="mr-4" />
                 <div>
                     <p class="font-semibold">{{ user.username }}</p>
                     <p class="text-sm text-gray-500">Rating: {{ user.rating }}</p>
@@ -14,8 +14,7 @@
             </div>
 
             <!-- User Actions Section -->
-            <div
-                class="flex flex-row sm:flex-col items-start sm:items-end space-x-2 sm:space-x-0 sm:space-y-2 mt-2 sm:mt-0">
+            <div class="flex flex-row items-start mt-2 gap-3">
                 <UBadge :color="user.isOnline ? 'green' : 'gray'" class="w-20 flex justify-center h-8">
                     {{ user.isOnline ? 'Online' : 'Offline' }}
                 </UBadge>

@@ -4,35 +4,33 @@
             <h3 class="text-lg font-semibold">Chess Board</h3>
         </template>
         <div class="chess-board">
-            <div class="board-with-labels">
-                <div class="board-labels vertical">
-                    <div v-for="row in 8" :key="row" class="cell">{{ 9 - row }}</div>
-                </div>
-                <div>
-                    <div class="board-labels horizontal">
-                        <div v-for="col in 'ABCDEFGH'" :key="col" class="cell">{{ col }}</div>
-                    </div>
-                    <div class="board-grid">
-                        <div v-for="row in 8" :key="row" class="flex">
-                            <div v-for="col in 8" :key="col" class="board-cell" :class="[
-                                ((row + col) % 2 === 0) ? 'bg-beige' : 'bg-brown',
-                                {
-                                    'highlight-selected': isSelected(8 - row, col - 1),
-                                    'highlight-valid-move': isValidMove(8 - row, col - 1),
-                                    'highlight-check': isCheck && isKing(8 - row, col - 1),
-                                    'highlight-checking-piece': isCheckingPiece(8 - row, col - 1)
-                                }
-                            ]" @click="handleCellClick(8 - row, col - 1)">
-                                <chess-piece :piece="board[8 - row][col - 1]" />
-                            </div>
-                        </div>
-                    </div>
-                    <PawnPromotionDialog v-if="gameStore.promote"
-                        :color="gameStore.currentGame?.currentTurn === 'white' ? 'black' : 'white'"
-                        @select="handlePromotion" />
+            <div class="board-vertical-labels">
+                <div v-for="row in 8" :key="row" class="cell flex items-start">
+                    {{ isPlayerWhite ? 9 - row : row }}
                 </div>
             </div>
+            <div class="board-grid">
+                <div v-for="col in 8" :key="col" class="board-row">
+                    <div v-for="row in 8" :key="row" class="board-cell" :class="[
+                        ((row + col) % 2 === 0) ? 'bg-beige' : 'bg-brown',
+                        {
+                            'highlight-selected': isSelected(isUserPlayingWhite ? 8 - row : row - 1, col - 1),
+                            'highlight-valid-move': isValidMove(isUserPlayingWhite ? 8 - row : row - 1, col - 1),
+                            'highlight-check': isCheck && isKing(isUserPlayingWhite ? 8 - row : row - 1, col - 1),
+                            'highlight-checking-piece': isCheckingPiece(isUserPlayingWhite ? 8 - row : row - 1, col - 1)
+                        }
+                    ]" @click="handleCellClick(isUserPlayingWhite ? 8 - row : row - 1, col - 1)">
+                        <chess-piece :piece="board[isUserPlayingWhite ? 8 - row : row - 1][col - 1]" />
+                    </div>
+                </div>
+            </div>
+            <div class="board-horizontal-labels">
+                <div v-for="col in 'ABCDEFGH'" :key="col" class="cell">{{ col }}</div>
+            </div>
+
         </div>
+        <PawnPromotionDialog v-if="gameStore.promote"
+            :color="gameStore.currentGame?.currentTurn === 'white' ? 'black' : 'white'" @select="handlePromotion" />
         <template #footer>
             <UButton v-if="gameStore.currentGame?.status === 'active'" color="red" icon="i-heroicons-flag"
                 @click="handleForcedEndGame">
@@ -71,6 +69,10 @@ const selectedCell = ref<Position | null>(null);
 const validMoves = ref<Position[]>([]);
 const isCheck = computed(() => isKingInCheck(props.game).inCheck);
 const currentGame = computed(() => gameStore.currentGame);
+
+const isUserPlayingWhite = computed(() => {
+    return currentGame.value?.players.white === userStore.user?._id;
+});
 
 const isCurrentPlayerTurn = computed(() => {
     if (!currentGame.value || !userStore.user) return false;
@@ -150,14 +152,28 @@ onUnmounted(() => {
 
 .chess-board {
     @apply p-2;
+    display: grid;
+    grid-template-areas:
+        ". h h h h h"
+        "v b b b b b"
+        "v b b b b b"
+        "v b b b b b"
+
 }
 
-.board-with-labels {
-    @apply flex;
+.board-vertical-labels {
+    grid-area: v;
+}
+
+.board-horizontal-labels {
+    grid-area: h;
+    display: flex;
 }
 
 .board-grid {
-    @apply inline-grid grid-rows-8;
+    @apply inline-grid grid-cols-8;
+    grid-area: b;
+
 }
 
 .board-labels {
@@ -175,8 +191,8 @@ onUnmounted(() => {
 .cell,
 .board-cell {
     @apply relative flex justify-center items-center;
-    width: theme('width.8');
-    height: theme('height.8');
+    width: 2rem;
+    height: 2rem;
 
     &.bg-beige {
         background-color: #f0d9b5;
@@ -215,23 +231,36 @@ onUnmounted(() => {
 }
 
 @screen sm {
+
+    .cell,
     .board-cell {
-        width: theme('width.10');
-        height: theme('height.10');
+        width: 2.5rem;
+        height: 2.5rem;
     }
 }
 
 @screen md {
+
+    .cell,
     .board-cell {
-        width: theme('width.12');
-        height: theme('height.12');
+        width: 3rem;
+        height: 3rem;
     }
 }
 
 @screen lg {
+
+    .cell,
     .board-cell {
-        width: theme('width.14');
-        height: theme('height.14');
+        width: 3.5rem;
+        height: 3.5rem;
+    }
+}
+
+.board-labels {
+    .cell {
+        width: 100%;
+        height: 100%;
     }
 }
 </style>
