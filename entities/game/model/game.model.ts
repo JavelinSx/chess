@@ -3,11 +3,6 @@ import type { Position } from '~/features/game-logic/model/pieces/types';
 import type { PieceType } from './board.model';
 import { initializeBoard } from './board.model';
 
-export interface PendingPromotion {
-  from: Position;
-  to: Position;
-  promoteTo: PieceType | null;
-}
 export interface CastlingRights {
   whiteKingSide: boolean;
   whiteQueenSide: boolean;
@@ -41,7 +36,6 @@ export interface ChessGame {
   };
   isCheckmate: boolean;
   isStalemate: boolean;
-  pendingPromotion: PendingPromotion | null;
 }
 
 export function initializeGame(id: string, inviterId: string, inviteeId: string): ChessGame {
@@ -76,6 +70,5 @@ export function initializeGame(id: string, inviterId: string, inviteeId: string)
     },
     isCheckmate: false,
     isStalemate: false,
-    pendingPromotion: null,
   };
 }

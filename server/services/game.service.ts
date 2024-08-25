@@ -53,46 +53,8 @@ export async function handleMove(gameId: string, from: Position, to: Position): 
 
   const updatedGame = performMove(game.toObject(), from, to);
 
-  if (updatedGame.pendingPromotion) {
-    await Game.findOneAndUpdate({ id: gameId }, updatedGame);
-    await sseManager.sendPawnPromotionEvent(gameId, updatedGame.pendingPromotion);
-  } else {
-    await Game.findOneAndUpdate({ id: gameId }, updatedGame);
-    await sseManager.broadcastGameUpdate(gameId, updatedGame);
-  }
-}
-
-export async function handlePawnPromotion(
-  gameId: string,
-  to: Position,
-  promoteTo: PieceType,
-  userId: string
-): Promise<ChessGame | null> {
-  const game = await Game.findOne({ id: gameId });
-
-  if (!game || !game.pendingPromotion) {
-    throw new Error('Invalid promotion attempt');
-  }
-
-  const isCorrectPlayer =
-    (game.currentTurn === 'white' && game.players.white === userId) ||
-    (game.currentTurn === 'black' && game.players.black === userId);
-
-  if (!isCorrectPlayer) {
-    throw new Error('Not your turn to promote');
-  }
-
-  const updatedGame = promotePawn(game, to, promoteTo);
-
-  const savedGame = await Game.findOneAndUpdate({ id: gameId }, updatedGame, { new: true });
-
-  if (!savedGame) {
-    throw new Error('Failed to save updated game');
-  }
-
-  await sseManager.broadcastGameUpdate(gameId, savedGame.toObject());
-
-  return savedGame.toObject();
+  await Game.findOneAndUpdate({ id: gameId }, updatedGame);
+  await sseManager.broadcastGameUpdate(gameId, updatedGame);
 }
 
 export async function endGame(gameId: string, result: GameResult) {
@@ -159,22 +121,19 @@ function initializeBoard(): ChessBoard {
     .fill(null)
     .map(() => Array(8).fill(null));
 
-  // // Расставляем пешки
-  // for (let i = 0; i < 8; i++) {
-  //   board[1][i] = { type: 'pawn', color: 'white' };
-  //   board[6][i] = { type: 'pawn', color: 'black' };
-  // }
+  // Расставляем пешки
+  for (let i = 0; i < 8; i++) {
+    board[1][i] = { type: 'pawn', color: 'white' };
+    board[6][i] = { type: 'pawn', color: 'black' };
+  }
 
-  // // Расставляем остальные фигуры
-  // const piecesBlack: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
-  // const piecesWhite: PieceType[] = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook'];
-  // for (let i = 0; i < 8; i++) {
-  //   board[0][i] = { type: piecesBlack[i], color: 'white' };
-  //   board[7][i] = { type: piecesWhite[i], color: 'black' };
-  // }
-  board[0][3] = { type: 'king', color: 'white' };
-  board[7][3] = { type: 'king', color: 'black' };
-  board[1][6] = { type: 'pawn', color: 'black' };
-  board[6][6] = { type: 'pawn', color: 'white' };
+  // Расставляем остальные фигуры
+  const piecesBlack: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+  const piecesWhite: PieceType[] = ['rook', 'knight', 'bishop', 'king', 'queen', 'bishop', 'knight', 'rook'];
+  for (let i = 0; i < 8; i++) {
+    board[0][i] = { type: piecesBlack[i], color: 'white' };
+    board[7][i] = { type: piecesWhite[i], color: 'black' };
+  }
+
   return board;
 }

@@ -7,7 +7,7 @@
             <div class="flex justify-around">
                 <button v-for="piece in promotionOptions" :key="piece" @click="selectPiece(piece)"
                     class="promotion-piece">
-                    {{ getPieceSymbol(piece, props.color) }}
+                    {{ getPieceSymbol(piece, color) }}
                 </button>
             </div>
         </UCard>
@@ -16,22 +16,20 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { PieceType } from '~/entities/game/model/board.model';
-import { useGameStore } from '~/store/game';
+import type { PieceType, PieceColor } from '~/entities/game/model/board.model';
 
 const props = defineProps<{
-    color: 'white' | 'black';
+    color: PieceColor;
 }>();
 
 const emit = defineEmits<{
     (e: 'select', piece: PieceType): void;
 }>();
 
-const gameStore = useGameStore()
 const isOpen = ref(true);
 const promotionOptions: PieceType[] = ['queen', 'rook', 'bishop', 'knight'];
 
-function getPieceSymbol(piece: PieceType, color: 'white' | 'black'): string {
+function getPieceSymbol(piece: PieceType, color: PieceColor): string {
     const symbols: Record<PieceType, string> = {
         king: color === 'white' ? '♔' : '♚',
         queen: color === 'white' ? '♕' : '♛',
@@ -46,7 +44,6 @@ function getPieceSymbol(piece: PieceType, color: 'white' | 'black'): string {
 function selectPiece(piece: PieceType) {
     emit('select', piece);
     isOpen.value = false;
-    gameStore.promotion.piece = piece
 }
 </script>
 

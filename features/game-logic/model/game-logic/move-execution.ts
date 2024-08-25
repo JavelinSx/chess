@@ -15,7 +15,6 @@ export function performMove(game: ChessGame, from: Position, to: Position): Ches
     return {
       ...game,
       board: newBoard,
-      pendingPromotion: { from, to, promoteTo: null },
     };
   } else if (isEnPassant(game, from, to)) {
     newBoard = performEnPassant(game.board, from, to);

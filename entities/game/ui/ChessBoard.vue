@@ -27,7 +27,8 @@
                             </div>
                         </div>
                     </div>
-                    <PawnPromotionDialog v-if="promotion.status" :color="gameStore.currentGame?.currentTurn || 'white'"
+                    <PawnPromotionDialog v-if="gameStore.promote"
+                        :color="gameStore.currentGame?.currentTurn === 'white' ? 'black' : 'white'"
                         @select="handlePromotion" />
                 </div>
             </div>
@@ -53,8 +54,6 @@ import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
 import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
-import { isPawnPromotion } from '~/features/game-logic/model/game-logic/special-moves';
-
 
 const props = defineProps<{
     game: ChessGame;
@@ -65,45 +64,28 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'move', from: Position, to: Position): void;
 }>();
+
 const userStore = useUserStore()
 const gameStore = useGameStore();
 const selectedCell = ref<Position | null>(null);
 const validMoves = ref<Position[]>([]);
 const isCheck = computed(() => isKingInCheck(props.game).inCheck);
-const promotion = computed(() => gameStore.promotion)
-const showPromotionDialog = computed(() => {
+const currentGame = computed(() => gameStore.currentGame);
 
-    if (!gameStore.currentGame || !gameStore.currentGame.pendingPromotion) {
-        return false;
-    }
-    const currentPlayerId = gameStore.currentGame.currentTurn === 'white'
-        ? gameStore.currentGame.players.white
-        : gameStore.currentGame.players.black;
-    return currentPlayerId === userStore.user?._id;
+const isCurrentPlayerTurn = computed(() => {
+    if (!currentGame.value || !userStore.user) return false;
+    const currentPlayerId = currentGame.value.currentTurn === 'white'
+        ? currentGame.value.players.white
+        : currentGame.value.players.black;
+    return currentPlayerId === userStore.user._id;
 });
 
-const handlePromotion = async () => {
-    try {
-        // Ожидание выбора фигуры пользователем
-        const selectedPiece = await new Promise<PieceType>((resolve) => {
-            const handleSelect = (piece: PieceType) => {
-                resolve(piece);
-            };
-
-
-        });
-
-        // После выбора фигуры вызвать sendPromotionChoice
-        if (gameStore.promotion.to && selectedPiece) {
-            await gameStore.sendPromotionChoice(gameStore.promotion.to, selectedPiece);
-        }
-    } catch (error) {
-        console.error('Error during promotion:', error);
-    } finally {
-
+const handlePromotion = (promoteTo: PieceType) => {
+    if (isCurrentPlayerTurn.value) {
+        console.log('Handling promotion:', promoteTo);
+        gameStore.promotePawn(promoteTo);
     }
 };
-
 
 const isKing = (row: number, col: number) => {
     const piece = props.board[row][col];
@@ -131,21 +113,19 @@ const handleForcedEndGame = async () => {
 };
 
 const handleCellClick = (row: number, col: number) => {
+    if (!isCurrentPlayerTurn.value) return;
+
     if (!selectedCell.value) {
-        const clickedPiece = props.board[row][col];
-        if (clickedPiece?.color === props.currentTurn) {
+        const clickedPiece = currentGame.value?.board[row][col];
+        if (clickedPiece?.color === currentGame.value?.currentTurn && currentGame.value) {
             selectedCell.value = [row, col];
-            validMoves.value = getValidMoves(props.game, selectedCell.value);
+            validMoves.value = getValidMoves(currentGame.value, selectedCell.value);
         }
     } else {
         const from = selectedCell.value;
         const to: Position = [row, col];
         if (isValidMove(row, col) && (from[0] !== to[0] || from[1] !== to[1])) {
-            try {
-                emit('move', from, to);
-            } catch (error) {
-                console.error('Error making move:', error);
-            }
+            gameStore.makeMove(from, to);
         }
         selectedCell.value = null;
         validMoves.value = [];
