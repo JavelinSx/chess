@@ -6,11 +6,11 @@
 
         <UForm :state="profile" @submit="updateProfile">
             <UFormGroup label="Username" name="username" class="mb-4">
-                <UInput v-model="profile.username" type="text" required />
+                <UInput v-model="profile.username" type="text" required size="lg" />
             </UFormGroup>
 
             <UFormGroup label="Email" name="email">
-                <UInput v-model="profile.email" type="email" required />
+                <UInput v-model="profile.email" type="email" required size="lg" />
             </UFormGroup>
 
             <UButton type="submit" color="primary" class="mt-4">Update Profile</UButton>

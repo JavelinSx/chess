@@ -10,10 +10,7 @@ export const profileUpdate = async (id: string, username: string, email: string)
     throw new Error('User not found');
   }
 
-  return {
-    username: user.username,
-    email: user.email,
-  };
+  return user;
 };
 
 export const getUsersList = async (): Promise<ClientUser[]> => {

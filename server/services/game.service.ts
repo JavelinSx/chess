@@ -6,12 +6,12 @@ import type { ChessBoard } from '~/entities/game/model/board.model';
 import type { PieceType, PieceColor } from '~/entities/game/model/board.model';
 import type { Position } from '~/features/game-logic/model/pieces/types';
 import type { GameResult } from '../types/game';
-import { updateUserStatus, updateUserStats } from './user.service';
+import { updateUserStats } from './user.service';
 import { sseManager } from '~/server/utils/SSEManager';
 import { getUsersList } from './user.service';
 import { getUserById } from './user.service';
-import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
+
 export async function createGame(inviterId: string, inviteeId: string): Promise<ChessGame> {
   const newGame = new Game({
     id: generateUniqueId(),

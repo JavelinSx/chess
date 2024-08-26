@@ -4,7 +4,6 @@ import { useUserStore } from '~/store/user';
 export const useAuth = () => {
   const authStore = useAuthStore();
   const userStore = useUserStore();
-  const router = useRouter();
 
   const register = async (username: string, email: string, password: string) => {
     try {
@@ -19,7 +18,9 @@ export const useAuth = () => {
         throw new Error(response.error);
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
     }
   };
 
@@ -38,7 +39,9 @@ export const useAuth = () => {
         throw new Error(response.error);
       }
     } catch (error) {
-      console.error('Login error:', error);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
     }
   };
 
@@ -56,7 +59,9 @@ export const useAuth = () => {
         throw new Error(response.error);
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
     }
   };
 

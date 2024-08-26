@@ -1,4 +1,4 @@
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 export interface UserProfileResponse {
   _id: string;
   username: string;
@@ -14,6 +14,7 @@ export interface UserProfileResponse {
   isGame: boolean;
   winRate: number;
   currentGameId?: string;
+  friends: mongoose.Types.ObjectId[];
 }
 export interface IUser extends Document {
   _id: string;
@@ -30,6 +31,7 @@ export interface IUser extends Document {
   isGame: boolean;
   winRate: number;
   currentGameId?: string;
+  friends: mongoose.Types.ObjectId[];
 }
 
 export interface IUserMethods {
@@ -51,5 +53,6 @@ export interface ClientUser {
   isOnline: boolean;
   isGame: boolean;
   winRate: number;
+  friends: mongoose.Types.ObjectId[];
   currentGameId?: string;
 }

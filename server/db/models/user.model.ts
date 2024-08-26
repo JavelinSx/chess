@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
   isGame: { type: Boolean, default: false },
   winRate: { type: Number, default: 0 },
   currentGameId: { type: String, default: null },
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 });
 
 userSchema.pre('save', async function (next) {

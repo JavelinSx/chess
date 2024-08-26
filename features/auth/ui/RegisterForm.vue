@@ -1,6 +1,6 @@
 <template>
     <UCard class="auth-form">
-        <UForm :state="formState" @submit="handleRegister" class="flex flex-col gap-4">
+        <UForm :state="formState" @submit="handleRegister" :validate="validateForm" class="flex flex-col gap-4">
             <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
 
             <UFormGroup label="Username" name="username">
@@ -37,6 +37,30 @@ const formState = reactive({
     email: '',
     password: '',
 });
+
+const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formState.username) {
+        errors.username = 'Username is required';
+    } else if (formState.username.length < 3) {
+        errors.username = 'Username must be at least 3 characters long';
+    }
+    if (!formState.email) {
+        errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+        errors.email = 'Invalid email format';
+    }
+    if (!formState.password) {
+        errors.password = 'Password is required';
+    } else if (formState.password.length < 8) {
+        errors.password = 'Password must be at least 8 characters long';
+    }
+
+    return Object.keys(errors).map(key => ({
+        path: key,
+        message: errors[key]
+    }));
+};
 
 const handleRegister = async () => {
     isLoading.value = true;

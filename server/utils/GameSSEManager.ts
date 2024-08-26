@@ -2,7 +2,6 @@
 import { H3Event } from 'h3';
 import type { ChessGame } from '~/entities/game/model/game.model';
 import type { GameResult } from '../types/game';
-import type { PendingPromotion } from '~/entities/game/model/game.model';
 import { updateUserStatus } from '~/server/services/user.service';
 import { getGameFromDatabase } from '../services/game.service';
 export class GameSSEManager {
@@ -66,18 +65,7 @@ export class GameSSEManager {
       }
     }
   }
-  async sendPawnPromotionEvent(gameId: string, promotionData: PendingPromotion) {
-    const clients = this.gameConnections.get(gameId);
-    if (clients) {
-      const message = JSON.stringify({
-        type: 'pawn_promotion',
-        data: promotionData,
-      });
-      for (const event of clients.values()) {
-        await this.sendEvent(event, message);
-      }
-    }
-  }
+
   private async sendEvent(event: H3Event, data: string) {
     await event.node.res.write(`data: ${data}\n\n`);
   }

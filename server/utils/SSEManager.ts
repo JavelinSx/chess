@@ -1,17 +1,19 @@
 // server/utils/SSEManager.ts
 import { H3Event } from 'h3';
 import { UserSSEManager } from './UserSSEManager';
-import type { UserStatus } from './UserSSEManager';
+import { updateUserStatus } from '../services/user.service';
 import { InvitationSSEManager } from './InvitationSSEManager';
 import { GameSSEManager } from './GameSSEManager';
 import type { GameResult } from '../types/game';
 import type { ClientUser, IUser } from '~/server/types/user';
 import type { ChessGame } from '~/entities/game/model/game.model';
-import type { PendingPromotion } from '~/entities/game/model/game.model';
+import type { UserStatus } from './UserSSEManager';
+
 export class SSEManager {
   private userManager: UserSSEManager;
   private invitationManager: InvitationSSEManager;
   private gameManager: GameSSEManager;
+  private activeConnections: Set<string> = new Set();
 
   constructor() {
     this.userManager = new UserSSEManager();
@@ -19,19 +21,26 @@ export class SSEManager {
     this.gameManager = new GameSSEManager();
   }
 
-  // User-related methods
   addUserConnection(userId: string, event: H3Event) {
     this.userManager.addUserConnection(userId, event);
     this.invitationManager.addInvitationConnection(userId, event);
+    this.activeConnections.add(userId);
+    updateUserStatus(userId, true, false);
   }
 
   removeUserConnection(userId: string) {
     this.userManager.removeUserConnection(userId);
     this.invitationManager.removeInvitationConnection(userId);
+    this.activeConnections.delete(userId);
+    updateUserStatus(userId, false, false);
   }
 
   isUserConnected(userId: string): boolean {
-    return this.userManager.isUserConnected(userId);
+    return this.activeConnections.has(userId);
+  }
+
+  getActiveConnections(): Set<string> {
+    return this.activeConnections;
   }
 
   async sendUserStatusUpdate(userId: string, status: UserStatus) {
@@ -76,9 +85,6 @@ export class SSEManager {
   }
   async sendUserUpdate(userId: string, userData: ClientUser) {
     await this.userManager.sendUserUpdate(userId, userData);
-  }
-  async sendPawnPromotionEvent(gameId: string, promotionData: PendingPromotion) {
-    await this.gameManager.sendPawnPromotionEvent(gameId, promotionData);
   }
 }
 

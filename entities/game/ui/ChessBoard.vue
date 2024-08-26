@@ -6,7 +6,7 @@
         <div class="chess-board">
             <div class="board-vertical-labels">
                 <div v-for="row in 8" :key="row" class="cell flex items-start">
-                    {{ isPlayerWhite ? 9 - row : row }}
+                    {{ isUserPlayingWhite ? 9 - row : row }}
                 </div>
             </div>
             <div class="board-grid">
@@ -27,7 +27,6 @@
             <div class="board-horizontal-labels">
                 <div v-for="col in 'ABCDEFGH'" :key="col" class="cell">{{ col }}</div>
             </div>
-
         </div>
         <PawnPromotionDialog v-if="gameStore.promote"
             :color="gameStore.currentGame?.currentTurn === 'white' ? 'black' : 'white'" @select="handlePromotion" />
@@ -71,7 +70,7 @@ const isCheck = computed(() => isKingInCheck(props.game).inCheck);
 const currentGame = computed(() => gameStore.currentGame);
 
 const isUserPlayingWhite = computed(() => {
-    return currentGame.value?.players.white === userStore.user?._id;
+    return gameStore.currentGame?.players.white === userStore.user?._id;
 });
 
 const isCurrentPlayerTurn = computed(() => {
