@@ -17,15 +17,16 @@
                             </UBadge>
                             <div class="flex items-center space-x-4">
                                 <UAvatar :src="getUserAvatar(friend._id)" :alt="getUserUsername(friend._id)" />
-
                                 <p class="font-semibold">{{ getUserUsername(friend._id) }}</p>
-
                             </div>
                             <div class="flex space-x-2">
-
                                 <UButton v-if="canInvite(friend)" @click="inviteToGame(friend._id)" color="violet"
                                     variant="soft" icon="i-heroicons-envelope">
                                     Invite
+                                </UButton>
+                                <UButton @click="startChat(friend._id)" color="blue" variant="soft"
+                                    icon="i-heroicons-chat-bubble-left-right">
+                                    Chat
                                 </UButton>
                                 <UButton color="red" variant="soft" icon="i-heroicons-user-minus"
                                     @click="removeFriend(friend._id)">
@@ -46,11 +47,13 @@ import { ref, onMounted, computed } from 'vue';
 import { useFriendsStore } from '~/store/friends';
 import { useUserStore } from '~/store/user';
 import { useInvitationStore } from '~/store/invitation';
+import { useChatStore } from '~/store/chat';
 import { storeToRefs } from 'pinia';
 
 const friendsStore = useFriendsStore();
 const userStore = useUserStore();
 const invitationStore = useInvitationStore();
+const chatStore = useChatStore();
 const { friends } = storeToRefs(friendsStore);
 const { usersList } = storeToRefs(userStore);
 const { user } = storeToRefs(userStore);
@@ -79,6 +82,10 @@ const canInvite = (friend: any) => {
 
 function inviteToGame(friendId: string) {
     invitationStore.sendGameInvitation(friendId);
+}
+
+function startChat(friendId: string) {
+    chatStore.openChat(friendId);
 }
 
 onMounted(async () => {

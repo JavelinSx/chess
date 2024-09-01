@@ -7,7 +7,6 @@
                     <UButton v-for="link in navLinks" :key="link.to" :to="link.to" color="gray" variant="ghost">
                         {{ link.label }}
                     </UButton>
-
                     <UButton v-if="isAuthenticated" @click="logout" color="gray" variant="ghost">
                         Logout
                     </UButton>
@@ -23,24 +22,31 @@
                 <slot />
             </UContainer>
         </main>
-
         <footer class="py-4 mt-auto">
             <UContainer class="text-center text-gray-600">
                 <p>&copy; {{ new Date().getFullYear() }} Chess App. All rights reserved.</p>
             </UContainer>
         </footer>
+        <Chat v-if="isChatOpen && currentChatUserId" :otherUserId="currentChatUserId" />
+        <UNotifications />
     </div>
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '../store/auth';
+import { useAuthStore } from '~/store/auth';
 import { useUserStore } from '~/store/user';
 import { useGameStore } from '~/store/game';
+import { useChatStore } from '~/store/chat';
 import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import Chat from '~/features/chat/ui/Chat.vue';
 
 const authStore = useAuthStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
+const chatStore = useChatStore();
+
+const { isChatOpen, currentChatUserId } = storeToRefs(chatStore);
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 

@@ -4,6 +4,9 @@ import { UserSSEManager } from './UserSSEManager';
 import { updateUserStatus } from '../services/user.service';
 import { InvitationSSEManager } from './InvitationSSEManager';
 import { GameSSEManager } from './GameSSEManager';
+import { ChatSSEManager } from './ChatSSEManager';
+
+import type { ClientChatMessage, ClientChatRoom } from '../types/chat';
 import type { GameResult } from '../types/game';
 import type { ClientUser, IUser } from '~/server/types/user';
 import type { ChessGame } from '~/entities/game/model/game.model';
@@ -14,17 +17,20 @@ export class SSEManager {
   private userManager: UserSSEManager;
   private invitationManager: InvitationSSEManager;
   private gameManager: GameSSEManager;
+  private chatManager: ChatSSEManager;
   private activeConnections: Set<string> = new Set();
 
   constructor() {
     this.userManager = new UserSSEManager();
     this.invitationManager = new InvitationSSEManager();
     this.gameManager = new GameSSEManager();
+    this.chatManager = new ChatSSEManager();
   }
 
   addUserConnection(userId: string, event: H3Event) {
     this.userManager.addUserConnection(userId, event);
     this.invitationManager.addInvitationConnection(userId, event);
+    this.chatManager.addChatConnection(userId, event);
     this.activeConnections.add(userId);
     updateUserStatus(userId, true, false);
   }
@@ -32,6 +38,7 @@ export class SSEManager {
   removeUserConnection(userId: string) {
     this.userManager.removeUserConnection(userId);
     this.invitationManager.removeInvitationConnection(userId);
+    this.chatManager.removeChatConnection(userId);
     this.activeConnections.delete(userId);
     updateUserStatus(userId, false, false);
   }
@@ -101,6 +108,14 @@ export class SSEManager {
 
   async sendFriendListUpdateNotification(userId: string, friendList: Friend[]) {
     await this.userManager.sendFriendListUpdateNotification(userId, friendList);
+  }
+
+  async sendChatMessage(userId: string, message: ClientChatMessage) {
+    await this.chatManager.sendChatMessage(userId, message);
+  }
+
+  async sendChatRoomUpdate(userId: string, room: ClientChatRoom) {
+    await this.chatManager.sendChatRoomUpdate(userId, room);
   }
 }
 

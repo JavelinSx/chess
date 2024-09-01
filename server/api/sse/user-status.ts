@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
 
   sseManager.addUserConnection(userId, event);
   sseManager.addInvitationConnection(userId, event);
+
   const closeHandler = () => {
     sseManager.removeUserConnection(userId);
   };

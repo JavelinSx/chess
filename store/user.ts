@@ -45,6 +45,9 @@ export const useUserStore = defineStore('user', {
         return null;
       }
     },
+    getUserById(userId: string): ClientUser | undefined {
+      return this.usersList.find((user) => user._id === userId);
+    },
     clearUser() {
       this.user = null;
     },

@@ -1,7 +1,6 @@
 <template>
     <UCard class="w-full max-w-sm">
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full">
-            <!-- User Info Section -->
             <div class="flex items-center mb-4 sm:mb-0">
                 <UAvatar :src="getUserAvatar(user)" :alt="user.username" class="mr-4" />
                 <div>
@@ -12,7 +11,6 @@
                 </div>
             </div>
 
-            <!-- User Actions Section -->
             <div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
                 <UBadge :color="user.isOnline ? 'green' : 'gray'" class="w-20 flex justify-center">
                     {{ user.isOnline ? 'Online' : 'Offline' }}
@@ -26,6 +24,9 @@
                     icon="i-heroicons-user-plus">
                     Add Friend
                 </UButton>
+                <UButton @click="startChat" color="blue" variant="soft" icon="i-heroicons-chat-bubble-left-right">
+                    Chat
+                </UButton>
             </div>
         </div>
     </UCard>
@@ -35,9 +36,11 @@
 import { computed } from 'vue';
 import { useInvitationStore } from '~/store/invitation';
 import { useFriendsStore } from '~/store/friends';
+import { useChatStore } from '~/store/chat';
 
 const invitationStore = useInvitationStore();
 const friendsStore = useFriendsStore();
+const chatStore = useChatStore();
 
 const props = defineProps<{
     user: any;
@@ -60,8 +63,12 @@ function addFriend() {
     friendsStore.sendFriendRequest(props.user._id);
 }
 
+function startChat() {
+    chatStore.openChat(props.user._id);
+}
+
 function getUserAvatar(user: any) {
-    return '';
+    return `https://avatar.example.com/${user.username}`;
 }
 
 function calculateWinRate(user: any) {
