@@ -8,6 +8,7 @@ import type { GameResult } from '../types/game';
 import type { ClientUser, IUser } from '~/server/types/user';
 import type { ChessGame } from '~/entities/game/model/game.model';
 import type { UserStatus } from './UserSSEManager';
+import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
 
 export class SSEManager {
   private userManager: UserSSEManager;
@@ -85,6 +86,21 @@ export class SSEManager {
   }
   async sendUserUpdate(userId: string, userData: ClientUser) {
     await this.userManager.sendUserUpdate(userId, userData);
+  }
+  async sendFriendRequestNotification(userId: string, request: FriendRequest) {
+    await this.userManager.sendFriendRequestNotification(userId, request);
+  }
+
+  async sendFriendRequestUpdateNotification(userId: string, updatedRequest: FriendRequestClient) {
+    await this.userManager.sendFriendRequestUpdateNotification(userId, updatedRequest);
+  }
+
+  async sendFriendRequestsUpdateNotification(userId: string, updatedRequest: FriendRequest[]) {
+    await this.userManager.sendFriendRequestsUpdateNotification(userId, updatedRequest);
+  }
+
+  async sendFriendListUpdateNotification(userId: string, friendList: Friend[]) {
+    await this.userManager.sendFriendListUpdateNotification(userId, friendList);
   }
 }
 

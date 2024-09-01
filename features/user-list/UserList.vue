@@ -11,6 +11,8 @@
             <h2 class="text-xl font-bold mb-4">Players</h2>
             <SortingPlayers />
         </template>
+        <FriendsList></FriendsList>
+        <FriendRequest></FriendRequest>
         <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <li v-if="paginationStore.paginatedUsers.length > 0" v-for="user in paginationStore.paginatedUsers"
                 :key="user._id">
@@ -30,6 +32,8 @@ import { useInvitationStore } from '~/store/invitation';
 import SortingPlayers from './SortingPlayers.vue';
 import UserCard from '../user/ui/UserCard.vue';
 import Pagination from './Pagination.vue';
+import FriendsList from '../friends/ui/FriendsList.vue';
+import FriendRequest from '../friends/ui/FriendRequest.vue';
 
 const userStore = useUserStore();
 const paginationStore = usePaginationStore();

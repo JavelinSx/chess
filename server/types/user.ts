@@ -1,9 +1,10 @@
 import mongoose, { Document } from 'mongoose';
+import type { Friend, FriendRequest } from './friends';
+
 export interface UserProfileResponse {
   _id: string;
   username: string;
   email: string;
-  password: string;
   rating: number;
   gamesPlayed: number;
   gamesWon: number;
@@ -16,6 +17,7 @@ export interface UserProfileResponse {
   currentGameId?: string;
   friends: mongoose.Types.ObjectId[];
 }
+
 export interface IUser extends Document {
   _id: string;
   username: string;
@@ -32,13 +34,12 @@ export interface IUser extends Document {
   winRate: number;
   currentGameId?: string;
   friends: mongoose.Types.ObjectId[];
+  friendRequests: FriendRequest[];
 }
 
 export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
-
-export type UserModel = IUser & IUserMethods;
 
 export interface ClientUser {
   _id: string;
@@ -53,6 +54,12 @@ export interface ClientUser {
   isOnline: boolean;
   isGame: boolean;
   winRate: number;
-  friends: mongoose.Types.ObjectId[];
+  friends: string[] | Friend[];
   currentGameId?: string;
 }
+
+export interface IUserMethods {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+export type UserModel = IUser & IUserMethods;

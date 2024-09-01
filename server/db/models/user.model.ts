@@ -17,6 +17,14 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
   winRate: { type: Number, default: 0 },
   currentGameId: { type: String, default: null },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  friendRequests: [
+    {
+      from: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      to: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 userSchema.pre('save', async function (next) {

@@ -1,12 +1,14 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useUserStore } from '~/store/user';
 import { useInvitationStore } from '~/store/invitation';
+import { useFriendsStore } from '~/store/friends';
 interface UserSSEReturn {
   closeSSE: () => void;
 }
 
 export function useUserSSE(): UserSSEReturn {
   const userStore = useUserStore();
+  const friendsStore = useFriendsStore();
   const invitationStore = useInvitationStore();
   const eventSource = ref<EventSource | null>(null);
 
@@ -33,6 +35,23 @@ export function useUserSSE(): UserSSEReturn {
           break;
         case 'game_start':
           navigateTo(`/game/${data.gameId}`);
+          break;
+        case 'friend_request':
+          console.log('Handling friend request:', data.request);
+          friendsStore.handleFriendRequest(data.request);
+          break;
+        case 'friend_request_update':
+          console.log('Received friend request update:', data.request);
+          friendsStore.handleFriendRequestUpdate(data.request);
+          break;
+        case 'friend_list_update':
+          console.log('Received friend list update:', data.friends);
+          if (Array.isArray(data.friends) && data.friends.length > 0) {
+            friendsStore.handleFriendListUpdate(data.friends);
+          } else {
+            console.warn('Received empty or invalid friends list');
+            friendsStore.fetchFriends();
+          }
           break;
         default:
           console.log('Unhandled user event type:', data.type);

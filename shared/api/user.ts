@@ -8,8 +8,8 @@ export const userApi = {
     return apiRequest<UserProfileResponse>('/user/profile-update', 'POST', { id, username, email });
   },
 
-  async profileGet(id: string): Promise<ApiResponse<UserProfileResponse>> {
-    return apiRequest<UserProfileResponse>(`/user/profile?id=${id}`, 'GET');
+  async profileGet(id: string): Promise<ApiResponse<ClientUser>> {
+    return apiRequest<ClientUser>(`/user/profile?id=${id}`, 'GET');
   },
 
   async getUsersList(): Promise<ApiResponse<ClientUser[]>> {

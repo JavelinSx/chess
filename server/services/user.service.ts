@@ -1,4 +1,5 @@
 import type { ClientUser, UserProfileResponse } from '../types/user';
+import type { Friend } from '../types/friends';
 import type { IUser } from '../types/user';
 import User from '../db/models/user.model';
 import { sseManager } from '~/server/utils/SSEManager';
@@ -85,8 +86,31 @@ export async function getUsersWithPagination(
 
   const totalCount = await getUsersCount();
 
+  // Преобразуем данные из базы в формат ClientUser
+  const clientUsers: ClientUser[] = users.map((user: IUser & { _id: string }) => ({
+    _id: user._id.toString(),
+    username: user.username,
+    email: user.email,
+    rating: user.rating,
+    gamesPlayed: user.gamesPlayed,
+    gamesWon: user.gamesWon,
+    gamesLost: user.gamesLost,
+    gamesDraw: user.gamesDraw,
+    lastLogin: user.lastLogin,
+    isOnline: user.isOnline,
+    isGame: user.isGame,
+    winRate: user.winRate,
+    currentGameId: user.currentGameId,
+    friends: user.friends.map((friend: any) => ({
+      _id: friend._id?.toString() || friend.toString(),
+      username: '',
+      isOnline: false,
+      isGame: false,
+    })) as Friend[],
+  }));
+
   return {
-    users: users,
+    users: clientUsers,
     totalCount,
   };
 }
