@@ -41,6 +41,7 @@ import { useChatStore } from '~/store/chat';
 const invitationStore = useInvitationStore();
 const friendsStore = useFriendsStore();
 const chatStore = useChatStore();
+const toast = useToast();
 
 const props = defineProps<{
     user: any;
@@ -57,10 +58,20 @@ const canAddFriend = computed(() => {
 
 function inviteToGame() {
     invitationStore.sendGameInvitation(props.user._id);
+    toast.add({
+        title: 'Game Invitation Sent',
+        description: `Invitation sent to ${props.user.username}`,
+        color: 'green'
+    });
 }
 
 function addFriend() {
     friendsStore.sendFriendRequest(props.user._id);
+    toast.add({
+        title: 'Friend Request Sent',
+        description: `Friend request sent to ${props.user.username}`,
+        color: 'green'
+    });
 }
 
 async function startChat() {
@@ -68,9 +79,18 @@ async function startChat() {
     try {
         await chatStore.openChat(props.user._id);
         console.log('Chat opened successfully');
+        toast.add({
+            title: 'Chat Opened',
+            description: `Chat with ${props.user.username} opened`,
+            color: 'green'
+        });
     } catch (error) {
         console.error('Error in startChat:', error);
-        // Показать уведомление об ошибке пользователю
+        toast.add({
+            title: 'Error',
+            description: 'Failed to open chat. Please try again.',
+            color: 'red'
+        });
     }
 }
 

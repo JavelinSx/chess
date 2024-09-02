@@ -46,6 +46,7 @@ export const useUserStore = defineStore('user', {
       }
     },
     getUserById(userId: string): ClientUser | undefined {
+      console.log(userId);
       return this.usersList.find((user) => user._id === userId);
     },
     clearUser() {
@@ -69,11 +70,15 @@ export const useUserStore = defineStore('user', {
       try {
         const response = await userApi.getUsersList();
         if (response.data) {
-          this.usersList = response.data.map((user) => ({
-            ...user,
-            isOnline: !!user.isOnline,
-            isGame: !!user.isGame,
-          }));
+          this.usersList = JSON.parse(
+            JSON.stringify(
+              response.data.map((user) => ({
+                ...user,
+                isOnline: !!user.isOnline,
+                isGame: !!user.isGame,
+              }))
+            )
+          );
         } else if (response.error) {
           console.error('Failed to fetch users list:', response.error);
         }

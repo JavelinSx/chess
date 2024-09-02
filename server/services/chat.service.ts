@@ -1,5 +1,3 @@
-// server/services/chat.service.ts
-
 import ChatMessage from '~/server/db/models/chat.model';
 import ChatRoom from '~/server/db/models/chatRoom.model';
 import User from '../db/models/user.model';
@@ -54,7 +52,6 @@ export const chatService = {
       isEdited: message.isEdited,
     };
 
-    // Отправляем SSE событие получателю
     await sseManager.sendChatMessage(receiverId.toString(), clientMessage);
 
     return message.toObject();
@@ -79,6 +76,23 @@ export const chatService = {
       .populate('participants', 'username');
 
     return chatRooms.map((room) => room.toObject());
+  },
+
+  async createOrGetChatRoom(userId: ObjectId, otherId: ObjectId): Promise<ChatRoomType> {
+    let chatRoom = await ChatRoom.findOne({
+      participants: { $all: [userId, otherId] },
+    });
+
+    if (!chatRoom) {
+      chatRoom = new ChatRoom({
+        participants: [userId, otherId],
+        lastMessage: null,
+        unreadCount: 0,
+      });
+      await chatRoom.save();
+    }
+
+    return chatRoom.toObject();
   },
 
   async deleteChat(userId: ObjectId, otherId: ObjectId): Promise<void> {
@@ -117,7 +131,6 @@ export const chatService = {
           unreadCount: room.unreadCount,
         };
 
-        // Отправляем обновление статуса сообщений отправителю
         const senderId = room.participants.find((p) => p.toString() !== message.receiver.toString())?.toString();
         if (senderId) {
           await sseManager.sendChatRoomUpdate(senderId, clientRoom);
@@ -151,7 +164,6 @@ export const chatService = {
         unreadCount: 0,
       };
 
-      // Отправляем обновление статуса сообщений отправителю
       const senderId = room.participants.find((p) => p.toString() !== userId)?.toString();
       if (senderId) {
         await sseManager.sendChatRoomUpdate(senderId, clientRoom);

@@ -44,9 +44,9 @@ export const useFriendsStore = defineStore('friends', {
         this.isLoading = false;
       }
     },
-
     async fetchFriendRequests() {
       this.isLoading = true;
+      this.error = null;
       try {
         const response = await friendsApi.getFriendRequests();
         if (response.data) {
@@ -64,6 +64,7 @@ export const useFriendsStore = defineStore('friends', {
 
     async sendFriendRequest(toUserId: string) {
       this.isLoading = true;
+      this.error = null;
       try {
         const response = await friendsApi.sendFriendRequest(toUserId);
         if (response.data) {
@@ -72,7 +73,11 @@ export const useFriendsStore = defineStore('friends', {
           this.error = response.error;
         }
       } catch (error) {
-        this.error = 'Failed to send friend request';
+        if (error instanceof Error && error.message === 'Friend request already exists') {
+          this.error = 'You have already sent a friend request to this user';
+        } else {
+          this.error = 'Failed to send friend request';
+        }
       } finally {
         this.isLoading = false;
       }
@@ -80,19 +85,16 @@ export const useFriendsStore = defineStore('friends', {
 
     async respondToFriendRequest(requestId: string, accept: boolean) {
       this.isLoading = true;
+      this.error = null;
       try {
         const response = await friendsApi.respondToFriendRequest(requestId, accept);
         if (response.data) {
           // Удаляем запрос из списка полученных запросов
           this.receivedRequests = this.receivedRequests.filter((req) => req._id !== requestId);
-          // Очищаем списки после обработки запроса
+          // Если запрос принят, обновляем список друзей
           if (accept) {
-            // Если запрос принят, обновляем список друзей
             await this.fetchFriends();
           }
-          // Очищаем все списки запросов
-          this.sentRequests = [];
-          this.friendRequests = [];
         } else if (response.error) {
           this.error = response.error;
         }

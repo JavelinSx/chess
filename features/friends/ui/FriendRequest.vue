@@ -1,19 +1,25 @@
 <template>
     <UCard>
-        <UAccordion :items="[accordionItem]">
+        <UAccordion :items="accordionItems" :ui="accordionUI">
             <template #default="{ open, toggle }">
                 <UButton class="w-full flex justify-between items-center" color="gray" variant="ghost" @click="toggle">
                     <span>Friend Requests ({{ receivedRequests.length }})</span>
                     <UIcon :name="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" />
                 </UButton>
             </template>
-            <template #content>
-                <div v-if="receivedRequests.length > 0" class="space-y-4">
+            <template #item="{ item }">
+                <div v-if="isLoading" class="text-center py-4">
+                    Loading...
+                </div>
+                <div v-else-if="error" class="text-center text-red-500 py-4">
+                    {{ error }}
+                </div>
+                <div v-else-if="receivedRequests.length > 0" class="space-y-4 py-4">
                     <UCard v-for="request in receivedRequests" :key="request._id" class="p-4">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
-                                <UAvatar :src="getUserAvatar(request.from)" :alt="getUserUsername(request.from)" />
-                                <p class="font-semibold">{{ getUserUsername(request.from) }} wants to be your friend</p>
+                                <UAvatar :src="getUserAvatar(request.from)" :alt="getUserName(request.from)" />
+                                <p class="font-semibold">{{ getUserName(request.from) }} wants to be your friend</p>
                             </div>
                             <div class="flex space-x-2">
                                 <UButton color="green" variant="soft" icon="i-heroicons-check"
@@ -28,7 +34,7 @@
                         </div>
                     </UCard>
                 </div>
-                <p v-else class="text-center text-gray-500">No pending friend requests.</p>
+                <p v-else class="text-center text-gray-500 py-4">No pending friend requests.</p>
             </template>
         </UAccordion>
     </UCard>
@@ -40,33 +46,39 @@ import { useFriendsStore } from '~/store/friends';
 import { useUserStore } from '~/store/user';
 import { storeToRefs } from 'pinia';
 
-const friendsStore = useFriendsStore();
 const userStore = useUserStore();
-const { receivedRequests } = storeToRefs(friendsStore);
-const { usersList } = storeToRefs(userStore);
+const friendsStore = useFriendsStore();
+const { receivedRequests, isLoading, error } = storeToRefs(friendsStore);
 
-const accordionItem = computed(() => ({
+const accordionItems = computed(() => [{
     label: `Friend Requests (${receivedRequests.value.length})`,
-    content: '',
-    defaultOpen: true,
-}));
+    content: 'Friend requests content',
+    defaultOpen: true
+}]);
+
+const accordionUI = {
+    wrapper: 'space-y-4',
+    item: {
+        wrapper: 'overflow-hidden',
+        content: 'mt-4',
+    },
+};
 
 onMounted(() => {
     friendsStore.fetchFriendRequests();
-    userStore.fetchUsersList();
 });
 
 const respondToRequest = (requestId: string, accept: boolean) => {
     friendsStore.respondToFriendRequest(requestId, accept);
 };
 
-function getUserUsername(userId: string): string {
-    const user = usersList.value.find(u => u._id === userId);
-    return user ? user.username : 'Unknown User';
+function getUserAvatar(userId: string): string {
+    return `https://avatar.example.com/${userId}`;
 }
 
-function getUserAvatar(userId: string): string {
-    const user = usersList.value.find(u => u._id === userId);
-    return user ? `https://avatar.example.com/${user.username}` : '';
+function getUserName(userId: string): string {
+    console.log(userId)
+    const user = userStore.usersList.find((user) => user._id === userId);
+    return user ? user.username : 'Unknown User';
 }
 </script>
