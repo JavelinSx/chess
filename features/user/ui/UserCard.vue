@@ -63,8 +63,15 @@ function addFriend() {
     friendsStore.sendFriendRequest(props.user._id);
 }
 
-function startChat() {
-    chatStore.openChat(props.user._id);
+async function startChat() {
+    console.log('startChat called');
+    try {
+        await chatStore.openChat(props.user._id);
+        console.log('Chat opened successfully');
+    } catch (error) {
+        console.error('Error in startChat:', error);
+        // Показать уведомление об ошибке пользователю
+    }
 }
 
 function getUserAvatar(user: any) {

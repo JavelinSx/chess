@@ -37,6 +37,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useChatStore } from '~/store/chat'
 import { useUserStore } from '~/store/user'
 import { storeToRefs } from 'pinia'
+import type { ClientChatRoom } from '~/server/types/chat'
 
 const props = defineProps<{
     otherUserId: string
@@ -50,12 +51,18 @@ const { messages, currentRoomId, isLoading } = storeToRefs(chatStore);
 const newMessage = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
 const isSending = ref(false);
-const toast = useToast();
 
 const currentUserId = computed(() => user.value?._id || '');
+
+const currentRoom = computed(() =>
+    currentRoomId.value ? chatStore.chatRooms[currentRoomId.value] : null
+);
+
 const otherUserName = computed(() => {
-    const otherUser = userStore.getUserById(props.otherUserId);
-    return otherUser ? otherUser.username : 'User';
+    if (!currentRoom.value) return 'User';
+    const otherUserId = currentRoom.value.participantIds.find(id => id !== currentUserId.value);
+    const otherUser = userStore.getUserById(otherUserId!);
+    return otherUser ? otherUser.username : 'Unknown User';
 });
 
 const currentMessages = computed(() => {
@@ -67,7 +74,8 @@ onMounted(async () => {
         await chatStore.openChat(props.otherUserId);
         scrollToBottom();
     } catch (err) {
-        handleError(err);
+        console.error('Error opening chat:', err);
+        // Здесь можно добавить обработку ошибки, например, показ уведомления
     }
 });
 
@@ -82,7 +90,8 @@ async function sendMessage() {
             await chatStore.sendMessage(newMessage.value);
             newMessage.value = '';
         } catch (err) {
-            handleError(err);
+            console.error('Error sending message:', err);
+            // Здесь можно добавить обработку ошибки
         } finally {
             isSending.value = false;
         }
@@ -101,16 +110,5 @@ function scrollToBottom() {
     if (messagesContainer.value) {
         messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
-}
-
-function handleError(err: unknown) {
-    const message = err instanceof Error ? err.message : 'An unknown error occurred';
-    toast.add({
-        title: 'Error',
-        description: message,
-        color: 'red',
-        icon: 'i-heroicons-exclamation-circle',
-        timeout: 5000
-    });
 }
 </script>
