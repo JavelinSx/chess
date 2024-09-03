@@ -1,11 +1,8 @@
-// server/types/chat.ts
-
-import type { ObjectId } from 'mongoose';
+import mongoose from 'mongoose';
 
 export interface ChatMessage {
-  _id: ObjectId;
-  sender: ObjectId;
-  receiver: ObjectId;
+  _id?: mongoose.Types.ObjectId;
+  senderId: mongoose.Types.ObjectId;
   content: string;
   timestamp: Date;
   status: 'sent' | 'delivered' | 'read';
@@ -13,18 +10,18 @@ export interface ChatMessage {
 }
 
 export interface ChatRoom {
-  _id: ObjectId;
-  participants: ObjectId[];
+  _id: mongoose.Types.ObjectId;
+  participants: mongoose.Types.ObjectId[];
+  messages: ChatMessage[];
   lastMessage: ChatMessage | null;
   unreadCount: number;
 }
 
 export interface ClientChatMessage {
   id: string;
+  roomId: string;
   senderId: string;
   senderName: string;
-  receiverId: string;
-  receiverName: string;
   content: string;
   timestamp: string;
   status: 'sent' | 'delivered' | 'read';
@@ -34,6 +31,7 @@ export interface ClientChatMessage {
 export interface ClientChatRoom {
   id: string;
   participantIds: string[];
+  messages: ClientChatMessage[];
   lastMessage: ClientChatMessage | null;
   unreadCount: number;
 }

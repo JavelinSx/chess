@@ -111,10 +111,12 @@ export class SSEManager {
   }
 
   async sendChatMessage(userId: string, message: ClientChatMessage) {
+    console.log(`Sending chat message in SSEManager to user: ${userId}`, message);
     await this.chatManager.sendChatMessage(userId, message);
   }
 
   async sendChatRoomUpdate(userId: string, room: ClientChatRoom) {
+    console.log(`Sending chat room update in SSEManager to user: ${userId}`, room);
     await this.chatManager.sendChatRoomUpdate(userId, room);
   }
 }

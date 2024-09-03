@@ -2,40 +2,36 @@
 import { defineEventHandler, readBody } from 'h3';
 import chatRoomModel from '~/server/db/models/chatRoom.model';
 import type { ClientChatRoom } from '~/server/types/chat';
-
+import { chatService } from '~/server/services/chat.service';
 export default defineEventHandler(async (event) => {
   const { otherUserId } = await readBody(event);
-  const currentUserId = event.context.auth?.userId;
+  const userId = event.context.auth?.userId;
 
-  if (!currentUserId || !otherUserId) {
-    return { data: null, error: 'Both user IDs are required' };
+  if (!userId || !otherUserId) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid request',
+    });
   }
 
   try {
-    let chatRoom = await chatRoomModel.findOne({
-      participantIds: { $all: [currentUserId, otherUserId] },
-    });
+    const room = await chatService.createChatRoom(userId, otherUserId);
+    console.log('Created room:', JSON.stringify(room, null, 2));
 
-    if (!chatRoom) {
-      chatRoom = new chatRoomModel({
-        participantIds: [currentUserId, otherUserId],
-        lastMessage: null,
-        unreadCount: 0,
-      });
-      await chatRoom.save();
-    }
-
-    // Преобразуем данные в формат ClientChatRoom
-    const clientChatRoom: ClientChatRoom = {
-      id: chatRoom._id.toString(),
-      participantIds: chatRoom.participants.map((id) => id.toString()),
-      lastMessage: null, // Преобразуйте lastMessage, если оно есть
-      unreadCount: chatRoom.unreadCount,
+    return {
+      data: {
+        id: room._id.toString(),
+        participantIds: room.participants.map((p) => p.toString()),
+        lastMessage: room.lastMessage,
+        unreadCount: room.unreadCount,
+      },
+      error: null,
     };
-
-    return { data: clientChatRoom, error: null };
   } catch (error) {
     console.error('Error creating chat room:', error);
-    return { data: null, error: 'Failed to create chat room' };
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to create chat room',
+    });
   }
 });

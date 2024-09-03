@@ -1,173 +1,146 @@
-import ChatMessage from '~/server/db/models/chat.model';
+// server/services/chat.service.ts
+
 import ChatRoom from '~/server/db/models/chatRoom.model';
 import User from '../db/models/user.model';
+import mongoose from 'mongoose';
 import { sanitizeUserHtml } from '~/server/utils/sanitizeHtml';
 import { sseManager } from '../utils/SSEManager';
-
-import type {
-  ChatMessage as ChatMessageType,
-  ChatRoom as ChatRoomType,
-  ClientChatMessage,
-  ClientChatRoom,
-} from '../types/chat';
-import type { ObjectId } from 'mongoose';
+import type { ChatRoom as ChatRoomType, ClientChatMessage, ClientChatRoom } from '../types/chat';
 
 export const chatService = {
-  async sendMessage(senderId: ObjectId, receiverId: ObjectId, content: string): Promise<ChatMessageType> {
-    const sanitizedContent = sanitizeUserHtml(content);
-    const message = new ChatMessage({
-      sender: senderId,
-      receiver: receiverId,
-      content: sanitizedContent,
-    });
-    await message.save();
+  async createChatRoom(userId1: string, userId2: string): Promise<ClientChatRoom> {
+    const participantIds = [userId1, userId2].sort().map((id) => new mongoose.Types.ObjectId(id));
 
-    let chatRoom = await ChatRoom.findOne({
-      participants: { $all: [senderId, receiverId] },
+    let room = await ChatRoom.findOne({
+      participants: { $all: participantIds },
     });
 
-    if (!chatRoom) {
-      chatRoom = new ChatRoom({
-        participants: [senderId, receiverId],
-        lastMessage: message,
-        unreadCount: 1,
+    if (!room) {
+      room = new ChatRoom({
+        participants: participantIds,
+        messages: [],
+        lastMessage: null,
+        unreadCount: 0,
       });
-    } else {
-      chatRoom.lastMessage = message;
-      chatRoom.unreadCount += 1;
+      await room.save();
     }
-    await chatRoom.save();
 
-    const [sender, receiver] = await Promise.all([User.findById(senderId), User.findById(receiverId)]);
+    return this.mapChatRoomToClientChatRoom(room);
+  },
 
-    const clientMessage: ClientChatMessage = {
-      id: message.id,
-      senderId: senderId.toString(),
-      senderName: sender?.username || 'Unknown',
-      receiverId: receiverId.toString(),
-      receiverName: receiver?.username || 'Unknown',
+  async sendMessage(roomId: string, senderId: string, content: string): Promise<ClientChatMessage> {
+    const senderObjectId = new mongoose.Types.ObjectId(senderId);
+    const roomObjectId = new mongoose.Types.ObjectId(roomId);
+
+    const sanitizedContent = sanitizeUserHtml(content);
+    const newMessage = {
+      senderId: senderObjectId,
       content: sanitizedContent,
+      timestamp: new Date(),
+      status: 'sent',
+      isEdited: false,
+    };
+
+    const room = await ChatRoom.findByIdAndUpdate(
+      roomObjectId,
+      {
+        $push: { messages: newMessage },
+        $set: { lastMessage: newMessage },
+        $inc: { unreadCount: 1 },
+      },
+      { new: true }
+    ).populate('participants', 'username');
+
+    if (!room) {
+      throw new Error('Chat room not found');
+    }
+
+    const clientMessage = await this.mapChatMessageToClientChatMessage(newMessage, room);
+
+    // Отправляем SSE события всем участникам чата
+    for (const participantId of room.participants) {
+      await sseManager.sendChatMessage(participantId.toString(), clientMessage);
+    }
+
+    // Отправляем обновление комнаты всем участникам
+    const clientRoom = this.mapChatRoomToClientChatRoom(room);
+    for (const participantId of room.participants) {
+      await sseManager.sendChatRoomUpdate(participantId.toString(), clientRoom);
+    }
+
+    return clientMessage;
+  },
+
+  async getMessages(roomId: string): Promise<ClientChatMessage[]> {
+    const room = await ChatRoom.findById(roomId).populate('participants', 'username');
+    if (!room) {
+      throw new Error('Chat room not found');
+    }
+
+    return Promise.all(room.messages.map((msg) => this.mapChatMessageToClientChatMessage(msg, room)));
+  },
+
+  async getChatRooms(userId: string): Promise<ClientChatRoom[]> {
+    const chatRooms = await ChatRoom.find({
+      participants: new mongoose.Types.ObjectId(userId),
+    }).populate('participants', 'username');
+
+    return chatRooms.map(this.mapChatRoomToClientChatRoom);
+  },
+
+  async markAsRead(roomId: string, userId: string): Promise<void> {
+    const room = await ChatRoom.findByIdAndUpdate(roomId, { $set: { unreadCount: 0 } }, { new: true }).populate(
+      'participants',
+      'username'
+    );
+
+    if (room) {
+      const clientRoom = this.mapChatRoomToClientChatRoom(room);
+      // Отправляем обновление статуса всем участникам
+      for (const participant of room.participants) {
+        await sseManager.sendChatRoomUpdate(participant._id.toString(), clientRoom);
+      }
+    }
+  },
+
+  async mapChatMessageToClientChatMessage(message: any, room: any): Promise<ClientChatMessage> {
+    const sender = room.participants.find((p: any) => p._id.toString() === message.senderId.toString());
+    return {
+      id: message._id.toString(),
+      senderId: message.senderId.toString(),
+      senderName: sender ? sender.username : 'Unknown',
+      content: message.content,
       timestamp: message.timestamp.toISOString(),
       status: message.status,
       isEdited: message.isEdited,
     };
-
-    await sseManager.sendChatMessage(receiverId.toString(), clientMessage);
-
-    return message.toObject();
   },
 
-  async getMessages(userId: ObjectId, otherId: ObjectId): Promise<ChatMessageType[]> {
-    const messages = await ChatMessage.find({
-      $or: [
-        { sender: userId, receiver: otherId },
-        { sender: otherId, receiver: userId },
-      ],
-    }).sort({ timestamp: 1 });
-
-    return messages.map((message) => message.toObject());
-  },
-
-  async getChatRooms(userId: ObjectId): Promise<ChatRoomType[]> {
-    const chatRooms = await ChatRoom.find({
-      participants: userId,
-    })
-      .populate('lastMessage')
-      .populate('participants', 'username');
-
-    return chatRooms.map((room) => room.toObject());
-  },
-
-  async createOrGetChatRoom(userId: ObjectId, otherId: ObjectId): Promise<ChatRoomType> {
-    let chatRoom = await ChatRoom.findOne({
-      participants: { $all: [userId, otherId] },
-    });
-
-    if (!chatRoom) {
-      chatRoom = new ChatRoom({
-        participants: [userId, otherId],
-        lastMessage: null,
-        unreadCount: 0,
-      });
-      await chatRoom.save();
-    }
-
-    return chatRoom.toObject();
-  },
-
-  async deleteChat(userId: ObjectId, otherId: ObjectId): Promise<void> {
-    await ChatMessage.deleteMany({
-      $or: [
-        { sender: userId, receiver: otherId },
-        { sender: otherId, receiver: userId },
-      ],
-    });
-    await ChatRoom.deleteOne({
-      participants: { $all: [userId, otherId] },
-    });
-  },
-
-  async updateMessageStatus(messageId: ObjectId, status: 'delivered' | 'read'): Promise<void> {
-    const message = await ChatMessage.findByIdAndUpdate(messageId, { status }, { new: true });
-    if (message) {
-      const room = await ChatRoom.findOne({ lastMessage: messageId }).populate('participants');
-      if (room) {
-        const [sender, receiver] = await Promise.all([User.findById(message.sender), User.findById(message.receiver)]);
-
-        const clientRoom: ClientChatRoom = {
-          id: room._id.toString(),
-          participantIds: room.participants.map((p) => p.toString()),
-          lastMessage: {
-            id: message.id,
-            senderId: message.sender.toString(),
-            senderName: sender?.username || 'Unknown',
-            receiverId: message.receiver.toString(),
-            receiverName: receiver?.username || 'Unknown',
-            content: message.content,
-            timestamp: message.timestamp.toISOString(),
-            status: message.status,
-            isEdited: message.isEdited,
-          },
-          unreadCount: room.unreadCount,
-        };
-
-        const senderId = room.participants.find((p) => p.toString() !== message.receiver.toString())?.toString();
-        if (senderId) {
-          await sseManager.sendChatRoomUpdate(senderId, clientRoom);
-        }
-      }
-    }
-  },
-
-  async markAsRead(userId: string, roomId: string): Promise<void> {
-    const room = await ChatRoom.findByIdAndUpdate(roomId, { unreadCount: 0 }, { new: true }).populate('participants');
-    if (room && room.lastMessage) {
-      const [sender, receiver] = await Promise.all([
-        User.findById(room.lastMessage.sender),
-        User.findById(room.lastMessage.receiver),
-      ]);
-
-      const clientRoom: ClientChatRoom = {
-        id: room._id.toString(),
-        participantIds: room.participants.map((p) => p.toString()),
-        lastMessage: {
-          id: room.lastMessage._id.toString(),
-          senderId: room.lastMessage.sender.toString(),
-          senderName: sender?.username || 'Unknown',
-          receiverId: room.lastMessage.receiver.toString(),
-          receiverName: receiver?.username || 'Unknown',
-          content: room.lastMessage.content,
-          timestamp: room.lastMessage.timestamp.toISOString(),
-          status: 'read',
-          isEdited: room.lastMessage.isEdited,
-        },
-        unreadCount: 0,
-      };
-
-      const senderId = room.participants.find((p) => p.toString() !== userId)?.toString();
-      if (senderId) {
-        await sseManager.sendChatRoomUpdate(senderId, clientRoom);
-      }
-    }
+  mapChatRoomToClientChatRoom(room: ChatRoomType): ClientChatRoom {
+    return {
+      id: room._id.toString(),
+      participantIds: room.participants.map((p) => p.toString()),
+      messages: room.messages.map((msg) => ({
+        id: msg._id!.toString(),
+        senderId: msg.senderId.toString(),
+        senderName: 'Unknown', // Это поле нужно будет заполнить отдельно
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+        status: msg.status,
+        isEdited: msg.isEdited,
+      })),
+      lastMessage: room.lastMessage
+        ? {
+            id: room.lastMessage._id!.toString(),
+            senderId: room.lastMessage.senderId.toString(),
+            senderName: 'Unknown', // Это поле нужно будет заполнить отдельно
+            content: room.lastMessage.content,
+            timestamp: room.lastMessage.timestamp.toISOString(),
+            status: room.lastMessage.status,
+            isEdited: room.lastMessage.isEdited,
+          }
+        : null,
+      unreadCount: room.unreadCount,
+    };
   },
 };

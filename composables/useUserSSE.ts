@@ -1,13 +1,12 @@
+// composables/useUserSSE.ts
+
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useUserStore } from '~/store/user';
 import { useInvitationStore } from '~/store/invitation';
 import { useFriendsStore } from '~/store/friends';
 import { useChatStore } from '~/store/chat';
-interface UserSSEReturn {
-  closeSSE: () => void;
-}
 
-export function useUserSSE(): UserSSEReturn {
+export function useUserSSE() {
   const chatStore = useChatStore();
   const userStore = useUserStore();
   const friendsStore = useFriendsStore();
@@ -17,10 +16,13 @@ export function useUserSSE(): UserSSEReturn {
   const setupSSE = () => {
     eventSource.value = new EventSource('/api/sse/user-status');
 
-    eventSource.value.onopen = (event) => {};
+    eventSource.value.onopen = (event) => {
+      console.log('SSE connection opened:', event);
+    };
 
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log('SSE message received:', data);
 
       switch (data.type) {
         case 'status_update':
@@ -52,10 +54,11 @@ export function useUserSSE(): UserSSEReturn {
           }
           break;
         case 'chat_message':
-          chatStore.handleIncomingMessage(data.message);
+          console.log('Received chat message:', data.message);
+          chatStore.handleNewMessage(data.message);
           break;
         case 'chat_room_update':
-          chatStore.updateRoomWithLastMessage(data.room.id, data.room.lastMessage);
+          chatStore.handleRoomUpdate(data.room);
           break;
         default:
           console.log('Unhandled user event type:', data.type);
@@ -63,8 +66,9 @@ export function useUserSSE(): UserSSEReturn {
     };
 
     eventSource.value.onerror = (error) => {
+      console.error('SSE error:', error);
       closeSSE();
-      setTimeout(setupSSE, 20000);
+      setTimeout(setupSSE, 5000); // Попытка переподключения через 5 секунд
     };
   };
 

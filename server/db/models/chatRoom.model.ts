@@ -1,11 +1,20 @@
-// server/models/chatRoom.model.ts
+// server/db/models/chatRoom.model.ts
 
 import mongoose from 'mongoose';
-import type { ChatRoom } from '~/server/types/chat';
+import type { ChatRoom, ChatMessage } from '~/server/types/chat';
+
+const chatMessageSchema = new mongoose.Schema<ChatMessage>({
+  senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  content: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
+  isEdited: { type: Boolean, default: false },
+});
 
 const chatRoomSchema = new mongoose.Schema<ChatRoom>({
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  lastMessage: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatMessage' },
+  messages: [chatMessageSchema],
+  lastMessage: chatMessageSchema,
   unreadCount: { type: Number, default: 0 },
 });
 

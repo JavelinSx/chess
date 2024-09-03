@@ -6,7 +6,6 @@ import mongoose from 'mongoose';
 
 export default defineEventHandler(async (event) => {
   const roomId = event.context.params?.roomId;
-
   if (!roomId) {
     console.log('Room ID is missing in the request');
     return { data: null, error: 'Room ID is required' };
@@ -15,16 +14,9 @@ export default defineEventHandler(async (event) => {
   console.log(`Received request for messages in room: ${roomId}`);
 
   try {
-    let objectId: mongoose.Types.ObjectId;
-
-    try {
-      objectId = new mongoose.Types.ObjectId(roomId);
-    } catch (error) {
-      console.log(`Invalid Room ID format: ${roomId}`);
-      return { data: null, error: 'Invalid Room ID format' };
-    }
-
+    const objectId = new mongoose.Types.ObjectId(roomId);
     const room = await chatRoomModel.findById(objectId);
+
     if (!room) {
       console.log(`Chat room not found for ID: ${roomId}`);
       return { data: null, error: 'Chat room not found' };
@@ -43,9 +35,14 @@ export default defineEventHandler(async (event) => {
 
     return {
       data: messages.map((msg) => ({
-        ...msg.toObject(),
         id: msg._id.toString(),
-        _id: undefined,
+        roomId: room._id.toString(),
+        senderId: msg.sender.toString(),
+        receiverId: msg.receiver.toString(),
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+        status: msg.status,
+        isEdited: msg.isEdited,
       })),
       error: null,
     };

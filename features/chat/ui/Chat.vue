@@ -1,5 +1,5 @@
 <template>
-    <div class="fixed bottom-0 right-0 w-80 bg-white shadow-lg z-50">
+    <div v-if="currentRoom" class="fixed bottom-0 right-0 w-80 bg-white shadow-lg z-50">
         <div class="flex justify-between items-center p-3 bg-gray-100 border-b">
             <h3 class="font-semibold">Chat with {{ otherUserName }}</h3>
             <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="closeChat" />
@@ -37,7 +37,6 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useChatStore } from '~/store/chat'
 import { useUserStore } from '~/store/user'
 import { storeToRefs } from 'pinia'
-import type { ClientChatRoom } from '~/server/types/chat'
 
 const props = defineProps<{
     otherUserId: string
@@ -46,7 +45,7 @@ const props = defineProps<{
 const chatStore = useChatStore();
 const userStore = useUserStore();
 const { user } = storeToRefs(userStore);
-const { messages, currentRoomId, isLoading } = storeToRefs(chatStore);
+const { currentRoomId, isLoading } = storeToRefs(chatStore);
 
 const newMessage = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
@@ -54,34 +53,36 @@ const isSending = ref(false);
 
 const currentUserId = computed(() => user.value?._id || '');
 
-const currentRoom = computed(() =>
-    currentRoomId.value ? chatStore.chatRooms[currentRoomId.value] : null
-);
+const currentRoom = computed(() => chatStore.currentRoom);
 
 const otherUserName = computed(() => {
-    if (!currentRoom.value) return 'User';
+    if (!currentRoom.value) {
+        console.log('No current room');
+        return 'User';
+    }
+    console.log('Current room:', JSON.stringify(currentRoom.value, null, 2));
+    console.log('Current user ID:', currentUserId.value);
     const otherUserId = currentRoom.value.participantIds.find(id => id !== currentUserId.value);
-    const otherUser = userStore.getUserById(otherUserId!);
+    console.log('Other user ID:', otherUserId);
+    if (!otherUserId) {
+        console.log('Other user ID not found in participants');
+        return 'Unknown User';
+    }
+    const otherUser = userStore.getUserById(otherUserId);
+    console.log('Other user:', otherUser);
     return otherUser ? otherUser.username : 'Unknown User';
 });
 
-const currentMessages = computed(() => {
-    return messages.value[currentRoomId.value || ''] || [];
-});
+const currentMessages = computed(() => chatStore.currentMessages);
 
-onMounted(async () => {
-    try {
-        await chatStore.openChat(props.otherUserId);
-        scrollToBottom();
-    } catch (err) {
-        console.error('Error opening chat:', err);
-        // Здесь можно добавить обработку ошибки, например, показ уведомления
-    }
+onMounted(() => {
+    console.log('Chat component mounted, otherUserId:', props.otherUserId);
+    chatStore.openChat(props.otherUserId);
 });
 
 watch(currentMessages, () => {
     scrollToBottom();
-});
+}, { deep: true });
 
 async function sendMessage() {
     if (newMessage.value.trim()) {
@@ -91,7 +92,6 @@ async function sendMessage() {
             newMessage.value = '';
         } catch (err) {
             console.error('Error sending message:', err);
-            // Здесь можно добавить обработку ошибки
         } finally {
             isSending.value = false;
         }
@@ -107,8 +107,10 @@ function formatTimestamp(timestamp: string) {
 }
 
 function scrollToBottom() {
-    if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-    }
+    nextTick(() => {
+        if (messagesContainer.value) {
+            messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+        }
+    });
 }
 </script>

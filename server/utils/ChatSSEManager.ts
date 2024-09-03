@@ -1,4 +1,5 @@
 // server/utils/ChatSSEManager.ts
+
 import { H3Event } from 'h3';
 import type { ClientChatMessage, ClientChatRoom } from '../types/chat';
 
@@ -14,6 +15,7 @@ export class ChatSSEManager {
   }
 
   async sendChatMessage(userId: string, message: ClientChatMessage) {
+    console.log(`Sending chat message to user: ${userId}`, message);
     const event = this.chatConnections.get(userId);
     if (event) {
       await this.sendEvent(
@@ -23,10 +25,14 @@ export class ChatSSEManager {
           message,
         })
       );
+      console.log(`SSE sent successfully to user: ${userId}`);
+    } else {
+      console.log(`No active connection found for user: ${userId}`);
     }
   }
 
   async sendChatRoomUpdate(userId: string, room: ClientChatRoom) {
+    console.log(`Sending chat room update to user: ${userId}`, room);
     const event = this.chatConnections.get(userId);
     if (event) {
       await this.sendEvent(
@@ -36,6 +42,9 @@ export class ChatSSEManager {
           room,
         })
       );
+      console.log(`Chat room update SSE sent successfully to user: ${userId}`);
+    } else {
+      console.log(`No active connection found for user: ${userId}`);
     }
   }
 

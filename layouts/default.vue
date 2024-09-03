@@ -27,7 +27,7 @@
                 <p>&copy; {{ new Date().getFullYear() }} Chess App. All rights reserved.</p>
             </UContainer>
         </footer>
-        <Chat v-if="isChatOpen && currentChatUserId" :otherUserId="currentChatUserId" />
+        <Chat v-if="isChatOpen" :otherUserId="currentChatUserId!" />
         <UNotifications />
     </div>
 </template>
@@ -69,4 +69,12 @@ const logout = async () => {
     await userStore.updateUserStatus(false, false);
     await authStore.logout();
 };
+
+// Добавим watcher для отслеживания изменений isChatOpen
+watch(isChatOpen, (newValue) => {
+    console.log('isChatOpen changed:', newValue);
+});
+watch(currentChatUserId, (newValue) => {
+    console.log('currentChatUserId changed:', newValue);
+});
 </script>

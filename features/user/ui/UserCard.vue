@@ -75,7 +75,7 @@ function addFriend() {
 }
 
 async function startChat() {
-    console.log('startChat called');
+    console.log('startChat called with user:', props.user);
     try {
         await chatStore.openChat(props.user._id);
         console.log('Chat opened successfully');

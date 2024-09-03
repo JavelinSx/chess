@@ -11,11 +11,13 @@ export const chatApi = {
   },
 
   async createChatRoom(otherUserId: string) {
-    return apiRequest<ClientChatRoom>('/chat/rooms', 'POST', { otherUserId });
+    const response = await apiRequest<ClientChatRoom>('/chat/rooms', 'POST', { otherUserId });
+    console.log('Create chat room response:', response);
+    return response;
   },
 
-  async sendMessage(senderId: string, receiverId: string, content: string) {
-    return apiRequest<ClientChatMessage>('/chat/messages', 'POST', { senderId, receiverId, content });
+  async sendMessage(roomId: string, senderId: string, receiverId: string, content: string) {
+    return apiRequest<ClientChatMessage>('/chat/messages', 'POST', { roomId, senderId, receiverId, content });
   },
 
   async getMessages(roomId: string) {
