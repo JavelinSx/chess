@@ -36,6 +36,11 @@ export interface ChessGame {
   };
   isCheckmate: boolean;
   isStalemate: boolean;
+  pendingPromotion: {
+    from: [Number] | null;
+    to: [Number] | null;
+    promoteTo: string | null;
+  };
 }
 
 export function initializeGame(id: string, inviterId: string, inviteeId: string): ChessGame {
@@ -70,5 +75,10 @@ export function initializeGame(id: string, inviterId: string, inviteeId: string)
     },
     isCheckmate: false,
     isStalemate: false,
+    pendingPromotion: {
+      from: null,
+      to: null,
+      promoteTo: null,
+    },
   };
 }

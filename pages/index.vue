@@ -17,12 +17,13 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import { useChatSSE } from '#imports';
 import { useUserStore } from '~/store/user';
 import { useAuthStore } from '~/store/auth';
 import { useInvitationStore } from '~/store/invitation';
 import UserList from '~/features/user-list/UserList.vue';
 import GameInvitationModal from '~/features/invite-modal/GameInvitationModal.vue';
-
+useChatSSE()
 const invitationStore = useInvitationStore()
 const userStore = useUserStore();
 const authStore = useAuthStore();

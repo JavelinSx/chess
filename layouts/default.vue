@@ -22,6 +22,7 @@
             <UContainer class="py-8 max-w-[570px] md:max-w-[770px]">
                 <slot />
             </UContainer>
+            <FloatingChat />
         </main>
 
         <footer class="py-4 mt-auto">
@@ -37,6 +38,8 @@ import { useAuthStore } from '../store/auth';
 import { useUserStore } from '~/store/user';
 import { useGameStore } from '~/store/game';
 import { computed } from 'vue';
+import FloatingChat from '~/features/chat/ui/FloatingChat.vue';
+
 
 const authStore = useAuthStore();
 const userStore = useUserStore();

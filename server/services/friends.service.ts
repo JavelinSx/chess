@@ -144,7 +144,14 @@ export const friendsService = {
     }
     return user.friendRequests;
   },
+  async areFriends(userId1: string, userId2: string): Promise<boolean> {
+    const user = await User.findById(userId1);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
+    return user.friends.some((friendId) => friendId.toString() === userId2);
+  },
   async getFriends(userId: string): Promise<Friend[]> {
     const user = await User.findById(userId).populate<{ friends: IUser[] }>('friends', 'username isOnline isGame');
     if (!user) {

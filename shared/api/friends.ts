@@ -8,7 +8,7 @@ export const friendsApi = {
   },
 
   async sendFriendRequest(toUserId: string): Promise<ApiResponse<FriendRequestClient>> {
-    return apiRequest<FriendRequestClient>('/friends/request', 'POST', { toUserId });
+    return apiRequest<FriendRequestClient>('/friends/requests', 'POST', { toUserId });
   },
 
   async respondToFriendRequest(requestId: string, accept: boolean): Promise<ApiResponse<void>> {

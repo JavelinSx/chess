@@ -4,22 +4,41 @@ import { UserSSEManager } from './UserSSEManager';
 import { updateUserStatus } from '../services/user.service';
 import { InvitationSSEManager } from './InvitationSSEManager';
 import { GameSSEManager } from './GameSSEManager';
+import { ChatSSEManager } from './ChatSSEManager';
 import type { GameResult } from '../types/game';
 import type { ClientUser, IUser } from '~/server/types/user';
 import type { ChessGame } from '~/entities/game/model/game.model';
 import type { UserStatus } from './UserSSEManager';
 import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
-
+import type { ChatMessage, IChatRoom } from '../types/chat';
 export class SSEManager {
   private userManager: UserSSEManager;
   private invitationManager: InvitationSSEManager;
   private gameManager: GameSSEManager;
+  private chatManager: ChatSSEManager;
   private activeConnections: Set<string> = new Set();
 
   constructor() {
     this.userManager = new UserSSEManager();
     this.invitationManager = new InvitationSSEManager();
     this.gameManager = new GameSSEManager();
+    this.chatManager = new ChatSSEManager();
+  }
+
+  addChatConnection(userId: string, event: H3Event) {
+    this.chatManager.addChatConnection(userId, event);
+  }
+
+  removeChatConnection(userId: string) {
+    this.chatManager.removeChatConnection(userId);
+  }
+
+  async sendChatMessage(roomId: string, message: ChatMessage) {
+    await this.chatManager.sendChatMessage(roomId, message);
+  }
+
+  async sendChatRoomCreated(userId: string, room: IChatRoom) {
+    await this.chatManager.sendChatRoomCreated(userId, room);
   }
 
   addUserConnection(userId: string, event: H3Event) {

@@ -1,41 +1,40 @@
 <template>
-    <UCard class="w-full max-w-sm">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full">
-            <!-- User Info Section -->
-            <div class="flex items-center mb-4 sm:mb-0">
-                <UAvatar :src="getUserAvatar(user)" :alt="user.username" class="mr-4" />
+    <div class="bg-gray-800 rounded-lg p-4 flex flex-col h-full">
+        <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center">
+                <UAvatar :src="getUserAvatar(user)" :alt="user.username" class="mr-3" size="sm" />
                 <div>
-                    <p class="font-semibold">{{ user.username }}</p>
-                    <p class="text-sm text-gray-500">Rating: {{ user.rating }}</p>
-                    <p class="text-sm text-gray-500">Games played: {{ user.gamesPlayed }}</p>
-                    <p class="text-sm text-gray-500">Win rate: {{ calculateWinRate(user) }}%</p>
+                    <p class="font-semibold text-white">{{ user.username }}</p>
+                    <p class="text-xs text-gray-400">Rating: {{ user.rating }}</p>
                 </div>
             </div>
-
-            <!-- User Actions Section -->
-            <div class="flex flex-wrap gap-2 mt-2 sm:mt-0">
-                <UBadge :color="user.isOnline ? 'green' : 'gray'" class="w-20 flex justify-center">
-                    {{ user.isOnline ? 'Online' : 'Offline' }}
-                </UBadge>
-                <UBadge v-if="user.isGame" color="blue" class="w-20 flex justify-center">In Game</UBadge>
-                <UButton v-if="canInvite" @click="inviteToGame" color="violet" variant="soft"
-                    icon="i-heroicons-envelope">
-                    Invite
-                </UButton>
-                <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft"
-                    icon="i-heroicons-user-plus">
-                    Add Friend
-                </UButton>
-            </div>
+            <UBadge :color="user.isOnline ? 'green' : 'gray'" class="text-xs px-2 py-1">
+                {{ user.isOnline ? 'Online' : 'Offline' }}
+            </UBadge>
         </div>
-    </UCard>
+        <div class="text-xs text-gray-400 mb-2">
+            <p>Games: {{ user.gamesPlayed }}</p>
+            <p>Win rate: {{ calculateWinRate(user) }}%</p>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-auto">
+            <UButton v-if="canInvite" @click="inviteToGame" color="violet" variant="soft" icon="i-heroicons-envelope"
+                size="xs" class="flex-grow">
+                Invite
+            </UButton>
+            <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft" icon="i-heroicons-user-plus"
+                size="xs" class="flex-grow">
+                Add
+            </UButton>
+            <ChatButton :username="user.username" :user-id="user._id" class="flex-grow" />
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useInvitationStore } from '~/store/invitation';
 import { useFriendsStore } from '~/store/friends';
-
+import ChatButton from '~/features/chat/ui/ChatButton.vue';
 const invitationStore = useInvitationStore();
 const friendsStore = useFriendsStore();
 
@@ -69,3 +68,9 @@ function calculateWinRate(user: any) {
     return ((user.gamesWon / user.gamesPlayed) * 100).toFixed(1);
 }
 </script>
+
+<style scoped>
+.UButton {
+    @apply justify-center;
+}
+</style>

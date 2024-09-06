@@ -37,19 +37,15 @@ export function useUserSSE(): UserSSEReturn {
           navigateTo(`/game/${data.gameId}`);
           break;
         case 'friend_request':
-          console.log('Handling friend request:', data.request);
           friendsStore.handleFriendRequest(data.request);
           break;
         case 'friend_request_update':
-          console.log('Received friend request update:', data.request);
           friendsStore.handleFriendRequestUpdate(data.request);
           break;
         case 'friend_list_update':
-          console.log('Received friend list update:', data.friends);
           if (Array.isArray(data.friends) && data.friends.length > 0) {
             friendsStore.handleFriendListUpdate(data.friends);
           } else {
-            console.warn('Received empty or invalid friends list');
             friendsStore.fetchFriends();
           }
           break;
