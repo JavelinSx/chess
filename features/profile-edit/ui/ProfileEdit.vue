@@ -15,7 +15,7 @@
 
             <UButton type="submit" color="primary" class="mt-4">Update Profile</UButton>
         </UForm>
-
+        <ChangePassword />
         <template #footer>
             <UAlert v-if="error" color="red" :title="error" icon="i-heroicons-exclamation-circle" />
             <UAlert v-if="success" color="green" title="Profile updated successfully!"
@@ -69,6 +69,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useUserStore } from '~/store/user';
+import ChangePassword from './ChangePassword.vue';
 import type { ClientUser } from '~/server/types/user';
 
 const props = defineProps<{

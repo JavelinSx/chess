@@ -23,4 +23,14 @@ export const userApi = {
   ): Promise<ApiResponse<{ success: boolean }>> {
     return apiRequest<{ success: boolean }>('/user/update-status', 'POST', { userId, isOnline, isGame });
   },
+
+  async changePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return apiRequest<{ success: boolean; message: string }>('/user/change-password', 'POST', {
+      currentPassword,
+      newPassword,
+    });
+  },
 };

@@ -27,6 +27,7 @@ export const useFriendsStore = defineStore('friends', {
       this.isLoading = true;
       try {
         const response = await friendsApi.getFriends();
+        console.log(response.data);
         if (response.data) {
           const { friends, friendRequests } = response.data;
           console.log('friendRequests', friendRequests);

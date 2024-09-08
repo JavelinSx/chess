@@ -1,44 +1,49 @@
 <template>
-    <UCard>
-        <UAccordion :items="accordionItems" :ui="accordionUI">
-            <template #default="{ open, toggle }">
-                <UButton class="w-full flex justify-between items-center" color="gray" variant="ghost" @click="toggle">
-                    <span>Friends ({{ onlineFriendsCount }} online)</span>
-                    <UIcon :name="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" />
-                </UButton>
-            </template>
-            <template #item="{ item }">
-                <div v-if="friends.length > 0" class="space-y-4">
-                    <UCard v-for="friend in friends" :key="friend._id" class="pt-6 lg:w-60 relative">
-                        <div class="flex flex-col items-center justify-between gap-4 ">
-                            <UBadge :color="friend.isOnline ? 'green' : 'gray'" size="sm"
-                                class="absolute top-3 right-3">
-                                {{ friend.isOnline ? 'Online' : 'Offline' }}
-                            </UBadge>
-                            <div class="flex items-center space-x-4">
+
+    <UAccordion :items="accordionItems" :ui="accordionUI" class="mb-4">
+        <template #default="{ open, toggle }">
+            <UButton class="w-full flex justify-between items-center" color="gray" variant="ghost" @click="toggle">
+                <span>Friends ({{ onlineFriendsCount }} online)</span>
+                <UIcon :name="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" />
+            </UButton>
+        </template>
+        <template #item="{ item }">
+            <div v-if="friends.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+                <UCard v-for="friend in friends" :key="friend._id" class="  relative">
+                    <div class="flex flex-col items-center justify-between gap-4 relative">
+
+
+                        <div class="flex items-center space-x-4 w-full justify-between">
+                            <div class="flex items-center gap-3">
                                 <UAvatar :src="getUserAvatar(friend._id)" :alt="getUserUsername(friend._id)" />
-
-                                <p class="font-semibold">{{ getUserUsername(friend._id) }}</p>
-
+                                <p class="font-semibold text-lg">{{ getUserUsername(friend._id) }}</p>
                             </div>
-                            <div class="flex space-x-2">
-
-                                <UButton v-if="canInvite(friend)" @click="inviteToGame(friend._id)" color="violet"
-                                    variant="soft" icon="i-heroicons-envelope">
-                                    Invite
-                                </UButton>
+                            <div class="flex items-center gap-3">
+                                <UBadge :color="friend.isOnline ? 'green' : 'gray'" size="sm">
+                                    {{ friend.isOnline ? 'Online' : 'Offline' }}
+                                </UBadge>
                                 <UButton color="red" variant="soft" icon="i-heroicons-user-minus"
                                     @click="removeFriend(friend._id)">
-                                    Remove
+
                                 </UButton>
                             </div>
                         </div>
-                    </UCard>
-                </div>
-                <p v-else class="text-center text-gray-500">You have no friends yet.</p>
-            </template>
-        </UAccordion>
-    </UCard>
+                        <div class="grid grid-cols-2  gap-4 w-full">
+
+                            <UButton :disabled="!canInvite(friend)" @click="inviteToGame(friend._id)" color="violet"
+                                variant="soft" icon="i-heroicons-envelope">
+                                Invite
+                            </UButton>
+
+                            <ChatButton :username="friend.username" :user-id="friend._id" class="flex-grow" />
+                        </div>
+                    </div>
+                </UCard>
+            </div>
+            <p v-else class="text-center text-gray-500">You have no friends yet.</p>
+        </template>
+    </UAccordion>
+
 </template>
 
 <script setup lang="ts">
@@ -47,6 +52,7 @@ import { useFriendsStore } from '~/store/friends';
 import { useUserStore } from '~/store/user';
 import { useInvitationStore } from '~/store/invitation';
 import { storeToRefs } from 'pinia';
+import ChatButton from '~/features/chat/ui/ChatButton.vue';
 
 const friendsStore = useFriendsStore();
 const userStore = useUserStore();

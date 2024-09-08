@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import { comparePassword, hashPassword } from '~/server/utils/auth';
 import type { IUser, IUserMethods } from '~/server/types/user';
 
 const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMethods>>({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true, select: false }, // password не будет включен в результаты запросов по умолчанию
+  password: { type: String, required: true, select: false },
   rating: { type: Number, default: 1200 },
   gamesPlayed: { type: Number, default: 0 },
   gamesWon: { type: Number, default: 0 },
@@ -29,17 +29,13 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
 
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
-    this.password = await bcrypt.hash(this.password, 10);
+    this.password = await hashPassword(this.password);
   }
   next();
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
-  const user = await this.model('User').findById(this._id).select('+password');
-  if (!user) {
-    throw new Error('User not found');
-  }
-  return bcrypt.compare(candidatePassword, user.password);
+  return comparePassword(candidatePassword, this.password);
 };
 
 const User = mongoose.model<IUser, mongoose.Model<IUser, {}, IUserMethods>>('User', userSchema);

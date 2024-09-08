@@ -9,17 +9,9 @@
                 <p class="text-center">Waiting for opponent to join...</p>
             </UCard>
             <template v-else>
-                <UCard class="mb-4">
-                    <p>Current turn: {{ gameStore.currentGame.currentTurn }}</p>
-                </UCard>
                 <chess-board :game="gameStore.currentGame" :board="gameStore.currentGame.board"
                     :current-turn="gameStore.currentGame.currentTurn" @move="makeMove" class="mb-4" />
-                <UCard>
-                    <p>Your color: {{ playerColor }}</p>
-                    <p v-if="gameStore.currentGame.status === 'completed'">
-                        Game over! Winner: {{ gameStore.currentGame.winner || 'Draw' }}
-                    </p>
-                </UCard>
+
                 <captured-pieces :captured-pieces="gameStore.currentGame.capturedPieces" />
             </template>
         </template>
@@ -52,17 +44,6 @@ onMounted(async () => {
         console.error('Error fetching game:', error);
         errorMessage.value = 'Failed to load the game. Please try again.';
     }
-});
-
-const playerColor = computed(() => {
-    if (gameStore.currentGame) {
-        if (gameStore.currentGame.players.white === userStore._id) {
-            return 'White';
-        } else if (gameStore.currentGame.players.black === userStore._id) {
-            return 'Black';
-        }
-    }
-    return 'Unknown';
 });
 
 async function makeMove(from: [number, number], to: [number, number]) {

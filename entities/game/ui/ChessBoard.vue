@@ -3,6 +3,18 @@
         <template #header>
             <h3 class="text-lg font-semibold">Chess Board</h3>
         </template>
+        <UCard :ui="cardStyle" class="mb-4">
+            <template #header>
+                <p class="text-sm">Current turn: {{ gameStore?.currentGame?.currentTurn }}</p>
+            </template>
+            <template #footer>
+                <p class="text-sm">Your color: {{ playerColor }}</p>
+                <p class="text-sm" v-if="gameStore?.currentGame?.status === 'completed'">
+                    Game over! Winner: {{ gameStore.currentGame.winner || 'Draw' }}
+                </p>
+            </template>
+        </UCard>
+
         <div class="chess-board">
             <div class="board-vertical-labels">
                 <div v-for="row in 8" :key="row" class="cell flex items-start">
@@ -52,6 +64,15 @@ import { useUserStore } from '~/store/user';
 import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
 
+const cardStyle = ref({
+    header: {
+        padding: 'p-2' // Измененный padding
+    },
+    footer: {
+        padding: 'p-2' // Измененный padding
+    },
+});
+
 const props = defineProps<{
     game: ChessGame;
     board: ChessBoard;
@@ -61,7 +82,16 @@ const props = defineProps<{
 const emit = defineEmits<{
     (e: 'move', from: Position, to: Position): void;
 }>();
-
+const playerColor = computed(() => {
+    if (gameStore.currentGame) {
+        if (gameStore.currentGame.players.white === userStore._id) {
+            return 'White';
+        } else if (gameStore.currentGame.players.black === userStore._id) {
+            return 'Black';
+        }
+    }
+    return 'Unknown';
+});
 const userStore = useUserStore()
 const gameStore = useGameStore();
 const selectedCell = ref<Position | null>(null);
@@ -150,7 +180,7 @@ onUnmounted(() => {
 }
 
 .chess-board {
-    @apply p-2;
+
     display: grid;
     grid-template-areas:
         ". h h h h h"

@@ -30,6 +30,22 @@ export const useUserStore = defineStore('user', {
     setUser(user: ClientUser) {
       this.user = user;
     },
+    async changePassword(currentPassword: string, newPassword: string) {
+      try {
+        const response = await userApi.changePassword(currentPassword, newPassword);
+        if (response.data) {
+          // Предполагаем, что сервер возвращает { message: string } в случае успеха
+          return { success: true, message: response.data.message };
+        } else if (response.error) {
+          throw new Error(response.error);
+        } else {
+          throw new Error('Unexpected response structure');
+        }
+      } catch (error) {
+        console.error('Error changing password:', error);
+        throw error;
+      }
+    },
     async getUser(id: string) {
       try {
         const response = await userApi.profileGet(id);
