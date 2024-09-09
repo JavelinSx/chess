@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const decoded = jwt.verify(token, config.private.jwtSecret);
+    const decoded = jwt.verify(token, config.jwtSecret);
     // Добавляем информацию о пользователе в контекст события
     event.context.auth = decoded;
   } catch (error) {
