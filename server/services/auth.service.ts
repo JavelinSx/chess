@@ -1,6 +1,12 @@
 import type { AuthData, ApiResponse } from '~/server/types/auth';
 import User from '~/server/db/models/user.model.js';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+console.log('Environment variables:');
+console.log('JWT_SECRET:', process.env.JWT_SECRET);
+console.log('MONGODB_URI:', process.env.MONGODB_URI);
+console.log('API_BASE:', process.env.API_BASE);
 export const registerUser = async (
   username: string,
   email: string,
@@ -10,6 +16,7 @@ export const registerUser = async (
     const user = new User({ username, email, password });
     await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();
+
     console.log(process.env.JWT_SECRET);
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' });
     return { data: { user: user.toObject(), token }, error: null };
