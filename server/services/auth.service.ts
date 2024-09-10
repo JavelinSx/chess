@@ -7,9 +7,10 @@ export const registerUser = async (
   password: string
 ): Promise<ApiResponse<AuthData>> => {
   try {
-    const user = new User({ username, email, password, isOnline: true });
+    const user = new User({ username, email, password });
     await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();
+    console.log(process.env.JWT_SECRET);
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' });
     return { data: { user: user.toObject(), token }, error: null };
   } catch (error) {

@@ -33,7 +33,7 @@ export interface IUser extends Document {
   isGame: boolean;
   winRate: number;
   currentGameId?: string;
-  friends: mongoose.Types.ObjectId[];
+  friends: mongoose.Types.ObjectId[] | string[];
   friendRequests: FriendRequest[];
 }
 
