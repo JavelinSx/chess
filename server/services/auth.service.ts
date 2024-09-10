@@ -1,22 +1,19 @@
 import type { AuthData, ApiResponse } from '~/server/types/auth';
 import User from '~/server/db/models/user.model.js';
 import jwt from 'jsonwebtoken';
-console.log('Environment variables:');
-console.log('JWT_SECRET:', process.env.JWT_SECRET);
-console.log('MONGODB_URI:', process.env.MONGODB_URI);
-console.log('API_BASE:', process.env.API_BASE);
+
 export const registerUser = async (
   username: string,
   email: string,
   password: string
 ): Promise<ApiResponse<AuthData>> => {
   try {
+    const config = useRuntimeConfig();
     const user = new User({ username, email, password });
     await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();
 
-    console.log(process.env.JWT_SECRET);
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '1d' });
+    const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: '1d' });
     return { data: { user: user.toObject(), token }, error: null };
   } catch (error) {
     return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
@@ -24,18 +21,34 @@ export const registerUser = async (
 };
 
 export const loginUser = async (email: string, password: string): Promise<ApiResponse<AuthData>> => {
+  const config = useRuntimeConfig();
+
   try {
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password))) {
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
       return { data: null, error: 'Invalid email or password' };
     }
+
+    const isPasswordValid = await user.comparePassword(password);
+
+    if (!isPasswordValid) {
+      return { data: null, error: 'Invalid email or password' };
+    }
+
     user.isOnline = true;
+
     await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
     await user.save();
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET!, { expiresIn: '30d' });
+
+    const token = jwt.sign({ userId: user._id.toString() }, config.jwtSecret, { expiresIn: '30d' });
+
     return { data: { user: user.toObject(), token }, error: null };
   } catch (error) {
-    return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    return {
+      data: null,
+      error: error instanceof Error ? `Error in loginUser: ${error.message}` : 'An unknown error occurred in loginUser',
+    };
   }
 };
 
