@@ -2,10 +2,8 @@ import { defineEventHandler, readBody, createError } from 'h3';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
 import { getGameFromDatabase, saveGameToDatabase } from '~/server/services/game.service';
 import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
-import { useRuntimeConfig } from '#app';
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig();
   console.log('Starting move handler');
 
   try {
