@@ -7,7 +7,7 @@
                 <UIcon :name="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" />
             </UButton>
         </template>
-        <template #content>
+        <template #item>
             <div v-if="receivedRequests.length > 0" class="space-y-4">
                 <UCard v-for="request in receivedRequests" :key="request._id" class="p-4">
                     <div class="flex items-center justify-between">
