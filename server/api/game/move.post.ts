@@ -2,41 +2,71 @@ import { defineEventHandler, readBody, createError } from 'h3';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
 import { getGameFromDatabase, saveGameToDatabase } from '~/server/services/game.service';
 import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
+import { useRuntimeConfig } from '#app';
 
 export default defineEventHandler(async (event) => {
-  const { gameId, from, to, promoteTo } = await readBody(event);
-  const userId = event.context.auth?.userId;
-
-  if (!userId) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
-  }
+  const config = useRuntimeConfig();
+  console.log('Starting move handler');
 
   try {
-    let game = await getGameFromDatabase(gameId);
-    if (!game) throw new Error('Game not found');
+    const { gameId, from, to, promoteTo } = await readBody(event);
+    console.log('Received move request:', { gameId, from, to, promoteTo });
 
-    if (
-      (game.currentTurn === 'white' && game.players.white !== userId) ||
-      (game.currentTurn === 'black' && game.players.black !== userId)
-    ) {
-      throw new Error('Not your turn');
+    const userId = event.context.auth?.userId;
+    console.log('User ID from context:', userId);
+
+    if (!userId) {
+      console.log('User not authenticated');
+      throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
+    }
+
+    let game = await getGameFromDatabase(gameId);
+    console.log('Retrieved game from database:', JSON.stringify(game));
+
+    if (!game) {
+      console.log('Game not found');
+      throw new Error('Game not found');
+    }
+
+    console.log('Current turn:', game.currentTurn);
+    console.log('White player:', game.players.white);
+    console.log('Black player:', game.players.black);
+
+    const isWhiteTurn = game.currentTurn === 'white';
+    const isPlayersTurn =
+      (isWhiteTurn && game.players.white === userId) || (!isWhiteTurn && game.players.black === userId);
+
+    console.log('Is white turn:', isWhiteTurn);
+    console.log("Is player's turn:", isPlayersTurn);
+
+    if (!isPlayersTurn) {
+      console.log("Not player's turn");
+      throw createError({ statusCode: 400, statusMessage: 'Not your turn' });
     }
 
     if (promoteTo) {
-      // Если это ход с продвижением пешки
+      console.log('Promoting pawn');
       game = promotePawn(game, from, to, promoteTo);
     } else {
-      // Обычный ход
+      console.log('Performing regular move');
       game = performMove(game, from, to);
     }
+
+    console.log('Updated game state:', JSON.stringify(game));
+
     await saveGameToDatabase(game);
+    console.log('Game saved to database');
 
     // Отправляем обновление игры через SSE
     await sseManager.broadcastGameUpdate(gameId, game);
-  } catch (error) {
+    console.log('Game update broadcasted');
+
+    return { success: true, game };
+  } catch (error: any) {
+    console.error('Error in move handler:', error);
     throw createError({
-      statusCode: 400,
-      statusMessage: error instanceof Error ? error.message : 'Failed to make move',
+      statusCode: error.statusCode || 400,
+      statusMessage: error.statusMessage || error.message || 'Failed to make move',
     });
   }
 });

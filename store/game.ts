@@ -40,20 +40,21 @@ export const useGameStore = defineStore('game', {
     async makeMove(from: Position, to: Position) {
       if (!this.currentGame) throw new Error('No active game');
 
-      if (this.isPawnPromotion(from, to)) {
-        this.pendingPromotion = { from, to };
-        this.promote = true;
-        return;
-      }
+      console.log('Making move:', { from, to });
 
       try {
         const response = await gameApi.makeMove(this.currentGame.id, from, to);
+        console.log('Move API response:', response);
+
         if (response.data) {
           this.currentGame = response.data;
+          console.log('Game state updated:', this.currentGame);
         } else if (response.error) {
+          console.error('Error making move:', response.error);
           this.error = response.error;
         }
       } catch (error) {
+        console.error('Failed to make move:', error);
         this.error = 'Failed to make move';
       }
     },

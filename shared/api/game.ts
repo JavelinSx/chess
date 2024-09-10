@@ -15,8 +15,11 @@ export const gameApi = {
     return apiRequest<ChessGame>(`/game/${gameId}`, 'GET');
   },
 
-  makeMove(gameId: string, from: Position, to: Position, promoteTo?: PieceType): Promise<ApiResponse<ChessGame>> {
-    return apiRequest<ChessGame>('/game/move', 'POST', { gameId, from, to, promoteTo });
+  async makeMove(gameId: string, from: Position, to: Position, promoteTo?: PieceType): Promise<ApiResponse<ChessGame>> {
+    console.log('Sending move request:', { gameId, from, to, promoteTo });
+    const response = await apiRequest<ChessGame>('/game/move', 'POST', { gameId, from, to, promoteTo });
+    console.log('Received move response:', response);
+    return response;
   },
 
   async forcedEndGame(gameId: string): Promise<ApiResponse<{ message: string }>> {

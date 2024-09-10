@@ -33,7 +33,7 @@ export interface IUser extends Document {
   isGame: boolean;
   winRate: number;
   currentGameId?: string;
-  friends: mongoose.Types.ObjectId[] | string[];
+  friends: Friend[];
   friendRequests: FriendRequest[];
 }
 
@@ -54,7 +54,7 @@ export interface ClientUser {
   isOnline: boolean;
   isGame: boolean;
   winRate: number;
-  friends: string[] | Friend[];
+  friends: Friend[];
   currentGameId?: string;
 }
 
