@@ -1,8 +1,6 @@
 import type { AuthData, ApiResponse } from '~/server/types/auth';
 import User from '~/server/db/models/user.model.js';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-dotenv.config();
 console.log('Environment variables:');
 console.log('JWT_SECRET:', process.env.JWT_SECRET);
 console.log('MONGODB_URI:', process.env.MONGODB_URI);
