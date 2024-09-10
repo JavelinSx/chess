@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
     await sseManager.broadcastGameUpdate(gameId, game);
     console.log('Game update broadcasted');
 
-    return { success: true, game };
+    return { data: game, error: null };
   } catch (error: any) {
     console.error('Error in move handler:', error);
     throw createError({
