@@ -1,3 +1,4 @@
+import svgLoader from 'vite-svg-loader';
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui'],
   css: ['~/app/styles/global.css'],
@@ -38,6 +39,7 @@ export default defineNuxtConfig({
     define: {
       'process.env.DEBUG': JSON.stringify(process.env.DEBUG),
     },
+    plugins: [svgLoader()],
   },
 
   typescript: {

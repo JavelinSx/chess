@@ -2,7 +2,7 @@
     <div class="min-h-screen flex flex-col">
         <UContainer>
             <nav class="py-4 flex items-center justify-between">
-                <NuxtLink to="/" class="text-base font-bold mr-4 sm:text-lg">Chess App</NuxtLink>
+                <NuxtLink to="/" class="text-base font-bold mr-4 text-center sm:text-lg">Chess App</NuxtLink>
                 <div class="flex items-center space-x-4">
                     <UButton v-for="link in navLinks" :key="link.to" :to="link.to" color="gray" variant="ghost">
                         {{ link.label }}
@@ -12,6 +12,7 @@
                         Logout
                     </UButton>
                 </div>
+                <ToggleTheme class="ml-4" />
             </nav>
         </UContainer>
         <UButton v-if="isAuthenticated && activeGameId" :to="`/game/${activeGameId}`" color="primary" variant="soft"
@@ -26,7 +27,7 @@
         </main>
 
         <footer class="py-4 mt-auto">
-            <UContainer class="text-center text-gray-600">
+            <UContainer class="text-center">
                 <p>&copy; {{ new Date().getFullYear() }} Chess App. All rights reserved.</p>
             </UContainer>
         </footer>
@@ -39,7 +40,7 @@ import { useUserStore } from '~/store/user';
 import { useGameStore } from '~/store/game';
 import { computed } from 'vue';
 import FloatingChat from '~/features/chat/ui/FloatingChat.vue';
-
+import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'
 
 const authStore = useAuthStore();
 const userStore = useUserStore();

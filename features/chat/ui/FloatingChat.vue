@@ -1,10 +1,11 @@
 <template>
-    <div v-if="chatStore.isOpen" class="fixed bottom-4 right-4 w-80 h-96 bg-white shadow-lg rounded-lg flex flex-col">
-        <div class="p-4 bg-gray-500 rounded-t-lg flex justify-between items-center">
-            <h2 class="text-lg font-semibold">{{ chatTitle }}</h2>
+    <div v-if="chatStore.isOpen" class="fixed bottom-4 right-4 w-80 h-96 shadow-lg rounded-lg flex flex-col">
+        <div class="p-4 rounded-t-lg flex justify-between items-center">
+            <h2 class="text-lg font-semibold ">{{ chatTitle }}</h2>
             <UButton icon="i-heroicons-arrow-left" v-if="chatStore.activeRoomId" @click="backToRoomList" color="gray"
-                variant="ghost" />
-            <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="chatStore.closeChat" />
+                variant="ghost" class="hover" />
+            <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="chatStore.closeChat"
+                class="hover" />
         </div>
         <div class="flex-grow overflow-hidden">
             <ChatRoomList v-if="!chatStore.activeRoomId" />

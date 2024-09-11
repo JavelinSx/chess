@@ -113,7 +113,6 @@ const isCurrentPlayerTurn = computed(() => {
 
 const handlePromotion = (promoteTo: PieceType) => {
     if (isCurrentPlayerTurn.value) {
-        console.log('Handling promotion:', promoteTo);
         gameStore.promotePawn(promoteTo);
     }
 };

@@ -1,9 +1,9 @@
 <template>
     <UAccordion :items="accordionItems" class="mt-4">
         <template #default="{ item, open, toggle }">
-            <div class="border border-gray-200 rounded-md overflow-hidden mb-4">
+            <div class="border border-skin-border rounded-md overflow-hidden mb-4">
                 <button @click="toggle"
-                    class="w-full flex justify-between items-center p-4  transition-all duration-200">
+                    class="w-full flex justify-between items-center p-4 transition-all duration-200 ">
                     <span class="font-semibold">{{ item.label }}</span>
                     <UIcon :name="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
                         class="transform transition-transform duration-200" :class="{ 'rotate-180': open }" />

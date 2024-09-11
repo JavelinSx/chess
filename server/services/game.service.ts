@@ -32,16 +32,12 @@ export async function createGame(inviterId: string, inviteeId: string): Promise<
 }
 
 export async function getGameFromDatabase(gameId: string): Promise<ChessGame | null> {
-  console.log('Getting game from database, ID:', gameId);
   const game = await Game.findOne({ id: gameId });
-  console.log('Retrieved game:', game ? JSON.stringify(game) : 'null');
   return game ? game.toObject() : null;
 }
 
 export async function saveGameToDatabase(game: ChessGame): Promise<void> {
-  console.log('Saving game to database, ID:', game.id);
   await Game.findOneAndUpdate({ id: game.id }, game, { new: true });
-  console.log('Game saved successfully');
 }
 
 export async function updateGameStatus(gameId: string, status: 'waiting' | 'active' | 'completed'): Promise<void> {

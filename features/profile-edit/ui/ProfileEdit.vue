@@ -1,7 +1,7 @@
 <template>
     <UCard class="max-w-2xl mx-auto">
         <template #header>
-            <h2 class="text-2xl font-bold">Edit Profile</h2>
+            <h2 class="text-2xl font-bold ">Edit Profile</h2>
         </template>
 
         <UForm :state="profile" @submit="updateProfile">
@@ -25,43 +25,43 @@
 
     <UCard class="max-w-2xl mx-auto mt-8">
         <template #header>
-            <h2 class="text-2xl font-bold">User Statistics</h2>
+            <h2 class="text-2xl font-bold ">User Statistics</h2>
         </template>
 
         <UDivider class="mb-2" />
 
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <h3 class="font-semibold">Games Played:</h3>
+                <h3 class="font-semibold ">Games Played:</h3>
                 <p>{{ user.gamesPlayed }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">Win Rate:</h3>
+                <h3 class="font-semibold ">Win Rate:</h3>
                 <p>{{ winRate }}%</p>
             </div>
             <div>
-                <h3 class="font-semibold">Games Won:</h3>
-                <p>{{ user.gamesWon }}</p>
+                <h3 class="font-semibold ">Games Won:</h3>
+                <p class="">{{ user.gamesWon }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">Games Lost:</h3>
-                <p>{{ user.gamesLost }}</p>
+                <h3 class="font-semibold ">Games Lost:</h3>
+                <p class="">{{ user.gamesLost }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">Games Drawn:</h3>
-                <p>{{ user.gamesDraw }}</p>
+                <h3 class="font-semibold ">Games Drawn:</h3>
+                <p class="">{{ user.gamesDraw }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">Rating:</h3>
-                <p>{{ user.rating }}</p>
+                <h3 class="font-semibold ">Rating:</h3>
+                <p class="">{{ user.rating }}</p>
             </div>
         </div>
 
         <UDivider class="mb-2 mt-2" />
 
         <div>
-            <h3 class="font-semibold">Last Login:</h3>
-            <p>{{ formattedLastLogin }}</p>
+            <h3 class="font-semibold ">Last Login:</h3>
+            <p class="">{{ formattedLastLogin }}</p>
         </div>
     </UCard>
 </template>

@@ -1,18 +1,18 @@
 <template>
-    <div class="bg-gray-800 rounded-lg p-4 flex flex-col h-full">
+    <div class="rounded-lg p-4 flex flex-col h-full">
         <div class="flex items-start justify-between mb-2">
             <div class="flex items-center">
                 <UAvatar :src="getUserAvatar(user)" :alt="user.username" class="mr-3" size="sm" />
                 <div>
-                    <p class="font-semibold text-white">{{ user.username }}</p>
-                    <p class="text-xs text-gray-400">Rating: {{ user.rating }}</p>
+                    <p class="font-semibold ">{{ user.username }}</p>
+                    <p class="text-xs">Rating: {{ user.rating }}</p>
                 </div>
             </div>
             <UBadge :color="user.isOnline ? 'green' : 'gray'" class="text-xs px-2 py-1">
                 {{ user.isOnline ? 'Online' : 'Offline' }}
             </UBadge>
         </div>
-        <div class="text-xs text-gray-400 mb-2">
+        <div class="text-xs mb-2">
             <p>Games: {{ user.gamesPlayed }}</p>
             <p>Win rate: {{ calculateWinRate(user) }}%</p>
         </div>

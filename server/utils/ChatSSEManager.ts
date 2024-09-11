@@ -5,7 +5,6 @@ export class ChatSSEManager {
   private chatConnections: Map<string, H3Event> = new Map();
 
   addChatConnection(userId: string, event: H3Event) {
-    console.log(`Adding chat connection for user ${userId}`);
     this.chatConnections.set(userId, event);
     this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
   }
@@ -15,7 +14,6 @@ export class ChatSSEManager {
   }
 
   async sendChatMessage(roomId: string, message: ChatMessage) {
-    console.log(`Sending chat message for room ${roomId}:`, message);
     const event = JSON.stringify({
       type: 'new_message',
       data: {
@@ -23,14 +21,12 @@ export class ChatSSEManager {
         message,
       },
     });
-    console.log(this.chatConnections);
     for (const [userId, connection] of this.chatConnections.entries()) {
       await this.sendEvent(connection, event);
     }
   }
 
   async sendChatRoomCreated(userId: string, room: IChatRoom) {
-    console.log(`Sending chat room created for user ${userId}:`, room);
     const event = this.chatConnections.get(userId);
     if (event) {
       await this.sendEvent(

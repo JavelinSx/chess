@@ -1,14 +1,14 @@
 <!-- features/chat/ui/ChatRoomList.vue -->
 <template>
-    <div class="h-full overflow-y-auto p-4">
+    <div class="h-full overflow-y-auto p-4 ">
         <ul>
             <li v-for="room in chatStore.sortedRooms" :key="room._id.toString()" @click="openRoom(room._id.toString())"
-                class="cursor-pointer text-blue-400 hover:bg-gray-100 p-2 rounded">
+                class="cursor-pointer p-2 rounded">
                 <div class="flex items-center">
                     <UAvatar :src="getOtherUserAvatar(room)" :alt="getOtherUsername(room)" class="mr-2" />
                     <div>
                         <p class="font-semibold">{{ getOtherUsername(room) }}</p>
-                        <p class="text-sm text-gray-500">{{ getLastMessage(room) }}</p>
+                        <p class="text-sm">{{ getLastMessage(room) }}</p>
                     </div>
                 </div>
             </li>

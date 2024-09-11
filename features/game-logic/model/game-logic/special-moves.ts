@@ -86,22 +86,15 @@ export function performCastling(board: ChessBoard, from: Position, to: Position)
 }
 
 export function promotePawn(game: ChessGame, from: Position, to: Position, promoteTo: PieceType): ChessGame {
-  console.log('promotePawn called with:', { from, to, promoteTo });
-  console.log('Initial board state:', JSON.stringify(game.board, null, 2));
-
   const newBoard = JSON.parse(JSON.stringify(game.board));
   const [fromRow, fromCol] = from;
   const [toRow, toCol] = to;
   const pawn = newBoard[fromRow][fromCol];
 
-  console.log('Pawn to be promoted:', pawn);
-
   if (pawn && pawn.type === 'pawn' && (toRow === 0 || toRow === 7)) {
     const newPiece: ChessPiece = { type: promoteTo, color: pawn.color };
     newBoard[toRow][toCol] = newPiece;
     newBoard[fromRow][fromCol] = null;
-    console.log('New piece:', newBoard[toRow][toCol]);
-    console.log('Updated board state:', JSON.stringify(newBoard, null, 2));
 
     const newTurn: PieceColor = game.currentTurn === 'white' ? 'black' : 'white';
 
@@ -113,11 +106,8 @@ export function promotePawn(game: ChessGame, from: Position, to: Position, promo
       halfMoveClock: 0,
     };
 
-    console.log('Final updated game:', JSON.stringify(updatedGame, null, 2));
-
     return updatedGame;
   } else {
-    console.log('Promotion not allowed or no pawn found');
     return game;
   }
 }

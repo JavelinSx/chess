@@ -39,6 +39,7 @@
     "playwright-core": "^1.45.3",
     "sass": "^1.77.6",
     "typescript": "^5.4.5",
+    "vite-svg-loader": "^5.1.0",
     "vitest": "^2.0.4",
     "vue-tsc": "^1"
   }

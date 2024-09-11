@@ -23,17 +23,13 @@ export const useFriendsStore = defineStore('friends', {
 
   actions: {
     async fetchFriends() {
-      console.log('Fetching friends...');
       this.isLoading = true;
       try {
         const response = await friendsApi.getFriends();
-        console.log(response.data);
         if (response.data) {
           const { friends, friendRequests } = response.data;
-          console.log('friendRequests', friendRequests);
           this.friends = friends;
           this.friendRequests = friendRequests;
-          console.log('Friends list updated:', this.friends);
         } else if (response.error) {
           console.error('Error fetching friends:', response.error);
           this.error = response.error;
@@ -108,10 +104,8 @@ export const useFriendsStore = defineStore('friends', {
       this.isLoading = true;
       try {
         const response = await friendsApi.removeFriend(friendId);
-        console.log('Remove friend response:', response); // Добавим для отладки
 
         if (response.data && response.data.success) {
-          console.log('Friend removed successfully, updating friends list');
           // Немедленно удаляем друга из локального списка
           this.friends = this.friends.filter((friend) => friend._id !== friendId);
           // Запрашиваем обновленный список друзей с сервера
@@ -138,13 +132,10 @@ export const useFriendsStore = defineStore('friends', {
     },
 
     handleFriendRequestsUpdate(updatedRequests: FriendRequestClient[]) {
-      console.log('Updating friend requests in store:', updatedRequests);
       this.friendRequests = updatedRequests;
     },
 
     handleFriendRequestUpdate(updatedRequest: FriendRequestClient) {
-      console.log('Handling friend request update:', updatedRequest);
-
       const updateRequest = (list: FriendRequestClient[]) => {
         if (!Array.isArray(list)) {
           console.error('Expected an array, but received:', list);
@@ -175,7 +166,6 @@ export const useFriendsStore = defineStore('friends', {
     },
 
     handleFriendListUpdate(updatedFriends: Friend[]) {
-      console.log('Updating friends list in store:', updatedFriends);
       if (Array.isArray(updatedFriends) && updatedFriends.length > 0) {
         this.friends = updatedFriends;
       } else {

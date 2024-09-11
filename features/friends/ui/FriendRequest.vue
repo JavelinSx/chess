@@ -1,5 +1,4 @@
 <template>
-
     <UAccordion v-if="receivedRequests.length > 0" :items="accordionItem" class="mb-4">
         <template #default="{ open, toggle }">
             <UButton class="w-full flex justify-between items-center" color="gray" variant="ghost" @click="toggle">
@@ -9,11 +8,12 @@
         </template>
         <template #item>
             <div v-if="receivedRequests.length > 0" class="space-y-4">
-                <UCard v-for="request in receivedRequests" :key="request._id" class="p-4">
-                    <div class="flex items-center justify-between">
+                <UCard v-for="request in receivedRequests" :key="request._id" class="p-4 ">
+                    <div class="flex flex-col gap-4 items-center justify-between">
                         <div class="flex items-center space-x-4">
                             <UAvatar :src="getUserAvatar(request.from)" :alt="getUserUsername(request.from)" />
-                            <p class="font-semibold">{{ getUserUsername(request.from) }} wants to be your friend</p>
+                            <p class="font-semibold">{{ getUserUsername(request.from) }} wants to be
+                                your friend</p>
                         </div>
                         <div class="flex space-x-2">
                             <UButton color="green" variant="soft" icon="i-heroicons-check"
@@ -28,10 +28,9 @@
                     </div>
                 </UCard>
             </div>
-            <p v-else class="text-center text-gray-500">No pending friend requests.</p>
+            <p v-else class="text-center">No pending friend requests.</p>
         </template>
     </UAccordion>
-
 </template>
 
 <script setup lang="ts">

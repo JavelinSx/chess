@@ -1,7 +1,7 @@
 <template>
     <UContainer class="py-8">
         <h1 class="text-3xl font-bold mb-6 text-center">Chess Game</h1>
-        <UCard v-if="errorMessage" color="red" class="mb-4">
+        <UCard v-if="errorMessage" color="red" class="mb-4 ">
             <p>{{ errorMessage }}</p>
         </UCard>
         <template v-if="gameStore.currentGame">
@@ -47,7 +47,6 @@ onMounted(async () => {
 });
 
 async function makeMove(from: [number, number], to: [number, number]) {
-    console.log(`Making move from [${from}] to [${to}]`);
     try {
 
         await gameStore.makeMove(from, to);

@@ -1,5 +1,5 @@
 <template>
-    <UCard class="user-list h-full w-full bg-gray-900" :ui="{
+    <UCard class="user-list h-full w-full" :ui="{
         base: 'h-full w-full',
         body: {
             base: 'h-full w-full',
@@ -8,7 +8,7 @@
         },
     }">
         <template #header>
-            <h2 class="text-xl font-bold mb-4 text-white">Players</h2>
+            <h2 class="text-xl font-bold mb-4">Players</h2>
             <SortingPlayers />
         </template>
         <UCard class="mb-4">
@@ -21,7 +21,7 @@
                 :key="user._id">
                 <UserCard :user="user" :current-user-id="currentUserId" @invite="inviteToGame" />
             </li>
-            <li v-else class="col-span-full text-center mt-10 mb-10 text-gray-400">
+            <li v-else class="col-span-full text-center mt-10 mb-10">
                 Players not found
             </li>
         </ul>

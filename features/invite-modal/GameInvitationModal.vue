@@ -7,14 +7,16 @@
                     <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="closeModal" />
                 </div>
             </template>
-            <p class="mb-4">
-                <span class="font-semibold">{{ invitationStore.currentInvitation?.fromInviteName }}</span> invites you
-                to play a
-                game!
+            <p class="mb-4 ">
+                <span class="font-semibold ">{{ invitationStore.currentInvitation?.fromInviteName
+                    }}</span> invites
+                you
+                to play a game!
             </p>
             <template #footer>
                 <div class="flex justify-end space-x-2">
-                    <UButton color="gray" @click="rejectInvitation">Decline</UButton>
+                    <UButton color="gray" @click="rejectInvitation">
+                        Decline</UButton>
                     <UButton color="primary" @click="acceptInvitation">Accept</UButton>
                 </div>
             </template>

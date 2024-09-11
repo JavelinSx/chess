@@ -1,5 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+    app: {
+        pageTransition: { name: 'page', mode: 'out-in' },
+    },
+    darkMode: 'class',
     content: [
         "./features/**/*.{vue,ts}",
         "./layouts/**/*.vue",
@@ -9,7 +13,9 @@ module.exports = {
         "./error.vue",
     ],
     theme: {
-        extend: {},
+
     },
-    plugins: [],
+    plugins: [
+
+    ],
 }

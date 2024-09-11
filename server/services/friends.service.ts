@@ -30,15 +30,12 @@ export const friendsService = {
       throw new Error('Failed to create friend request');
     }
 
-    // Отправляем уведомление получателю запроса
     await sseManager.sendFriendRequestNotification(toUserId, createdRequest);
 
     return createdRequest;
   },
 
   async respondToFriendRequest(requestId: string, userId: string, accept: boolean) {
-    console.log(`Responding to friend request: ${requestId}, userId: ${userId}, accept: ${accept}`);
-
     const user = await User.findById(userId);
     if (!user) {
       throw new Error('User not found');
@@ -51,7 +48,6 @@ export const friendsService = {
 
     const request = user.friendRequests[requestIndex];
 
-    // Создаем объект с нужными свойствами для клиента
     const requestDataForClient: FriendRequestClient = {
       _id: request._id.toString(),
       from: request.from.toString(),
@@ -61,18 +57,34 @@ export const friendsService = {
     };
 
     if (accept) {
-      console.log('Accepting friend request');
       request.status = 'accepted';
-      user.friends.push(request.from);
+      // Создаем объект Friend из ObjectId
+      const friendToAdd: Friend = {
+        _id: request.from.toString(),
+        username: requestDataForClient.to,
+        isOnline: false,
+        isGame: false,
+      };
+      user.friends.push(friendToAdd);
+
       const requester = await User.findById(request.from);
       if (!requester) {
         throw new Error('Requester not found');
       }
-      requester.friends.push(new mongoose.Types.ObjectId(userId));
+
+      // Создаем объект Friend для requester
+      const requesterFriend: Friend = {
+        _id: userId,
+        username: user.username,
+        isOnline: user.isOnline,
+        isGame: user.isGame,
+      };
+      requester.friends.push(requesterFriend);
+
+      // Обновляем username для friendToAdd
+      friendToAdd.username = requester.username;
 
       await Promise.all([user.save(), requester.save()]);
-
-      console.log('Friends lists updated in database');
 
       const [userFriends, requesterFriends] = await Promise.all([
         this.getFriends(userId),
@@ -89,7 +101,6 @@ export const friendsService = {
         }),
       ]);
     } else {
-      console.log('Rejecting friend request');
       request.status = 'rejected';
       await sseManager.sendFriendRequestUpdateNotification(userId, { ...requestDataForClient, status: 'rejected' });
       await sseManager.sendFriendRequestUpdateNotification(request.from.toString(), {
@@ -105,33 +116,29 @@ export const friendsService = {
   },
 
   async removeFriend(userId: string, friendId: string) {
-    console.log(`Removing friend: userId ${userId}, friendId ${friendId}`);
-
     const [user, friend] = await Promise.all([
       User.findByIdAndUpdate(
         userId,
         { $pull: { friends: new mongoose.Types.ObjectId(friendId) } },
         { new: true }
-      ).populate<{ friends: Friend[] }>('friends', 'username isOnline isGame'),
+      ).populate<{ friends: IUser[] }>('friends', 'username isOnline isGame'),
       User.findByIdAndUpdate(
         friendId,
         { $pull: { friends: new mongoose.Types.ObjectId(userId) } },
         { new: true }
-      ).populate<{ friends: Friend[] }>('friends', 'username isOnline isGame'),
+      ).populate<{ friends: IUser[] }>('friends', 'username isOnline isGame'),
     ]);
 
     if (!user || !friend) {
       throw new Error('User or friend not found');
     }
 
-    console.log(`Friends removed successfully`);
-    console.log(`Updated friends list for user ${userId}:`, user.friends);
-    console.log(`Updated friends list for user ${friendId}:`, friend.friends);
+    const userFriends = await this.getFriends(userId);
+    const friendFriends = await this.getFriends(friendId);
 
-    // Отправляем обновленные списки друзей обоим пользователям
     await Promise.all([
-      sseManager.sendFriendListUpdateNotification(userId, user.friends),
-      sseManager.sendFriendListUpdateNotification(friendId, friend.friends),
+      sseManager.sendFriendListUpdateNotification(userId, userFriends),
+      sseManager.sendFriendListUpdateNotification(friendId, friendFriends),
     ]);
 
     return { success: true, message: 'Friend removed successfully' };
@@ -144,6 +151,7 @@ export const friendsService = {
     }
     return user.friendRequests;
   },
+
   async areFriends(userId1: string, userId2: string): Promise<boolean> {
     const user = await User.findById(userId1);
     if (!user) {
@@ -152,6 +160,7 @@ export const friendsService = {
 
     return user.friends.some((friendId) => friendId.toString() === userId2);
   },
+
   async getFriends(userId: string): Promise<Friend[]> {
     const user = await User.findById(userId).populate<{ friends: IUser[] }>('friends', 'username isOnline isGame');
     if (!user) {

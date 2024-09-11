@@ -1,68 +1,72 @@
 <template>
-    <div v-if="piece" class="chess-piece" :class="piece.color">
-        {{ getPieceSymbol(piece.type, piece.color) }}
+    <div v-if="piece" class="chess-piece flex items-center justify-center" :class="[piece.color, 'piece-container']">
+        <component :is="getPieceComponent(piece.type)" />
     </div>
 </template>
 
 <script setup lang="ts">
 import type { ChessPiece } from '~/entities/game/model/board.model';
 
+import ChessKnight from '~/app/styles/chess-icon/chess-knight.svg';
+import ChessRook from '~/app/styles/chess-icon/chess-rook.svg';
+import ChessBishop from '~/app/styles/chess-icon/chess-bishop.svg';
+import ChessQueen from '~/app/styles/chess-icon/chess-queen.svg';
+import ChessKing from '~/app/styles/chess-icon/chess-king.svg';
+import ChessPawn from '~/app/styles/chess-icon/chess-pawn.svg';
+
 const props = defineProps<{
     piece: ChessPiece | null;
 }>();
 
-function getPieceSymbol(type: string, color: string): string {
-    if (!type || !color) return '';
-    const symbols = {
-        king: color === 'white' ? '♔' : '♚',
-        queen: color === 'white' ? '♕' : '♛',
-        rook: color === 'white' ? '♖' : '♜',
-        bishop: color === 'white' ? '♗' : '♝',
-        knight: color === 'white' ? '♘' : '♞',
-        pawn: color === 'white' ? '♙' : '♟'
-    };
-    return symbols[type as keyof typeof symbols] || '';
+function getPieceComponent(type: string) {
+    switch (type) {
+        case 'knight': return ChessKnight;
+        case 'rook': return ChessRook;
+        case 'bishop': return ChessBishop;
+        case 'queen': return ChessQueen;
+        case 'king': return ChessKing;
+        case 'pawn': return ChessPawn;
+        default: return null;
+    }
 }
 </script>
 
 <style lang="scss" scoped>
 .chess-piece {
-    @apply text-2xl cursor-pointer;
+    @apply w-full h-full flex items-center justify-center;
+
+    :deep(svg) {
+        width: 80%;
+        height: 80%;
+        fill: none;
+        stroke-width: 1;
+    }
 
     &.white {
-        @apply text-white;
-        text-shadow:
-            -1px -1px 0 theme('colors.gray.800'),
-            1px -1px 0 theme('colors.gray.800'),
-            -1px 1px 0 theme('colors.gray.800'),
-            1px 1px 0 theme('colors.gray.800');
+        :deep(svg) {
+            stroke: theme('colors.white'); // Белая граница для белых фигур
+        }
     }
 
-    &.black {
-        @apply text-gray-900;
-        text-shadow:
-            -1px -1px 0 theme('colors.white'),
-            1px -1px 0 theme('colors.white'),
-            -1px 1px 0 theme('colors.white'),
-            1px 1px 0 theme('colors.white');
+
+
+}
+
+:root.dark {
+    .chess-piece {
+        &.white {
+            :deep(svg) {
+                stroke: theme('colors.gray.200'); // Светлая граница для белых фигур в темной теме
+            }
+        }
+
+
     }
 }
 
-@screen sm {
-    .chess-piece {
-        @apply text-3xl;
-    }
-}
-
-@screen md {
-    .chess-piece {
-        @apply text-4xl;
-    }
-}
-
-@screen lg {
-    .chess-piece {
-        @apply text-5xl;
-    }
+.piece-container {
+    @apply flex items-center justify-center;
+    height: 100%;
+    width: 100%;
 }
 </style>

@@ -102,7 +102,6 @@ export const useChatStore = defineStore('chat', {
       }
     },
     addMessageToRoom(roomId: string, message: ChatMessage) {
-      console.log(roomId, message);
       if (this.rooms[roomId]) {
         if (!this.rooms[roomId].messages) {
           this.rooms[roomId].messages = [];

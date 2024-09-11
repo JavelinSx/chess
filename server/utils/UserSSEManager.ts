@@ -85,7 +85,6 @@ export class UserSSEManager {
   }
 
   async sendFriendListUpdateNotification(userId: string, friends: Friend[]) {
-    console.log(`Sending friend list update to user ${userId}:`, friends);
     const event = this.userConnections.get(userId);
     if (event) {
       const message = JSON.stringify({
@@ -97,27 +96,20 @@ export class UserSSEManager {
           isGame: friend.isGame,
         })),
       });
-      console.log(`SSE message being sent:`, message);
       await this.sendEvent(event, message);
-      console.log(`SSE message sent successfully`);
     } else {
-      console.log(`No active connection found for user ${userId}`);
     }
   }
 
   async sendFriendRequestsUpdateNotification(userId: string, requests: FriendRequest[]) {
-    console.log(`Sending friend requests update to user ${userId}:`, requests);
     const event = this.userConnections.get(userId);
     if (event) {
       const message = JSON.stringify({
         type: 'friend_requests_update',
         requests,
       });
-      console.log(`SSE message being sent:`, message);
       await this.sendEvent(event, message);
-      console.log(`SSE message sent successfully`);
     } else {
-      console.log(`No active connection found for user ${userId}`);
     }
   }
 

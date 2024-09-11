@@ -1,5 +1,5 @@
 <template>
-    <UCard class="auth-form">
+    <UCard class="auth-form ">
         <UForm :state="formState" @submit="handleLogin" :validate="validateForm" class="flex flex-col gap-4">
             <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
             <UFormGroup label="Email" name="email">

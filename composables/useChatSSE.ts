@@ -12,13 +12,10 @@ export function useChatSSE(): ChatSSEReturn {
   const setupSSE = () => {
     eventSource.value = new EventSource('/api/sse/chat');
 
-    eventSource.value.onopen = (event) => {
-      console.log('Chat SSE connection opened');
-    };
+    eventSource.value.onopen = (event) => {};
 
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log('Received SSE event:', data);
 
       switch (data.type) {
         case 'new_message':
@@ -28,14 +25,13 @@ export function useChatSSE(): ChatSSEReturn {
           chatStore.addRoom(data.data);
           break;
         default:
-          console.log('Unhandled chat event type:', data.type);
+          console.log('Unhandled game event type:', data.type);
       }
     };
 
     eventSource.value.onerror = (error) => {
-      console.error('Chat SSE error:', error);
       closeSSE();
-      setTimeout(setupSSE, 5000); // Attempt to reconnect after 5 seconds
+      setTimeout(setupSSE, 5000);
     };
   };
 

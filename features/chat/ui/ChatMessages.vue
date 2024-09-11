@@ -1,18 +1,23 @@
 <template>
     <div class="h-full flex flex-col">
-        <div ref="messagesContainer" class="flex-grow overflow-y-auto p-4 space-y-2">
+        <div ref="messagesContainer" class="flex-grow overflow-y-auto p-4 space-y-4">
             <div v-for="message in chatStore.sortedMessages" :key="message.timestamp"
                 :class="['flex', message._id.toString() === userStore.user?._id ? 'justify-end' : 'justify-start']">
-                <div class="w-4/5"> <!-- This div ensures 80% width -->
-                    <div :class="['rounded-lg p-2 inline-block w-full',
-                        message._id.toString() === userStore.user?._id ? 'bg-blue-500 text-white' : 'bg-gray-500']">
+                <div :class="['max-w-[70%]', message._id.toString() === userStore.user?._id ? 'ml-auto' : 'mr-auto']">
+                    <div :class="[
+                        'rounded-lg p-3 inline-block',
+                        message._id.toString() === userStore.user?._id
+                            ? 'bg-blue-500'
+                            : 'bg-slate-500'
+                    ]">
                         <p class="text-sm break-words">{{ message.content }}</p>
-                        <span class="text-xs opacity-75 block text-right">{{ formatTime(message.timestamp) }}</span>
+                        <span class="text-xs opacity-75 block text-right mt-1">{{ formatTime(message.timestamp)
+                            }}</span>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="p-4 bg-gray-100">
+        <div class="p-4 ">
             <UForm :state="formState" @submit="sendMessage">
                 <div class="flex items-center">
                     <UInput v-model="formState.content" placeholder="Type a message..." class="flex-grow mr-2" />

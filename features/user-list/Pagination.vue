@@ -16,7 +16,7 @@
             </template>
         </UPagination>
     </div>
-    <div class="mt-2 text-sm text-gray-500">
+    <div class="mt-2 text-sm ">
         Page {{ paginationStore.currentPage }} of {{ paginationStore.totalPages }}
         ({{ paginationStore.paginatedUsers.length }} items shown, {{ paginationStore.totalUsers }} total)
     </div>

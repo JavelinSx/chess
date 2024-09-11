@@ -14,12 +14,17 @@ export function useGameSSE(gameId: string): GameSSEReturn {
 
     eventSource.value.onopen = (event) => {};
 
+    eventSource.value.onerror = (error) => {
+      console.error('SSE error:', error);
+      eventSource.value?.close();
+      setTimeout(setupSSE, 5000); // Попытка переподключения через 5 секунд
+    };
+
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
 
       switch (data.type) {
         case 'game_update':
-          console.log(data.game.pendingPromotion);
           gameStore.updateGameState(data.game);
           break;
         case 'game_end':
