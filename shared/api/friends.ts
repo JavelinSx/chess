@@ -20,6 +20,6 @@ export const friendsApi = {
   },
 
   async getFriendRequests(): Promise<ApiResponse<{ received: FriendRequestClient[]; sent: FriendRequestClient[] }>> {
-    return apiRequest<{ received: FriendRequestClient[]; sent: FriendRequestClient[] }>('/friends/request', 'GET');
+    return apiRequest<{ received: FriendRequestClient[]; sent: FriendRequestClient[] }>('/friends/requests', 'GET');
   },
 };

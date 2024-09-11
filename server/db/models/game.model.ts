@@ -33,6 +33,11 @@ const gameSchema = new mongoose.Schema<ChessGame>(
       white: { type: [String], default: [] },
       black: { type: [String], default: [] },
     },
+    pendingPromotion: {
+      from: { type: [Number], default: null },
+      to: { type: [Number], default: null },
+      promoteTo: { type: String, default: null },
+    },
   },
   { timestamps: true }
 );

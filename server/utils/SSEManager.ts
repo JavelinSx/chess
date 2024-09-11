@@ -44,7 +44,6 @@ export class SSEManager {
   addUserConnection(userId: string, event: H3Event) {
     this.userManager.addUserConnection(userId, event);
     this.invitationManager.addInvitationConnection(userId, event);
-    this.chatManager.addChatConnection(userId, event);
     this.activeConnections.add(userId);
     updateUserStatus(userId, true, false);
   }
@@ -52,7 +51,6 @@ export class SSEManager {
   removeUserConnection(userId: string) {
     this.userManager.removeUserConnection(userId);
     this.invitationManager.removeInvitationConnection(userId);
-    this.chatManager.removeChatConnection(userId);
     this.activeConnections.delete(userId);
     updateUserStatus(userId, false, false);
   }
@@ -122,16 +120,6 @@ export class SSEManager {
 
   async sendFriendListUpdateNotification(userId: string, friendList: Friend[]) {
     await this.userManager.sendFriendListUpdateNotification(userId, friendList);
-  }
-
-  async sendChatMessage(userId: string, message: ClientChatMessage) {
-    console.log(`Sending chat message in SSEManager to user: ${userId}`, message);
-    await this.chatManager.sendChatMessage(userId, message);
-  }
-
-  async sendChatRoomUpdate(userId: string, room: ClientChatRoom) {
-    console.log(`Sending chat room update in SSEManager to user: ${userId}`, room);
-    await this.chatManager.sendChatRoomUpdate(userId, room);
   }
 }
 

@@ -29,17 +29,18 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const result = await friendsService.respondToFriendRequest(requestId, userId, accept);
+    const status = accept ? true : false;
+    await friendsService.respondToFriendRequest(requestId, userId, status);
 
     return {
-      data: result,
-      error: null,
+      success: true,
+      message: `Friend request ${status}`,
     };
   } catch (error) {
-    console.error(`Error responding to friend request:`, error);
-    return {
-      data: null,
-      error: error instanceof Error ? error.message : 'An unknown error occurred',
-    };
+    console.error(`Error friend request:`, error);
+    throw createError({
+      statusCode: 500,
+      message: `Failed to friend request`,
+    });
   }
 });

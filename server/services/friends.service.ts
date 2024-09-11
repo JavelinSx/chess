@@ -6,18 +6,6 @@ import { sseManager } from '../utils/SSEManager';
 
 export const friendsService = {
   async sendFriendRequest(fromUserId: string, toUserId: string): Promise<FriendRequest> {
-    // Проверяем, существует ли уже запрос на дружбу
-    const existingRequest = await User.findOne({
-      $or: [
-        { _id: fromUserId, 'friendRequests.to': toUserId },
-        { _id: toUserId, 'friendRequests.from': fromUserId },
-      ],
-    });
-
-    if (existingRequest) {
-      throw new Error('Friend request already exists');
-    }
-
     const request: Omit<FriendRequest, '_id'> = {
       from: new mongoose.Types.ObjectId(fromUserId),
       to: new mongoose.Types.ObjectId(toUserId),
@@ -156,20 +144,12 @@ export const friendsService = {
     return { success: true, message: 'Friend removed successfully' };
   },
 
-  async getFriendRequests(userId: string): Promise<FriendRequestClient[]> {
+  async getFriendRequests(userId: string): Promise<FriendRequest[]> {
     const user = await User.findById(userId).populate('friendRequests.from', 'username');
-
     if (!user) {
       throw new Error('User not found');
     }
-
-    return user.friendRequests.map((request: FriendRequest) => ({
-      _id: request._id.toString(),
-      from: request.from._id.toString(), // Преобразуем ObjectId в строку
-      to: request.to.toString(),
-      status: request.status,
-      createdAt: request.createdAt.toISOString(),
-    }));
+    return user.friendRequests;
   },
 
   async areFriends(userId1: string, userId2: string): Promise<boolean> {

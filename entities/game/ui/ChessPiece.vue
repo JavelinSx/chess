@@ -44,7 +44,11 @@ function getPieceComponent(type: string) {
 
     &.white {
         :deep(svg) {
-            stroke: theme('colors.white'); // Белая граница для белых фигур
+            stroke: theme('colors.white'); // Светлая граница для белых фигур в темной теме
+
+            path {
+                fill: theme('colors.black');
+            }
         }
     }
 
@@ -56,7 +60,11 @@ function getPieceComponent(type: string) {
     .chess-piece {
         &.white {
             :deep(svg) {
-                stroke: theme('colors.gray.200'); // Светлая граница для белых фигур в темной теме
+                stroke: theme('colors.white'); // Светлая граница для белых фигур в темной теме
+
+                path {
+                    fill: theme('colors.black');
+                }
             }
         }
 

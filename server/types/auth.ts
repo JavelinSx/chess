@@ -1,7 +1,7 @@
-import type { ClientUser } from './user';
+import type { IUser } from './user';
 
 export interface AuthData {
-  user: ClientUser;
+  user: IUser;
   token: string;
 }
 

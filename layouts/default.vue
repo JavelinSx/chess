@@ -7,6 +7,7 @@
                     <UButton v-for="link in navLinks" :key="link.to" :to="link.to" color="gray" variant="ghost">
                         {{ link.label }}
                     </UButton>
+
                     <UButton v-if="isAuthenticated" @click="logout" color="gray" variant="ghost">
                         Logout
                     </UButton>
@@ -24,21 +25,19 @@
             </UContainer>
             <FloatingChat />
         </main>
+
         <footer class="py-4 mt-auto">
             <UContainer class="text-center">
                 <p>&copy; {{ new Date().getFullYear() }} Chess App. All rights reserved.</p>
             </UContainer>
         </footer>
-        <Chat v-if="isChatOpen" :otherUserId="currentChatUserId!" />
-        <UNotifications />
     </div>
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '~/store/auth';
+import { useAuthStore } from '../store/auth';
 import { useUserStore } from '~/store/user';
 import { useGameStore } from '~/store/game';
-import { useChatStore } from '~/store/chat';
 import { computed } from 'vue';
 import FloatingChat from '~/features/chat/ui/FloatingChat.vue';
 import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'
@@ -46,9 +45,6 @@ import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'
 const authStore = useAuthStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
-const chatStore = useChatStore();
-
-const { isChatOpen, currentChatUserId } = storeToRefs(chatStore);
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 
@@ -71,12 +67,4 @@ const logout = async () => {
     await userStore.updateUserStatus(false, false);
     await authStore.logout();
 };
-
-// Добавим watcher для отслеживания изменений isChatOpen
-watch(isChatOpen, (newValue) => {
-    console.log('isChatOpen changed:', newValue);
-});
-watch(currentChatUserId, (newValue) => {
-    console.log('currentChatUserId changed:', newValue);
-});
 </script>

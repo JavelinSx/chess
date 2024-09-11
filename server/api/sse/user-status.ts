@@ -1,3 +1,4 @@
+// server/api/sse/user-status.ts
 import { sseManager } from '~/server/utils/SSEManager';
 
 export default defineEventHandler(async (event) => {
