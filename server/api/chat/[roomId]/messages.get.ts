@@ -2,41 +2,34 @@
 import { chatService } from '~/server/services/chat.service';
 
 export default defineEventHandler(async (event) => {
-  const userId = event.context.auth?.userId;
   const roomId = event.context.params?.roomId;
+  const query = getQuery(event);
+  const page = Number(query.page) || 1;
+  const limit = Number(query.limit) || 50;
 
-  if (!userId || !roomId) {
+  if (!roomId) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Missing required fields',
+      statusMessage: 'Room ID is required',
     });
   }
 
   try {
-    const room = await chatService.getRoom(roomId);
-    if (!room) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'Room not found',
-      });
-    }
-
-    // Проверяем, является ли пользователь участником комнаты
-    if (!room.participants.some((participant) => participant.userId === userId)) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Access denied',
-      });
-    }
-
-    const messages = await chatService.getRoomMessages(roomId);
-    return { messages };
+    const { messages, totalCount, currentPage, totalPages } = await chatService.getRoomMessages(roomId, page, limit);
+    return {
+      data: {
+        messages,
+        totalCount,
+        currentPage,
+        totalPages,
+      },
+      error: null,
+    };
   } catch (error) {
     console.error('Error fetching room messages:', error);
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred',
-    });
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Failed to fetch room messages',
+    };
   }
 });

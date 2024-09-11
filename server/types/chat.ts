@@ -16,6 +16,8 @@ export interface IChatRoom extends mongoose.Document {
   _id: mongoose.Types.ObjectId;
   participants: ChatParticipant[];
   messages: ChatMessage[];
+  messageCount: number;
+  lastMessage: ChatMessage | null;
   createdAt: Date;
   updatedAt: Date;
   lastMessageAt: Date;

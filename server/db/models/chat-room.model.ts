@@ -18,6 +18,7 @@ const chatRoomSchema = new mongoose.Schema<IChatRoom>(
     participants: [chatParticipantSchema],
     messages: [chatMessageSchema],
     lastMessageAt: { type: Date, default: Date.now },
+    messageCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

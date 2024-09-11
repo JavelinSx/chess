@@ -35,7 +35,14 @@ export const chatApi = {
     return apiRequest<IChatRoom[]>('/chat/rooms', 'GET');
   },
 
-  async getRoomMessages(roomId: string): Promise<ApiResponse<ChatMessage[]>> {
-    return apiRequest<ChatMessage[]>(`/chat/room/${roomId}/messages`, 'GET');
+  async getRoomMessages(
+    roomId: string,
+    page: number = 1,
+    limit: number = 50
+  ): Promise<ApiResponse<{ messages: ChatMessage[]; totalCount: number; currentPage: number; totalPages: number }>> {
+    return apiRequest<{ messages: ChatMessage[]; totalCount: number; currentPage: number; totalPages: number }>(
+      `/chat/${roomId}/messages?page=${page}&limit=${limit}`,
+      'GET'
+    );
   },
 };
