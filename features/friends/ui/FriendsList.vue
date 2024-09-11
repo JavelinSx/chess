@@ -44,12 +44,14 @@ import { ref, onMounted, computed } from 'vue';
 import { useFriendsStore } from '~/store/friends';
 import { useUserStore } from '~/store/user';
 import { useInvitationStore } from '~/store/invitation';
+import { useChatStore } from '~/store/chat';
 import { storeToRefs } from 'pinia';
 import ChatButton from '~/features/chat/ui/ChatButton.vue';
 
 const friendsStore = useFriendsStore();
 const userStore = useUserStore();
 const invitationStore = useInvitationStore();
+const chatStore = useChatStore();
 const { friends } = storeToRefs(friendsStore);
 const { usersList } = storeToRefs(userStore);
 const { user } = storeToRefs(userStore);
@@ -78,6 +80,10 @@ const canInvite = (friend: any) => {
 
 function inviteToGame(friendId: string) {
     invitationStore.sendGameInvitation(friendId);
+}
+
+function startChat(friendId: string) {
+    chatStore.openChat(friendId);
 }
 
 onMounted(async () => {

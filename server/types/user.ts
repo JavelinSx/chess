@@ -16,6 +16,7 @@ export interface UserProfileResponse {
   winRate: number;
   currentGameId?: string;
   friends: mongoose.Types.ObjectId[];
+  chatSettings: boolean;
 }
 
 export interface IUser extends Document {
@@ -35,6 +36,7 @@ export interface IUser extends Document {
   currentGameId?: string;
   friends: Friend[];
   friendRequests: FriendRequest[];
+  chatSettings: boolean;
 }
 
 export interface IUserMethods {
@@ -56,6 +58,7 @@ export interface ClientUser {
   winRate: number;
   friends: Friend[];
   currentGameId?: string;
+  chatSettings: boolean;
 }
 
 export interface IUserMethods {

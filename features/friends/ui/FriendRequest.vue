@@ -39,10 +39,9 @@ import { useFriendsStore } from '~/store/friends';
 import { useUserStore } from '~/store/user';
 import { storeToRefs } from 'pinia';
 
-const friendsStore = useFriendsStore();
 const userStore = useUserStore();
-const { receivedRequests } = storeToRefs(friendsStore);
-const { usersList } = storeToRefs(userStore);
+const friendsStore = useFriendsStore();
+const { receivedRequests, isLoading, error } = storeToRefs(friendsStore);
 
 const accordionItem = computed(() => [
     {
@@ -54,20 +53,19 @@ const accordionItem = computed(() => [
 
 onMounted(() => {
     friendsStore.fetchFriendRequests();
-    userStore.fetchUsersList();
 });
 
 const respondToRequest = (requestId: string, accept: boolean) => {
     friendsStore.respondToFriendRequest(requestId, accept);
 };
 
-function getUserUsername(userId: string): string {
-    const user = usersList.value.find(u => u._id === userId);
-    return user ? user.username : 'Unknown User';
+function getUserAvatar(userId: string): string {
+    return `https://avatar.example.com/${userId}`;
 }
 
-function getUserAvatar(userId: string): string {
-    const user = usersList.value.find(u => u._id === userId);
-    return user ? `https://avatar.example.com/${user.username}` : '';
+function getUserName(userId: string): string {
+    console.log(userId)
+    const user = userStore.usersList.find((user) => user._id === userId);
+    return user ? user.username : 'Unknown User';
 }
 </script>

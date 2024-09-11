@@ -25,6 +25,9 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
       createdAt: { type: Date, default: Date.now },
     },
   ],
+  chatSettings: {
+    isOpen: { type: Boolean, default: true }, // true - открыт для всех, false - только для друзей
+  },
 });
 
 userSchema.pre('save', async function (next) {
