@@ -3,14 +3,16 @@
     <div class="h-full overflow-y-auto p-4 ">
         <ul>
             <li v-for="room in chatStore.sortedRooms" :key="room._id.toString()" @click="openRoom(room._id.toString())"
-                class="cursor-pointer p-2 rounded">
+                class="cursor-pointer p-2 rounded hover:bg-slate-500 transition">
                 <div class="flex items-center">
                     <UAvatar :src="getOtherUserAvatar(room)" :alt="getOtherUsername(room)" class="mr-2" />
                     <div>
                         <p class="font-semibold">{{ getOtherUsername(room) }}</p>
                         <p class="text-sm">{{ getLastMessage(room) }}</p>
                     </div>
+
                 </div>
+                <UDivider class="mt-2"></UDivider>
             </li>
         </ul>
     </div>

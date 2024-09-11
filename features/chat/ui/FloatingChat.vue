@@ -1,5 +1,6 @@
 <template>
-    <div v-if="chatStore.isOpen" class="fixed bottom-4 right-4 w-80 h-96 shadow-lg rounded-lg flex flex-col">
+    <div v-if="chatStore.isOpen"
+        class="fixed bottom-4 right-4 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-400">
         <div class="p-4 rounded-t-lg flex justify-between items-center">
             <h2 class="text-lg font-semibold ">{{ chatTitle }}</h2>
             <UButton icon="i-heroicons-arrow-left" v-if="chatStore.activeRoomId" @click="backToRoomList" color="gray"
