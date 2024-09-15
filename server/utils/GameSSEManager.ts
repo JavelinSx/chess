@@ -1,9 +1,9 @@
-// server/utils/GameSSEManager.ts
 import { H3Event } from 'h3';
-import type { ChessGame } from '~/entities/game/model/game.model';
+import type { ChessGame } from '../types/game';
 import type { GameResult } from '../types/game';
 import { updateUserStatus } from '~/server/services/user.service';
-import { getGameFromDatabase } from '../services/game.service';
+import { GameService } from '../services/game.service';
+
 export class GameSSEManager {
   private gameConnections: Map<string, Map<string, H3Event>> = new Map();
 
@@ -31,9 +31,7 @@ export class GameSSEManager {
         type: 'game_update',
         game: gameState,
       });
-      for (const event of clients.values()) {
-        await this.sendEvent(event, message);
-      }
+      await this.broadcastToClients(clients, message);
     }
   }
 
@@ -46,7 +44,7 @@ export class GameSSEManager {
       });
 
       try {
-        const game = await getGameFromDatabase(gameId);
+        const game = await GameService.getGame(gameId);
 
         if (game && game.players.white && game.players.black) {
           await Promise.all([
@@ -54,19 +52,29 @@ export class GameSSEManager {
             updateUserStatus(game.players.black, true, false),
           ]);
         } else {
-          console.error(`Game with id ${gameId} not found`);
+          console.error(`Game with id ${gameId} not found or has invalid player data`);
         }
       } catch (error) {
         console.error(`Error updating user statuses for game ${gameId}:`, error);
       }
 
-      for (const event of clients.values()) {
-        await this.sendEvent(event, message);
-      }
+      await this.broadcastToClients(clients, message);
     }
   }
 
+  private async broadcastToClients(clients: Map<string, H3Event>, message: string) {
+    const sendPromises = Array.from(clients.values()).map((event) =>
+      this.sendEvent(event, message).catch((error) => console.error('Error sending SSE event:', error))
+    );
+    await Promise.all(sendPromises);
+  }
+
   private async sendEvent(event: H3Event, data: string) {
-    await event.node.res.write(`data: ${data}\n\n`);
+    try {
+      await event.node.res.write(`data: ${data}\n\n`);
+    } catch (error) {
+      console.error('Error writing SSE event:', error);
+      throw error; // Re-throw to be caught in broadcastToClients
+    }
   }
 }

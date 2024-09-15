@@ -1,5 +1,4 @@
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { PieceColor } from '~/entities/game/model/board.model';
+import type { ChessGame, PieceColor } from '~/server/types/game';
 import { isStalemate, isCheckmate } from '../game-logic/check';
 import { isDraw } from './draw';
 

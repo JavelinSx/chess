@@ -1,7 +1,6 @@
 // features/game-logic/model/pieces/pawn.ts
 
-import type { MoveValidationParams } from './types';
-import type { Position } from './types';
+import type { MoveValidationParams, Position } from '~/server/types/game';
 
 export function isValidPawnMove({ game, from, to }: MoveValidationParams): boolean {
   const { board, currentTurn: color, enPassantTarget } = game;

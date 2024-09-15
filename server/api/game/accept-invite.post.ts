@@ -1,7 +1,7 @@
 // server/api/game/accept-invite.post.ts
 
 import { sseManager } from '~/server/utils/SSEManager';
-import { createGame, setPlayerColor, updateGameStatus } from '~/server/services/game.service';
+import { GameService } from '~/server/services/game.service';
 import { updateUserStatus } from '~/server/services/user.service';
 
 export default defineEventHandler(async (event) => {
@@ -15,14 +15,14 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const game = await createGame(inviterId, inviteeId);
+  const game = await GameService.createGame(inviterId, inviteeId);
 
   // Назначаем цвета игрокам случайным образом
   const isWhite = Math.random() < 0.5;
-  await setPlayerColor(game.id, inviterId, isWhite ? 'white' : 'black');
-  await setPlayerColor(game.id, inviteeId, isWhite ? 'black' : 'white');
+  await GameService.setPlayerColor(game.id, inviterId, isWhite ? 'white' : 'black');
+  await GameService.setPlayerColor(game.id, inviteeId, isWhite ? 'black' : 'white');
 
-  await updateGameStatus(game.id, 'active');
+  await GameService.updateGameStatus(game.id, 'active');
   if (game.players.white && game.players.black) {
     await updateUserStatus(game.players.white, true, true);
     await updateUserStatus(game.players.black, true, true);

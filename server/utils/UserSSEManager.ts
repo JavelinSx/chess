@@ -36,8 +36,8 @@ export class UserSSEManager {
       );
     }
   }
-  async sendUserUpdate(userId: string, userData: ClientUser) {
-    const event = this.userConnections.get(userId);
+  async sendUserUpdate(userData: ClientUser) {
+    const event = this.userConnections.get(userData._id);
     if (event) {
       await this.sendEvent(
         event,

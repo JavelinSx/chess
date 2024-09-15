@@ -33,7 +33,7 @@
                     <UInput v-model="formState.content" placeholder="Type a message..." class="flex-grow mr-2" />
                     <UButton type="submit" color="primary" :loading="isSending" :disabled="!formState.content.trim()"
                         icon="i-heroicons-paper-airplane-20-solid">
-                        Send
+                        {{ t('send') }}
                     </UButton>
                 </div>
             </UForm>
@@ -45,10 +45,9 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useChatStore } from '~/store/chat';
 import { useUserStore } from '~/store/user';
-
+const { t } = useI18n()
 const chatStore = useChatStore();
 const userStore = useUserStore();
-const countMessage = computed(() => chatStore.sortedMessages.length);
 const messagesContainer = ref<HTMLElement | null>(null);
 const isSending = ref(false);
 
@@ -59,9 +58,7 @@ const formState = ref({
 const isCurrentUserMessage = (message: any) => {
     return message._id === userStore.user?._id || message.username === userStore.user?.username;
 };
-const getUniqueKey = (message: any) => {
-    return `${message._id}-${message.timestamp}`;
-};
+
 const sendMessage = async () => {
     if (!formState.value.content.trim()) return;
     isSending.value = true;
@@ -104,14 +101,12 @@ const scrollToBottom = () => {
     }
 };
 
-
 onMounted(() => {
     if (chatStore.activeRoomId) {
         chatStore.loadMoreMessages();
     }
     nextTick(() => {
         scrollToBottom();
-        console.log(`Initial scroll position: ${messagesContainer.value?.scrollTop}`);
     });
 });
 
@@ -123,17 +118,12 @@ watch(() => chatStore.activeRoomId, (newRoomId) => {
 });
 
 
-watch(() => chatStore.totalPages, (newTotalPages) => {
-    console.log(`Total pages updated: ${newTotalPages}`);
-});
-
 watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
     if (newMessages.length > oldMessages.length) {
         nextTick(scrollToBottom);
     }
 }, { deep: true });
 
-const hasActiveRoom = computed(() => !!chatStore.activeRoomId);
 
 </script>
 

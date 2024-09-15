@@ -1,6 +1,4 @@
-import type { ChessBoard, PieceColor } from '~/entities/game/model/board.model';
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { Position } from '../pieces/types';
+import type { ChessBoard, PieceColor, ChessGame, Position } from '~/server/types/game';
 import { updateCastlingRights } from '../game-logic/castling';
 import { updatePositionsHistory } from '../game-logic/utils';
 import { isCapture } from '../game-logic/board';

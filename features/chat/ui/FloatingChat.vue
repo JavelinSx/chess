@@ -1,8 +1,9 @@
+<!-- FloatingChat.vue -->
 <template>
     <div v-if="chatStore.isOpen"
-        class="fixed bottom-4 right-4 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-400">
+        class="fixed bottom-4 right-4 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
         <div class="p-4 rounded-t-lg flex justify-between items-center">
-            <h2 class="text-lg font-semibold">{{ chatTitle }}</h2>
+            <h2 class="text-lg font-semibold">{{ t('chatTitle') }}</h2>
             <UButton v-if="chatStore.activeRoomId" icon="i-heroicons-arrow-left" @click="backToRoomList" color="gray"
                 variant="ghost" class="hover" />
             <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="closeChat" class="hover" />
@@ -15,20 +16,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import ChatRoomList from '~/features/chat/ui/ChatRoomList.vue';
 import ChatMessages from '~/features/chat/ui/ChatMessages.vue';
 import { useChatStore } from '~/store/chat';
-
+import { useUserStore } from '~/store/user';
+const { t } = useI18n();
 const chatStore = useChatStore();
-
-const chatTitle = computed(() => {
-    if (chatStore.activeRoomId) {
-        const otherUser = chatStore.activeRoom?.participants.find(p => p._id.toString() !== chatStore.currentUserId);
-        return otherUser ? otherUser.username : 'Chat';
-    }
-    return 'Chats';
-});
+const userStore = useUserStore();
 
 const backToRoomList = () => {
     chatStore.setActiveRoom(null);
@@ -37,6 +32,13 @@ const backToRoomList = () => {
 const closeChat = () => {
     chatStore.closeChat();
 };
+
+onMounted(() => {
+    if (userStore.user) {
+        chatStore.currentUserId = userStore.user._id;
+        chatStore.fetchRooms();
+    }
+});
 
 onUnmounted(() => {
     chatStore.closeChat();

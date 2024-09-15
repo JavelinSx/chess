@@ -1,8 +1,6 @@
 // check.ts
 
-import type { Position } from '../pieces/types';
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { PieceColor } from '~/entities/game/model/board.model';
+import type { Position, ChessGame } from '~/server/types/game';
 import { isValidMove, getValidMoves } from './moves';
 import { findKing, makeMove } from './board';
 

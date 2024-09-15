@@ -1,6 +1,6 @@
 // server/utils/InvitationSSEManager.ts
 import { H3Event } from 'h3';
-import { getGameFromDatabase } from '../services/game.service';
+import { GameService } from '../services/game.service';
 import { updateUserStatus } from '../services/user.service';
 export class InvitationSSEManager {
   private invitationConnections: Map<string, H3Event> = new Map();
@@ -36,7 +36,7 @@ export class InvitationSSEManager {
     for (const playerId of playerIds) {
       const event = this.invitationConnections.get(playerId);
       try {
-        const game = await getGameFromDatabase(gameId);
+        const game = await GameService.getGame(gameId);
 
         if (game && game.players.white && game.players.black) {
           await Promise.all([

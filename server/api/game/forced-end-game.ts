@@ -1,4 +1,4 @@
-import { forcedEndGame } from '~/server/services/game.service';
+import { GameService } from '~/server/services/game.service';
 
 export default defineEventHandler(async (event) => {
   const { gameId } = await readBody(event);
@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await forcedEndGame(gameId, userId);
+    await GameService.forcedEndGame(gameId, userId);
     return { success: true, message: 'Game forfeited successfully' };
   } catch (error) {
     console.error('Error in forced end game:', error);

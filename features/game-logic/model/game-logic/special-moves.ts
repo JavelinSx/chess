@@ -1,7 +1,4 @@
-import type { Position } from '../pieces/types';
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { PieceType, ChessBoard, PieceColor } from '~/entities/game/model/board.model';
-import type { ChessPiece } from '~/entities/game/model/board.model';
+import type { Position, ChessGame, PieceType, ChessBoard, PieceColor, ChessPiece } from '~/server/types/game';
 import { getPieceAt } from './board';
 
 export function simulateCastling(board: ChessBoard, kingSide: boolean, color: 'white' | 'black'): ChessBoard {

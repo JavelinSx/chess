@@ -1,6 +1,6 @@
 // features/game-logic/model/pieces/rook.ts
 
-import type { MoveValidationParams } from './types';
+import type { MoveValidationParams } from '~/server/types/game';
 
 export function isValidRookMove({ game, from, to }: MoveValidationParams): boolean {
   const { board } = game;

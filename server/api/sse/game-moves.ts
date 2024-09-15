@@ -1,6 +1,6 @@
 // server/api/sse/game-moves.ts
 import { sseManager } from '~/server/utils/SSEManager';
-import { getGameFromDatabase } from '~/server/services/game.service';
+import { GameService } from '~/server/services/game.service';
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const game = await getGameFromDatabase(gameId);
+  const game = await GameService.getGame(gameId);
 
   if (!game) {
     throw createError({

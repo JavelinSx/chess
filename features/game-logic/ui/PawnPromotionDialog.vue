@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { PieceType, PieceColor } from '~/entities/game/model/board.model';
+import type { PieceType, PieceColor } from '~/server/types/game';
 
 const props = defineProps<{
     color: PieceColor;

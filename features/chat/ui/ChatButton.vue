@@ -1,13 +1,13 @@
 <template>
     <UButton @click="openChat" icon="i-heroicons-chat-bubble-left-ellipsis">
-        Chat
+        {{ t('chat') }}
     </UButton>
 </template>
 
 <script setup lang="ts">
 import { useChatStore } from '~/store/chat';
 import { useUserStore } from '~/store/user';
-
+const { t } = useI18n();
 const props = defineProps<{
     userId: string;
     username: string;

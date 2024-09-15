@@ -1,11 +1,14 @@
 import ChatRoomModel from '~/server/db/models/chat-room.model';
-import type { IChatRoom, ChatMessage, UserChatMessage } from '~/server/types/chat';
-import { sseManager } from '~/server/utils/SSEManager';
+import User from '../db/models/user.model';
+import type { IChatRoom, ChatMessage, UserChatMessage, ChatParticipant } from '~/server/types/chat';
+import type { IUser } from '../types/user';
 import mongoose from 'mongoose';
 
 class ChatService {
   async addMessage(roomId: string, user: { _id: string; username: string }, content: string): Promise<ChatMessage> {
-    const room = await ChatRoomModel.findById(roomId);
+    // Находим комнату без загрузки сообщений
+    const room = await ChatRoomModel.findById(roomId).select('-messages');
+
     if (!room) {
       throw new Error('Chat room not found');
     }
@@ -17,44 +20,91 @@ class ChatService {
       timestamp: Date.now(),
     };
 
-    room.messages.push(message);
-    room.lastMessage = message;
-    room.lastMessageAt = new Date();
-    room.messageCount = room.messages.length;
-
-    await room.save();
+    // Добавляем новое сообщение, не загружая существующие
+    await ChatRoomModel.findByIdAndUpdate(roomId, {
+      $push: { messages: message },
+      $set: {
+        lastMessageAt: new Date(),
+        lastMessage: message,
+      },
+      $inc: { messageCount: 1 },
+    });
 
     return message;
   }
 
-  async createOrGetRoom(user1: UserChatMessage, user2: UserChatMessage): Promise<IChatRoom> {
-    const participantIds = [new mongoose.Types.ObjectId(user1._id), new mongoose.Types.ObjectId(user2._id)].sort();
+  async createOrGetRoom(user1: UserChatMessage, user2: UserChatMessage): Promise<IChatRoom | null> {
+    try {
+      const [userDoc1, userDoc2] = await Promise.all([
+        User.findById(user1._id).select('chatSetting chatRooms'),
+        User.findById(user2._id).select('chatSetting chatRooms'),
+      ]);
 
-    let room = await ChatRoomModel.findOne({
-      'participants._id': { $all: participantIds },
-    });
+      if (!userDoc1 || !userDoc2) {
+        return null;
+      }
 
-    if (!room) {
-      room = new ChatRoomModel({
+      // Проверяем, существует ли уже комната между этими пользователями
+      const existingRoom = await ChatRoomModel.findOne({
+        'participants._id': { $all: [new mongoose.Types.ObjectId(user1._id), new mongoose.Types.ObjectId(user2._id)] },
+      });
+
+      if (existingRoom) {
+        return existingRoom;
+      }
+
+      // Создаем новую комнату
+      const newRoom = new ChatRoomModel({
         participants: [
-          { _id: participantIds[0], username: user1.username },
-          { _id: participantIds[1], username: user2.username },
+          { _id: new mongoose.Types.ObjectId(user1._id), username: user1.username },
+          { _id: new mongoose.Types.ObjectId(user2._id), username: user2.username },
         ],
         messages: [],
         messageCount: 0,
         lastMessage: null,
+        lastMessageAt: new Date(),
       });
-      await room.save();
-    }
 
-    return room;
+      await newRoom.save();
+
+      // Добавляем ссылку на новую комнату обоим пользователям
+      await User.updateMany({ _id: { $in: [user1._id, user2._id] } }, { $push: { chatRooms: newRoom._id } });
+
+      return newRoom;
+    } catch (error) {
+      console.error('Error in createOrGetRoom:', error);
+      throw error;
+    }
   }
 
-  async getRooms(_id: string): Promise<IChatRoom[]> {
-    return ChatRoomModel.find({ 'participants._id': new mongoose.Types.ObjectId(_id) })
-      .select('_id participants lastMessage messageCount createdAt updatedAt lastMessageAt')
-      .sort({ lastMessageAt: -1 })
-      .lean();
+  async getRooms(userId: string): Promise<IChatRoom[]> {
+    try {
+      const user = await User.findById(userId).select('chatRooms');
+      if (!user) {
+        return [];
+      }
+
+      const rooms = await ChatRoomModel.find({
+        'participants._id': new mongoose.Types.ObjectId(userId),
+      })
+        .sort({ lastMessageAt: -1 })
+        .lean();
+      return rooms;
+    } catch (error) {
+      console.error('Error in getRooms:', error);
+      throw error;
+    }
+  }
+
+  private canCreateChat(user1: any, user2: any): boolean {
+    return user1.chatSetting !== false && user2.chatSetting !== false;
+  }
+
+  private checkIfFriends(user1: IUser, user2: IUser): boolean {
+    return (
+      user1.friends.some((friend) => friend._id.toString() === user2._id.toString()) ||
+      user2.friends.some((friend) => friend._id.toString() === user1._id.toString())
+    );
   }
 
   async getRoomMessages(

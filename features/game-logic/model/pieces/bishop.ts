@@ -1,6 +1,6 @@
 // features/game-logic/model/pieces/bishop.ts
 
-import type { MoveValidationParams } from './types';
+import type { MoveValidationParams } from '~/server/types/game';
 
 export function isValidBishopMove({ game, from, to }: MoveValidationParams): boolean {
   const { board } = game;

@@ -5,25 +5,25 @@
                 <UAvatar :src="getUserAvatar(user)" :alt="user.username" class="mr-3" size="sm" />
                 <div>
                     <p class="font-semibold ">{{ user.username }}</p>
-                    <p class="text-xs">Rating: {{ user.rating }}</p>
+                    <p class="text-xs">{{ t('rating') }}: {{ user.rating }}</p>
                 </div>
             </div>
             <UBadge :color="user.isOnline ? 'green' : 'gray'" class="text-xs px-2 py-1">
-                {{ user.isOnline ? 'Online' : 'Offline' }}
+                {{ user.isOnline ? t('online') : t('offline') }}
             </UBadge>
         </div>
         <div class="text-xs mb-2">
-            <p>Games: {{ user.gamesPlayed }}</p>
-            <p>Win rate: {{ calculateWinRate(user) }}%</p>
+            <p>{{ t('gamesPlayed') }}: {{ user.gamesPlayed }}</p>
+            <p>{{ t('winRate') }}: {{ calculateWinRate(user) }}%</p>
         </div>
         <div class="flex flex-wrap gap-2 mt-auto">
             <UButton v-if="canInvite" @click="inviteToGame" color="violet" variant="soft" icon="i-heroicons-envelope"
                 size="xs" class="flex-grow">
-                Invite
+                {{ t('invite') }}
             </UButton>
             <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft" icon="i-heroicons-user-plus"
                 size="xs" class="flex-grow">
-                Add
+                {{ t('addFriend') }}
             </UButton>
             <ChatButton :username="user.username" :user-id="user._id" class="flex-grow" />
         </div>
@@ -35,6 +35,7 @@ import { computed } from 'vue';
 import { useInvitationStore } from '~/store/invitation';
 import { useFriendsStore } from '~/store/friends';
 import ChatButton from '~/features/chat/ui/ChatButton.vue';
+const { t } = useI18n()
 const invitationStore = useInvitationStore();
 const friendsStore = useFriendsStore();
 

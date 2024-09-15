@@ -1,11 +1,17 @@
 import type { ApiResponse } from '~/server/types/auth';
 import type { UserProfileResponse } from '~/server/types/user';
 import type { ClientUser } from '~/server/types/user';
+import type { SettingChat } from '~/server/types/user';
 import { apiRequest } from './api';
 
 export const userApi = {
-  async profileUpdate(id: string, username: string, email: string): Promise<ApiResponse<UserProfileResponse>> {
-    return apiRequest<UserProfileResponse>('/user/profile-update', 'POST', { id, username, email });
+  async profileUpdate(
+    id: string,
+    username: string,
+    email: string,
+    chatSetting: SettingChat
+  ): Promise<ApiResponse<UserProfileResponse>> {
+    return apiRequest<UserProfileResponse>('/user/profile-update', 'POST', { id, username, email, chatSetting });
   },
 
   async profileGet(id: string): Promise<ApiResponse<ClientUser>> {

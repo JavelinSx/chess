@@ -1,17 +1,14 @@
 <template>
     <UCard class="chess-board-container">
         <template #header>
-            <h3 class="text-lg font-semibold">Chess Board</h3>
+            <h3 class="text-lg font-semibold">{{ t('chessBoard') }}</h3>
         </template>
-        <UCard :ui="cardStyle" class="mb-4">
+        <UCard :ui="{ header: { padding: 'py-4' } }" class="mb-4">
             <template #header>
-                <p class="text-sm">Current turn: {{ gameStore?.currentGame?.currentTurn }}</p>
-            </template>
-            <template #footer>
-                <p class="text-sm">Your color: {{ playerColor }}</p>
-                <p class="text-sm" v-if="gameStore?.currentGame?.status === 'completed'">
-                    Game over! Winner: {{ gameStore.currentGame.winner || 'Draw' }}
-                </p>
+                <div class="flex items-center space-x-2">
+                    <UAvatar :src="currentPlayerAvatar" :alt="currentPlayerName" size="sm" />
+                    <p class="text-sm">{{ t('playerTurn', { name: currentPlayerName }) }}</p>
+                </div>
             </template>
         </UCard>
 
@@ -23,16 +20,9 @@
             </div>
             <div class="board-grid">
                 <div v-for="col in 8" :key="col" class="board-row">
-                    <div v-for="row in 8" :key="row" class="board-cell" :class="[
-                        ((row + col) % 2 === 0) ? 'bg-beige' : 'bg-brown',
-                        {
-                            'highlight-selected': isSelected(isUserPlayingWhite ? 8 - row : row - 1, col - 1),
-                            'highlight-valid-move': isValidMove(isUserPlayingWhite ? 8 - row : row - 1, col - 1),
-                            'highlight-check': isCheck && isKing(isUserPlayingWhite ? 8 - row : row - 1, col - 1),
-                            'highlight-checking-piece': isCheckingPiece(isUserPlayingWhite ? 8 - row : row - 1, col - 1)
-                        }
-                    ]" @click="handleCellClick(isUserPlayingWhite ? 8 - row : row - 1, col - 1)">
-                        <chess-piece :piece="board[isUserPlayingWhite ? 8 - row : row - 1][col - 1]" />
+                    <div v-for="row in 8" :key="row" class="board-cell" :class="getCellClasses(row, col)"
+                        @click="handleCellClick(getAdjustedPosition(row, col))">
+                        <chess-piece :piece="getPieceAt(row, col)" />
                     </div>
                 </div>
             </div>
@@ -45,7 +35,7 @@
         <template #footer>
             <UButton v-if="gameStore.currentGame?.status === 'active'" color="red" icon="i-heroicons-flag"
                 @click="handleForcedEndGame">
-                Forfeit Game
+                {{ t('forfeitGame') }}
             </UButton>
         </template>
     </UCard>
@@ -55,99 +45,105 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import ChessPiece from './ChessPiece.vue';
 import PawnPromotionDialog from '~/features/game-logic/ui/PawnPromotionDialog.vue';
-import type { ChessBoard, PieceColor } from '~/entities/game/model/board.model';
-import type { Position } from '~/features/game-logic/model/pieces/types';
-import type { PieceType } from '~/entities/game/model/board.model';
-import type { ChessGame } from '../model/game.model';
+import type { PieceType, Position } from '~/server/types/game';
 import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
 import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
-
-const cardStyle = ref({
-    header: {
-        padding: 'p-2' // Измененный padding
-    },
-    footer: {
-        padding: 'p-2' // Измененный padding
-    },
-});
-
-const props = defineProps<{
-    game: ChessGame;
-    board: ChessBoard;
-    currentTurn: PieceColor;
-}>();
-
-const emit = defineEmits<{
-    (e: 'move', from: Position, to: Position): void;
-}>();
-const playerColor = computed(() => {
-    if (gameStore.currentGame) {
-        if (gameStore.currentGame.players.white === userStore._id) {
-            return 'White';
-        } else if (gameStore.currentGame.players.black === userStore._id) {
-            return 'Black';
-        }
-    }
-    return 'Unknown';
-});
-const userStore = useUserStore()
+const { t } = useI18n();
 const gameStore = useGameStore();
+const userStore = useUserStore();
+
 const selectedCell = ref<Position | null>(null);
 const validMoves = ref<Position[]>([]);
-const isCheck = computed(() => isKingInCheck(props.game).inCheck);
+
 const currentGame = computed(() => gameStore.currentGame);
+const isCheck = computed(() => currentGame.value ? isKingInCheck(currentGame.value).inCheck : false);
 
-const isUserPlayingWhite = computed(() => {
-    return gameStore.currentGame?.players.white === userStore.user?._id;
+const isUserPlayingWhite = computed(() => gameStore.currentGame?.players.white === userStore.user?._id);
+
+const currentPlayerId = computed(() => {
+    return gameStore.currentGame?.currentTurn === 'white'
+        ? gameStore.currentGame.players.white
+        : gameStore.currentGame?.players.black;
 });
 
-const isCurrentPlayerTurn = computed(() => {
-    if (!currentGame.value || !userStore.user) return false;
-    const currentPlayerId = currentGame.value.currentTurn === 'white'
-        ? currentGame.value.players.white
-        : currentGame.value.players.black;
-    return currentPlayerId === userStore.user._id;
+const currentPlayerName = computed(() => {
+    if (currentPlayerId.value === userStore.user?._id) {
+        return userStore.user?.username || 'Your';
+    } else {
+        const opponent = userStore.usersList.find(user => user._id === currentPlayerId.value);
+        return opponent ? opponent.username : 'Opponent\'s';
+    }
 });
 
-const handlePromotion = (promoteTo: PieceType) => {
+const currentPlayerAvatar = computed(() => {
+    // Здесь логика получения аватара текущего игрока
+    // Пример: return userStore.getAvatarUrl(currentPlayerId.value);
+    return 'https://via.placeholder.com/40';
+});
+
+const isCurrentPlayerTurn = computed(() => currentPlayerId.value === userStore.user?._id);
+
+function getCellClasses(row: number, col: number) {
+    const [adjustedRow, adjustedCol] = getAdjustedPosition(row, col);
+    return {
+        'bg-beige': (row + col) % 2 === 0,
+        'bg-brown': (row + col) % 2 !== 0,
+        'highlight-selected': isSelected(adjustedRow, adjustedCol),
+        'highlight-valid-move': isValidMove(adjustedRow, adjustedCol),
+        'highlight-check': isCheck.value && isKing(adjustedRow, adjustedCol),
+        'highlight-checking-piece': isCheckingPiece(adjustedRow, adjustedCol)
+    };
+}
+
+function getAdjustedPosition(row: number, col: number): Position {
+    return isUserPlayingWhite.value ? [8 - row, col - 1] : [row - 1, col - 1];
+}
+
+function getPieceAt(row: number, col: number) {
+    const [adjustedRow, adjustedCol] = getAdjustedPosition(row, col);
+    return currentGame.value?.board[adjustedRow][adjustedCol] ?? null;
+}
+
+function isSelected(row: number, col: number) {
+    return selectedCell.value && selectedCell.value[0] === row && selectedCell.value[1] === col;
+}
+
+function isValidMove(row: number, col: number) {
+    return validMoves.value.some(move => move[0] === row && move[1] === col);
+}
+
+function isKing(row: number, col: number) {
+    const piece = getPieceAt(row, col);
+    return piece && piece.type === 'king' && piece.color === currentGame.value?.currentTurn;
+}
+
+function isCheckingPiece(row: number, col: number) {
+    return currentGame.value?.checkingPieces.some((pos: Position) => pos[0] === row && pos[1] === col) ?? false;
+}
+
+function handlePromotion(promoteTo: PieceType) {
     if (isCurrentPlayerTurn.value) {
         gameStore.promotePawn(promoteTo);
     }
-};
+}
 
-const isKing = (row: number, col: number) => {
-    const piece = props.board[row][col];
-    return piece && piece.type === 'king' && piece.color === props.currentTurn;
-};
-
-const isCheckingPiece = (row: number, col: number) => {
-    return props.game.checkingPieces.some(pos => pos[0] === row && pos[1] === col);
-};
-
-const isSelected = (row: number, col: number) => {
-    return selectedCell.value && selectedCell.value[0] === row && selectedCell.value[1] === col;
-};
-
-const isValidMove = (row: number, col: number) => {
-    return validMoves.value.some(move => move[0] === row && move[1] === col);
-};
-
-const handleForcedEndGame = async () => {
+async function handleForcedEndGame() {
     try {
         await gameStore.forcedEndGame();
     } catch (error) {
         console.error('Error ending game:', error);
     }
-};
+}
 
-const handleCellClick = (row: number, col: number) => {
-    if (!isCurrentPlayerTurn.value) return;
+function handleCellClick(position: Position) {
+    if (!isCurrentPlayerTurn.value || !currentGame.value) return;
 
+    const [row, col] = position;
     if (!selectedCell.value) {
-        const clickedPiece = currentGame.value?.board[row][col];
-        if (clickedPiece?.color === currentGame.value?.currentTurn && currentGame.value) {
+        const clickedPiece = currentGame.value.board[row][col];
+        if (clickedPiece?.color === currentGame.value.currentTurn) {
             selectedCell.value = [row, col];
             validMoves.value = getValidMoves(currentGame.value, selectedCell.value);
         }
@@ -160,11 +156,11 @@ const handleCellClick = (row: number, col: number) => {
         selectedCell.value = null;
         validMoves.value = [];
     }
-};
+}
 
-watch(() => props.game, () => {
-    if (selectedCell.value) {
-        validMoves.value = getValidMoves(props.game, selectedCell.value);
+watch(() => currentGame.value, () => {
+    if (selectedCell.value && currentGame.value) {
+        validMoves.value = getValidMoves(currentGame.value, selectedCell.value);
     }
 }, { deep: true });
 

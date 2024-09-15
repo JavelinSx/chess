@@ -1,6 +1,8 @@
 import mongoose, { Document } from 'mongoose';
 import type { Friend, FriendRequest } from './friends';
-
+export interface SettingChat {
+  setting: boolean;
+}
 export interface UserProfileResponse {
   _id: string;
   username: string;
@@ -15,7 +17,8 @@ export interface UserProfileResponse {
   isGame: boolean;
   winRate: number;
   currentGameId?: string;
-  friends: mongoose.Types.ObjectId[];
+  friends: Friend[];
+  chatSetting: SettingChat;
 }
 
 export interface IUser extends Document {
@@ -35,6 +38,8 @@ export interface IUser extends Document {
   currentGameId?: string;
   friends: Friend[];
   friendRequests: FriendRequest[];
+  chatSetting: SettingChat;
+  chatRooms: mongoose.Types.ObjectId[];
 }
 
 export interface IUserMethods {
@@ -56,6 +61,7 @@ export interface ClientUser {
   winRate: number;
   friends: Friend[];
   currentGameId?: string;
+  chatSetting: SettingChat;
 }
 
 export interface IUserMethods {

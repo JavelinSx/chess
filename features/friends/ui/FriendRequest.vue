@@ -53,7 +53,6 @@ const accordionItem = computed(() => [
 ]);
 
 onMounted(() => {
-    friendsStore.fetchFriendRequests();
     userStore.fetchUsersList();
 });
 

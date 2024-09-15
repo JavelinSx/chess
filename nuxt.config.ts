@@ -1,10 +1,19 @@
 import svgLoader from 'vite-svg-loader';
 export default defineNuxtConfig({
-  modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui'],
+  modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui', '@nuxtjs/i18n'],
   css: ['~/app/styles/global.css'],
-
   nitro: {
     plugins: ['~/server/db/index.ts'],
+  },
+
+  i18n: {
+    locales: [
+      { code: 'en', iso: 'en-US', file: 'en.json' },
+      { code: 'ru', iso: 'ru-RU', file: 'ru.json' },
+    ],
+    langDir: 'locales/',
+    defaultLocale: 'ru',
+    strategy: 'no_prefix',
   },
 
   components: {
@@ -49,4 +58,6 @@ export default defineNuxtConfig({
   build: {
     transpile: ['jsonwebtoken'],
   },
+
+  compatibilityDate: '2024-09-13',
 });

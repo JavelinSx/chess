@@ -1,5 +1,4 @@
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { Position } from '../pieces/types';
+import type { ChessGame, Position } from '~/server/types/game';
 import { isValidMove } from '../game-logic/moves';
 
 export function generateAllMoves(game: ChessGame): [Position, Position][] {

@@ -1,6 +1,7 @@
 // server/api/chat/rooms.get.ts
 import { chatService } from '~/server/services/chat.service';
 
+// server/api/chat/rooms.get.ts
 export default defineEventHandler(async (event) => {
   const userId = event.context.auth?.userId;
 

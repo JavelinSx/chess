@@ -1,6 +1,6 @@
 // features/game-logic/model/pieces/knight.ts
 
-import type { MoveValidationParams } from './types';
+import type { MoveValidationParams } from '~/server/types/game';
 
 export function isValidKnightMove({ game, from, to }: MoveValidationParams): boolean {
   const [fromRow, fromCol] = from;

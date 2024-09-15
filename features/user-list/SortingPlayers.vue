@@ -1,11 +1,13 @@
 <template>
     <div class="flex flex-wrap items-center gap-4">
-        <UInput v-model="searchQuery" placeholder="Search by username" icon="i-heroicons-magnifying-glass"
+        <UInput v-model="searchQuery" :placeholder="t('searchByUsername')" icon="i-heroicons-magnifying-glass"
             class="w-full sm:w-auto " />
-        <USelect v-model="sortCriteria" :options="sortOptions" placeholder="Sort by" class="w-full sm:w-auto " />
-        <UButton @click="toggleSortDirection" icon="i-heroicons-arrows-up-down" />
-        <UCheckbox v-model="onlineOnly" label="Online only" />
-        <USelect v-model="itemsPerPage" :options="itemsPerPageOptions" label="Items per page"
+        <USelect v-model="sortCriteria" :options="localizedSortOptions" :placeholder="t('sortBy')"
+            class="w-full sm:w-auto " />
+        <UButton @click="toggleSortDirection" icon="i-heroicons-arrows-up-down"
+            :aria-label="t('toggleSortDirection')" />
+        <UCheckbox v-model="onlineOnly" :label="t('onlineOnly')" />
+        <USelect v-model="itemsPerPage" :options="localizedItemsPerPageOptions" :label="t('itemsPerPage')"
             class="w-full sm:w-auto " />
     </div>
 </template>
@@ -13,15 +15,20 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { usePaginationStore } from '~/store/pagination';
-
+const { t } = useI18n();
 const paginationStore = usePaginationStore();
 
 const sortOptions = [
-    { label: 'Rating', value: 'rating' },
-    { label: 'Games Played', value: 'gamesPlayed' },
-    { label: 'Free Players', value: 'isGame' },
+    { label: 'rating', value: 'rating' },
+    { label: 'gamesPlayed', value: 'gamesPlayed' },
+    { label: 'freePlayers', value: 'isGame' },
 ];
-
+const localizedSortOptions = computed(() =>
+    sortOptions.map(option => ({ ...option, label: t(option.label) }))
+);
+const localizedItemsPerPageOptions = computed(() =>
+    itemsPerPageOptions.map(option => ({ ...option, label: t('itemsPerPageOption', { count: option.label }) }))
+);
 const itemsPerPageOptions = [
     { label: '10', value: 9 },
     { label: '20', value: 18 },

@@ -1,5 +1,5 @@
-import type { Position } from '../pieces/types';
-import type { ChessBoard } from '~/entities/game/model/board.model';
+import type { Position, ChessBoard } from '~/server/types/game';
+
 export function isMoveBetween(from: Position, to: Position, pos1: Position, pos2: Position): boolean {
   const [x1, y1] = pos1;
   const [x2, y2] = pos2;

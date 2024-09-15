@@ -8,7 +8,7 @@
         },
     }">
         <template #header>
-            <h2 class="text-xl font-bold mb-4">Players</h2>
+            <h2 class="text-xl font-bold mb-4">{{ t('onlinePlayers') }}</h2>
             <SortingPlayers />
         </template>
         <UCard class="mb-4">
@@ -22,7 +22,7 @@
                 <UserCard :user="user" :current-user-id="currentUserId" @invite="inviteToGame" />
             </li>
             <li v-else class="col-span-full text-center mt-10 mb-10">
-                Players not found
+                {{ t('noOnlinePlayers') }}
             </li>
         </ul>
         <Pagination />
@@ -40,6 +40,7 @@ import Pagination from './Pagination.vue';
 import FriendsList from '../friends/ui/FriendsList.vue';
 import FriendRequest from '../friends/ui/FriendRequest.vue';
 
+const { t } = useI18n()
 const userStore = useUserStore();
 const paginationStore = usePaginationStore();
 const invitationStore = useInvitationStore();

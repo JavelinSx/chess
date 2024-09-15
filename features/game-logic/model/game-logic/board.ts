@@ -1,5 +1,4 @@
-import type { ChessBoard, ChessPiece, PieceColor } from '~/entities/game/model/board.model';
-import type { Position } from '../pieces/types';
+import type { ChessBoard, ChessPiece, PieceColor, Position } from '~/server/types/game';
 
 export function makeMove(board: ChessBoard, from: Position, to: Position): ChessBoard {
   const newBoard = board.map((row) => [...row]);

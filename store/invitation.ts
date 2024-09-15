@@ -9,12 +9,13 @@ interface Invitation {
 export const useInvitationStore = defineStore('invitation', {
   state: () => ({
     currentInvitation: null as Invitation | null,
+    locales: useI18n(),
   }),
 
   actions: {
     async acceptGameInvitation() {
       if (!this.currentInvitation) {
-        console.error('No current invitation to accept');
+        console.error(this.locales.t('noCurrentInvitation'));
         return;
       }
       try {
@@ -23,10 +24,10 @@ export const useInvitationStore = defineStore('invitation', {
           this.currentInvitation = null;
           navigateTo(`/game/${response.data.gameId}`);
         } else if (response.error) {
-          console.error('Failed to accept game invitation:', response.error);
+          console.error(this.locales.t('failedToAcceptInvitation'), response.error);
         }
       } catch (error) {
-        console.error('Error accepting game invitation:', error);
+        console.error(this.locales.t('errorAcceptingInvitation'), error);
       }
     },
 
@@ -41,9 +42,9 @@ export const useInvitationStore = defineStore('invitation', {
     async sendGameInvitation(toInviteId: string) {
       const response = await gameApi.sendInvitation(toInviteId);
       if (response.error) {
-        console.error('Failed to send game invitation:', response.error);
+        console.error(this.locales.t('failedToSendInvitation'), response.error);
       } else if (response.data && response.data.success) {
-        console.log('Game invitation sent successfully');
+        console.log(this.locales.t('invitationSentSuccessfully'));
       }
     },
   },

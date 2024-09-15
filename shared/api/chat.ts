@@ -4,8 +4,11 @@ import type { IChatRoom, ChatMessage, UserChatMessage } from '~/server/types/cha
 import type { ApiResponse } from '~/server/types/auth';
 
 export const chatApi = {
-  async createOrGetRoom(currentUser: UserChatMessage, otherUser: UserChatMessage): Promise<ApiResponse<IChatRoom>> {
-    return apiRequest<IChatRoom>('/chat/create-or-get-room', 'POST', {
+  async createOrGetRoom(
+    currentUser: UserChatMessage,
+    otherUser: UserChatMessage
+  ): Promise<ApiResponse<{ room: IChatRoom }>> {
+    return apiRequest<{ room: IChatRoom }>('/chat/create-or-get-room', 'POST', {
       currentUser: {
         _id: currentUser._id,
         username: currentUser.username,

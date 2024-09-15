@@ -6,8 +6,8 @@ import { InvitationSSEManager } from './InvitationSSEManager';
 import { GameSSEManager } from './GameSSEManager';
 import { ChatSSEManager } from './ChatSSEManager';
 import type { GameResult } from '../types/game';
-import type { ClientUser, IUser } from '~/server/types/user';
-import type { ChessGame } from '~/entities/game/model/game.model';
+import type { ClientUser } from '~/server/types/user';
+import type { ChessGame } from '../types/game';
 import type { UserStatus } from './UserSSEManager';
 import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
 import type { ChatMessage, IChatRoom } from '../types/chat';
@@ -103,8 +103,8 @@ export class SSEManager {
   async sendGameEndNotification(gameId: string, result: GameResult) {
     await this.gameManager.sendGameEndNotification(gameId, result);
   }
-  async sendUserUpdate(userId: string, userData: ClientUser) {
-    await this.userManager.sendUserUpdate(userId, userData);
+  async sendUserUpdate(userData: ClientUser) {
+    await this.userManager.sendUserUpdate(userData);
   }
   async sendFriendRequestNotification(userId: string, request: FriendRequest) {
     await this.userManager.sendFriendRequestNotification(userId, request);

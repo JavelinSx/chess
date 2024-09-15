@@ -1,8 +1,7 @@
 // features/game-logic/model/pieces/king.ts
-import type { MoveValidationParams } from './types';
+import type { MoveValidationParams, ChessBoard, PieceColor } from '~/server/types/game';
 import { isKingInCheck } from '../game-logic/check';
 import { makeMove } from '../game-logic/board';
-import type { ChessBoard, PieceColor } from '~/entities/game/model/board.model';
 
 function simulateCastling(board: ChessBoard, kingSide: boolean, color: 'white' | 'black'): ChessBoard {
   const newBoard = board.map((row) => [...row]);

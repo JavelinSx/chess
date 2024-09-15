@@ -1,5 +1,6 @@
 import { chatService } from '~/server/services/chat.service';
 
+// server/api/chat/create-or-get-room.post.ts
 export default defineEventHandler(async (event) => {
   const { currentUser, otherUser } = await readBody(event);
 
@@ -15,7 +16,15 @@ export default defineEventHandler(async (event) => {
       { _id: currentUser._id, username: currentUser.username },
       { _id: otherUser._id, username: otherUser.username }
     );
-    return { room: room.toObject() };
+
+    if (!room) {
+      return {
+        statusCode: 403,
+        body: { message: 'Chat creation is not allowed due to user settings' },
+      };
+    }
+
+    return { room };
   } catch (error) {
     console.error('Error creating or getting room:', error);
     throw createError({

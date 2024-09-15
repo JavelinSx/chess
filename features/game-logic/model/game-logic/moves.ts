@@ -1,6 +1,4 @@
-import type { Position } from '../pieces/types';
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { MoveValidationParams } from '../pieces/types';
+import type { Position, ChessGame, MoveValidationParams } from '~/server/types/game';
 import { isValidPawnMove } from '../pieces/pawn';
 import { isValidRookMove } from '../pieces/rook';
 import { isValidKnightMove } from '../pieces/knight';

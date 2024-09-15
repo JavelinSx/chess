@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+button {
+    justify-content: center;
+}
+
 @layer base {
     :root {
         --color-fill: 251, 254, 251;

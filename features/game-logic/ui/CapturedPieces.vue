@@ -2,11 +2,11 @@
     <div class="captured-pieces">
         <UCard>
             <template #header>
-                <h3 class="text-lg font-semibold">Captured Pieces</h3>
+                <h3 class="text-lg font-semibold">{{ t('capturedPieces') }}</h3>
             </template>
             <div class="flex justify-between">
                 <div class="captured-white">
-                    <h4 class="text-sm font-medium mb-2">White</h4>
+                    <h4 class="text-sm font-medium mb-2">{{ t('white') }}</h4>
                     <div class="flex flex-wrap gap-1">
                         <TransitionGroup name="piece">
                             <div v-for="(piece, index) in whitePieces" :key="`white-${index}`" class="piece">
@@ -16,7 +16,7 @@
                     </div>
                 </div>
                 <div class="captured-black">
-                    <h4 class="text-sm font-medium mb-2">Black</h4>
+                    <h4 class="text-sm font-medium mb-2">{{ t('black') }}</h4>
                     <div class="flex flex-wrap gap-1">
                         <TransitionGroup name="piece">
                             <div v-for="(piece, index) in blackPieces" :key="`black-${index}`" class="piece">
@@ -32,8 +32,8 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PieceType } from '~/entities/game/model/board.model';
-
+import type { PieceType } from '~/server/types/game';
+const { t } = useI18n();
 const props = defineProps<{
     capturedPieces: {
         white: PieceType[];

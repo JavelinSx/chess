@@ -5,8 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ChessPiece } from '~/entities/game/model/board.model';
-
+import type { ChessPiece } from '~/server/types/game';
 import ChessKnight from '~/app/styles/chess-icon/chess-knight.svg';
 import ChessRook from '~/app/styles/chess-icon/chess-rook.svg';
 import ChessBishop from '~/app/styles/chess-icon/chess-bishop.svg';
@@ -39,7 +38,7 @@ function getPieceComponent(type: string) {
         width: 80%;
         height: 80%;
         fill: none;
-        stroke-width: 1;
+        stroke-width: .8;
     }
 
     &.white {
@@ -51,8 +50,6 @@ function getPieceComponent(type: string) {
             }
         }
     }
-
-
 
 }
 
@@ -67,8 +64,6 @@ function getPieceComponent(type: string) {
                 }
             }
         }
-
-
     }
 }
 

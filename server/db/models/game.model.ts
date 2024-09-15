@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import type { ChessGame } from '~/entities/game/model/game.model';
+import type { ChessGame } from '~/server/types/game';
 
 const gameSchema = new mongoose.Schema<ChessGame>(
   {

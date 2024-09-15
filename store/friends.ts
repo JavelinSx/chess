@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { Friend, FriendRequestClient, FriendsData } from '~/server/types/friends';
+import type { Friend, FriendRequestClient } from '~/server/types/friends';
 import { friendsApi } from '~/shared/api/friends';
 
 interface FriendsState {
@@ -11,14 +11,19 @@ interface FriendsState {
   error: string | null;
 }
 
+interface ChatState extends FriendsState {
+  locales: ReturnType<typeof useI18n>;
+}
+
 export const useFriendsStore = defineStore('friends', {
-  state: (): FriendsState => ({
+  state: (): ChatState => ({
     friends: [],
     friendRequests: [] as FriendRequestClient[],
     receivedRequests: [],
     sentRequests: [],
     isLoading: false,
     error: null,
+    locales: useI18n(),
   }),
 
   actions: {
@@ -31,29 +36,10 @@ export const useFriendsStore = defineStore('friends', {
           this.friends = friends;
           this.friendRequests = friendRequests;
         } else if (response.error) {
-          console.error('Error fetching friends:', response.error);
           this.error = response.error;
         }
       } catch (error) {
-        console.error('Failed to fetch friends:', error);
-        this.error = 'Failed to fetch friends';
-      } finally {
-        this.isLoading = false;
-      }
-    },
-    async fetchFriendRequests() {
-      this.isLoading = true;
-      this.error = null;
-      try {
-        const response = await friendsApi.getFriendRequests();
-        if (response.data) {
-          this.receivedRequests = response.data.received;
-          this.sentRequests = response.data.sent;
-        } else if (response.error) {
-          this.error = response.error;
-        }
-      } catch (error) {
-        this.error = 'Failed to fetch friend requests';
+        this.error = this.locales.t('failedToFetchFriends');
       } finally {
         this.isLoading = false;
       }
@@ -71,9 +57,9 @@ export const useFriendsStore = defineStore('friends', {
         }
       } catch (error) {
         if (error instanceof Error && error.message === 'Friend request already exists') {
-          this.error = 'You have already sent a friend request to this user';
+          this.error = this.locales.t('friendRequestAlreadyExists');
         } else {
-          this.error = 'Failed to send friend request';
+          this.error = this.locales.t('failedToSendFriendRequest');
         }
       } finally {
         this.isLoading = false;
@@ -86,9 +72,7 @@ export const useFriendsStore = defineStore('friends', {
       try {
         const response = await friendsApi.respondToFriendRequest(requestId, accept);
         if (response.data) {
-          // Удаляем запрос из списка полученных запросов
           this.receivedRequests = this.receivedRequests.filter((req) => req._id !== requestId);
-          // Если запрос принят, обновляем список друзей
           if (accept) {
             await this.fetchFriends();
           }
@@ -96,7 +80,7 @@ export const useFriendsStore = defineStore('friends', {
           this.error = response.error;
         }
       } catch (error) {
-        this.error = `Failed to ${accept ? 'accept' : 'reject'} friend request`;
+        this.error = this.locales.t(accept ? 'failedToAcceptFriendRequest' : 'failedToRejectFriendRequest');
       } finally {
         this.isLoading = false;
       }
@@ -108,18 +92,15 @@ export const useFriendsStore = defineStore('friends', {
         const response = await friendsApi.removeFriend(friendId);
 
         if (response.data && response.data.success) {
-          // Немедленно удаляем друга из локального списка
           this.friends = this.friends.filter((friend) => friend._id !== friendId);
-          // Запрашиваем обновленный список друзей с сервера
           await this.fetchFriends();
         } else {
-          const errorMessage = response.error || (response.data && response.data.message) || 'Unknown error occurred';
-          console.error('Error removing friend:', errorMessage);
+          const errorMessage =
+            response.error || (response.data && response.data.message) || this.locales.t('unknownErrorOccurred');
           this.error = errorMessage;
         }
       } catch (error) {
-        console.error('Failed to remove friend:', error);
-        this.error = error instanceof Error ? error.message : 'Failed to remove friend';
+        this.error = error instanceof Error ? error.message : this.locales.t('failedToRemoveFriend');
       } finally {
         this.isLoading = false;
       }
@@ -127,7 +108,6 @@ export const useFriendsStore = defineStore('friends', {
 
     // Методы для обработки SSE событий
     handleFriendRequest(request: FriendRequestClient) {
-      // Проверяем, нет ли уже такого запроса
       if (!this.receivedRequests.some((req) => req._id === request._id)) {
         this.receivedRequests.push(request);
       }
@@ -140,7 +120,6 @@ export const useFriendsStore = defineStore('friends', {
     handleFriendRequestUpdate(updatedRequest: FriendRequestClient) {
       const updateRequest = (list: FriendRequestClient[]) => {
         if (!Array.isArray(list)) {
-          console.error('Expected an array, but received:', list);
           return;
         }
         const index = list.findIndex((req) => req._id === updatedRequest._id);
@@ -153,7 +132,6 @@ export const useFriendsStore = defineStore('friends', {
         }
       };
 
-      // Убедимся, что все списки инициализированы
       if (!this.receivedRequests) this.receivedRequests = [];
       if (!this.sentRequests) this.sentRequests = [];
       if (!this.friendRequests) this.friendRequests = [];
@@ -170,14 +148,11 @@ export const useFriendsStore = defineStore('friends', {
     handleFriendListUpdate(updatedFriends: Friend[]) {
       if (Array.isArray(updatedFriends) && updatedFriends.length > 0) {
         this.friends = updatedFriends;
-      } else {
-        console.warn('Attempted to update with empty or invalid friends list');
       }
     },
 
-    // Метод для инициализации данных
     async initializeFriendData() {
-      await Promise.all([this.fetchFriends(), this.fetchFriendRequests()]);
+      await this.fetchFriends();
     },
   },
 });

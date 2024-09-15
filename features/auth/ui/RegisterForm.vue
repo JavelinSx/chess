@@ -1,25 +1,26 @@
+<!-- RegisterForm.vue -->
 <template>
     <UCard class="auth-form">
         <UForm :state="formState" @submit="handleRegister" :validate="validateForm" class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center">{{ t('register') }}</h2>
 
-            <UFormGroup label="Username" name="username">
-                <UInput v-model="formState.username" type="text" placeholder="Enter your username"
+            <UFormGroup :label="t('username')" name="username">
+                <UInput v-model="formState.username" type="text" :placeholder="t('enterUsername')"
                     autocomplete="username" size="lg" required />
             </UFormGroup>
 
-            <UFormGroup label="Email" name="email">
-                <UInput v-model="formState.email" type="email" placeholder="Enter your email" autocomplete="email"
+            <UFormGroup :label="t('email')" name="email">
+                <UInput v-model="formState.email" type="email" :placeholder="t('enterEmail')" autocomplete="email"
                     size="lg" required />
             </UFormGroup>
 
-            <UFormGroup label="Password" name="password">
-                <UInput v-model="formState.password" type="password" placeholder="Enter your password"
+            <UFormGroup :label="t('password')" name="password">
+                <UInput v-model="formState.password" type="password" :placeholder="t('enterPassword')"
                     autocomplete="new-password" required :minlength="8" size="lg" />
             </UFormGroup>
 
             <UButton type="submit" color="primary" block :loading="isLoading" class="mt-3 mb-6 h-11 text-base">
-                Register
+                {{ t('register') }}
             </UButton>
         </UForm>
     </UCard>
@@ -28,9 +29,11 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-
+const { t } = useI18n()
 const authStore = useAuth();
 const isLoading = ref(false);
+const error = ref('');
+const success = ref(false);
 
 const formState = reactive({
     username: '',
@@ -47,7 +50,7 @@ const validateForm = () => {
     }
     if (!formState.email) {
         errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+/.test(formState.email)) {
         errors.email = 'Invalid email format';
     }
     if (!formState.password) {
@@ -64,21 +67,16 @@ const validateForm = () => {
 
 const handleRegister = async () => {
     isLoading.value = true;
+    error.value = '';
+    success.value = false;
     try {
         await authStore.register(formState.username, formState.email, formState.password);
-        navigateTo('/login');
-    } catch (error) {
-        console.error('Registration error:', error);
-        // Здесь можно добавить обработку ошибок, например, показать уведомление пользователю
+        success.value = true;
+        navigateTo('/login')
+    } catch (e) {
+        error.value = e instanceof Error ? e.message : 'An error occurred during registration';
     } finally {
         isLoading.value = false;
     }
 };
 </script>
-
-<style lang="scss" scoped>
-.auth-form {
-    max-width: 400px;
-    margin: 2rem auto;
-}
-</style>

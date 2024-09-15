@@ -25,7 +25,12 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
       createdAt: { type: Date, default: Date.now },
     },
   ],
+  chatSetting: { type: Boolean, defaul: false },
+  chatRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' }],
 });
+
+// Добавляем индекс для поля chatRooms
+userSchema.index({ chatRooms: 1 });
 
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {

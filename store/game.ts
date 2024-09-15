@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia';
 import { gameApi } from '~/shared/api/game';
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { Position } from '~/features/game-logic/model/pieces/types';
-import type { PieceType } from '~/entities/game/model/board.model';
+import type { ChessGame, Position, PieceType } from '~/server/types/game';
 import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
 import { useUserStore } from './user';
 
@@ -12,6 +10,7 @@ export const useGameStore = defineStore('game', {
     error: null as string | null,
     promote: false,
     pendingPromotion: null as { from: Position; to: Position } | null,
+    locales: useI18n(),
   }),
 
   actions: {
@@ -24,7 +23,7 @@ export const useGameStore = defineStore('game', {
           this.error = response.error;
         }
       } catch (error) {
-        this.error = 'Failed to fetch game';
+        this.error = this.locales.t('failedToFetchGame');
         this.currentGame = null;
       }
     },
@@ -38,7 +37,7 @@ export const useGameStore = defineStore('game', {
     },
 
     async makeMove(from: Position, to: Position) {
-      if (!this.currentGame) throw new Error('No active game');
+      if (!this.currentGame) throw new Error(this.locales.t('noActiveGame'));
 
       try {
         const response = await gameApi.makeMove(this.currentGame.id, from, to);
@@ -46,18 +45,18 @@ export const useGameStore = defineStore('game', {
         if (response.data) {
           this.currentGame = response.data;
         } else if (response.error) {
-          console.error('Error making move:', response.error);
+          console.error(this.locales.t('errorMakingMove'), response.error);
           this.error = response.error;
         }
       } catch (error) {
-        console.error('Failed to make move:', error);
-        this.error = 'Failed to make move';
+        console.error(this.locales.t('failedToMakeMove'), error);
+        this.error = this.locales.t('failedToMakeMove');
       }
     },
 
     async promotePawn(promoteTo: PieceType) {
       if (!this.currentGame || !this.pendingPromotion) {
-        throw new Error('No pending promotion');
+        throw new Error(this.locales.t('noPendingPromotion'));
       }
 
       const { from, to } = this.pendingPromotion;
@@ -66,7 +65,6 @@ export const useGameStore = defineStore('game', {
       try {
         const response = await gameApi.makeMove(this.currentGame.id, from, to, promoteTo);
         if (response.data) {
-          // Применяем локальные изменения к ответу сервера
           const mergedGame = {
             ...response.data,
             board: updatedGame.board,
@@ -76,7 +74,7 @@ export const useGameStore = defineStore('game', {
           this.error = response.error;
         }
       } catch (error) {
-        this.error = 'Failed to promote pawn';
+        this.error = this.locales.t('failedToPromotePawn');
       } finally {
         this.pendingPromotion = null;
         this.promote = false;
@@ -97,22 +95,21 @@ export const useGameStore = defineStore('game', {
 
     async forcedEndGame() {
       if (!this.currentGame) {
-        throw new Error('No active game');
+        throw new Error(this.locales.t('noActiveGame'));
       }
 
       try {
         await gameApi.forcedEndGame(this.currentGame.id);
         this.currentGame = null;
-        // Обновляем статус пользователя
         const userStore = useUserStore();
         await userStore.updateUserStatus(false, false);
-        // Перенаправляем на главную страницу
         navigateTo('/');
       } catch (error) {
-        console.error('Failed to forfeit game:', error);
-        this.error = 'Failed to forfeit game';
+        console.error(this.locales.t('failedToForfeitGame'), error);
+        this.error = this.locales.t('failedToForfeitGame');
       }
     },
+
     handleGameUpdate(updatedGame: ChessGame) {
       this.currentGame = updatedGame;
     },

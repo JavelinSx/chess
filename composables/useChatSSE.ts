@@ -44,7 +44,6 @@ export function useChatSSE(): ChatSSEReturn {
 
   onMounted(() => {
     setupSSE();
-    chatStore.fetchRooms();
   });
 
   onUnmounted(closeSSE);

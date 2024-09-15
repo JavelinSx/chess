@@ -5,15 +5,59 @@ import User from '../db/models/user.model';
 import { sseManager } from '~/server/utils/SSEManager';
 
 export const profileUpdate = async (id: string, username: string, email: string): Promise<UserProfileResponse> => {
-  const user = await User.findByIdAndUpdate(id, { username, email }, { new: true });
+  const user = await User.findByIdAndUpdate(id, { username, email }, { new: true }).lean();
 
   if (!user) {
     throw new Error('User not found');
   }
 
-  return user;
+  return {
+    _id: user._id.toString(),
+    username: user.username,
+    email: user.email,
+    rating: user.rating,
+    gamesPlayed: user.gamesPlayed,
+    gamesWon: user.gamesWon,
+    gamesLost: user.gamesLost,
+    gamesDraw: user.gamesDraw,
+    lastLogin: user.lastLogin,
+    isOnline: user.isOnline,
+    isGame: user.isGame,
+    winRate: user.winRate,
+    currentGameId: user.currentGameId,
+    friends: user.friends,
+    chatSetting: user.chatSetting,
+  };
 };
 
+export const updateUserProfile = async (
+  id: string,
+  updateData: { username?: string; email?: string; chatSetting?: boolean }
+): Promise<UserProfileResponse> => {
+  const user = await User.findByIdAndUpdate(id, updateData, { new: true }).lean();
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  return {
+    _id: user._id.toString(),
+    username: user.username,
+    email: user.email,
+    rating: user.rating,
+    gamesPlayed: user.gamesPlayed,
+    gamesWon: user.gamesWon,
+    gamesLost: user.gamesLost,
+    gamesDraw: user.gamesDraw,
+    lastLogin: user.lastLogin,
+    isOnline: user.isOnline,
+    isGame: user.isGame,
+    winRate: user.winRate,
+    currentGameId: user.currentGameId,
+    friends: user.friends,
+    chatSetting: user.chatSetting,
+  };
+};
 export const getUsersList = async (): Promise<ClientUser[]> => {
   return User.find({});
 };
@@ -107,6 +151,7 @@ export async function getUsersWithPagination(
       isOnline: false,
       isGame: false,
     })) as Friend[],
+    chatSetting: user.chatSetting,
   }));
 
   return {

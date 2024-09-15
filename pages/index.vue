@@ -1,13 +1,13 @@
 <!-- pages/index.vue -->
 <template>
     <div class="flex flex-col items-center justify-center gap-4">
-        <h1>Welcome to Chess Game</h1>
+        <h1>{{ t('welcome') }}</h1>
         <p v-if="isAuthenticated">
-            Hello, {{ user?.username }}!
+            {{ t('hello') }} {{ user?.username }}!
         </p>
         <p v-else>
-            <NuxtLink to="/login">Login</NuxtLink> or
-            <NuxtLink to="/register">Register</NuxtLink> to start playing.
+            <NuxtLink to="/login">{{ t('login') }}</NuxtLink> {{ t('or') }}
+            <NuxtLink to="/register">{{ t('register') }}</NuxtLink> {{ t('startPlaying') }}.
         </p>
 
         <UserList v-if="isAuthenticated" />
@@ -16,6 +16,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { onMounted } from 'vue';
 import { useChatSSE } from '#imports';
 import { useUserStore } from '~/store/user';

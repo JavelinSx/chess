@@ -1,6 +1,4 @@
-import type { CastlingRights } from '~/entities/game/model/game.model';
-import type { ChessBoard } from '~/entities/game/model/board.model';
-import type { Position } from '../pieces/types';
+import type { CastlingRights, ChessBoard, Position } from '~/server/types/game';
 
 export function updateCastlingRights(
   castlingRights: CastlingRights,

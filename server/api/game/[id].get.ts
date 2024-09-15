@@ -1,6 +1,6 @@
 // server/api/game/[id].get.ts
 
-import { getGameFromDatabase } from '~/server/services/game.service';
+import { GameService } from '~/server/services/game.service';
 
 export default defineEventHandler(async (event) => {
   const gameId = event.context.params?.id;
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const game = await getGameFromDatabase(gameId);
+  const game = await GameService.getGame(gameId);
 
   if (!game) {
     throw createError({

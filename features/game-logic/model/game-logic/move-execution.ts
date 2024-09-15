@@ -1,5 +1,4 @@
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { Position } from '../pieces/types';
+import type { ChessGame, Position } from '~/server/types/game';
 import { makeMove, isCapture, getPieceAt } from './board';
 import { isKingInCheck, isCheckmate, isStalemate } from './check';
 import { isPawnPromotion, isEnPassant, isCastling, performEnPassant, performCastling } from './special-moves';

@@ -27,8 +27,3 @@ export interface UserChatMessage {
   _id: string;
   username: string;
 }
-
-export interface UserChatSettings {
-  _id: string;
-  chatAccessibility: 'friends' | 'all';
-}

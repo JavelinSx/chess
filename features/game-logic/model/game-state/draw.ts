@@ -1,5 +1,5 @@
 import { hasInsufficientMaterial } from '../game-logic/special-moves';
-import type { ChessGame } from '~/entities/game/model/game.model';
+import type { ChessGame } from '~/server/types/game';
 export function isDraw(game: ChessGame): boolean {
   // 50-move rule
   if (game.halfMoveClock >= 100) return true;

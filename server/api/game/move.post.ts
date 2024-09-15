@@ -1,6 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
-import { getGameFromDatabase, saveGameToDatabase } from '~/server/services/game.service';
+import { GameService } from '~/server/services/game.service';
 import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
 
 export default defineEventHandler(async (event) => {
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
     }
 
-    let game = await getGameFromDatabase(gameId);
+    let game = await GameService.getGame(gameId);
     if (!game) {
       throw new Error('Game not found');
     }
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
       game = performMove(game, from, to);
     }
 
-    await saveGameToDatabase(game);
+    await GameService.saveGame(game);
     // Отправляем обновление игры через SSE
     await sseManager.broadcastGameUpdate(gameId, game);
     return { data: game, error: null };

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import type { ClientUser } from '~/server/types/user';
+import type { SettingChat } from '~/server/types/user';
 import { userApi } from '~/shared/api/user';
-import { gameApi } from '~/shared/api/game';
 
 export const useUserStore = defineStore('user', {
   state: () => {
@@ -25,10 +25,15 @@ export const useUserStore = defineStore('user', {
     isGame: (state) => state.user?.isGame,
     winRate: (state) => state.user?.winRate,
     currentGameId: (state) => state.user?.currentGameId,
+    chatSettings: (state) => state.user?.chatSetting,
   },
   actions: {
     setUser(user: ClientUser) {
       this.user = user;
+    },
+    async changeChatSetting() {
+      try {
+      } catch (error) {}
     },
     async changePassword(currentPassword: string, newPassword: string) {
       try {
@@ -67,13 +72,13 @@ export const useUserStore = defineStore('user', {
     setUsersList(users: ClientUser[]) {
       this.usersList = users;
     },
-    async updateProfile(username: string, email: string) {
+    async updateProfile(username: string, email: string, chatSetting: SettingChat) {
       if (!this.user) {
         throw new Error('User is not authenticated');
       }
-      const response = await userApi.profileUpdate(this.user._id, username, email);
+      const response = await userApi.profileUpdate(this.user._id, username, email, chatSetting);
       if (response.data) {
-        this.setUser({ ...this.user, username, email });
+        this.setUser({ ...this.user, username, email, chatSetting });
       } else if (response.error) {
         throw new Error(response.error);
       }

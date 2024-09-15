@@ -6,7 +6,7 @@ import type { IChatRoom, ChatMessage, UserChatMessage } from '~/server/types/cha
 export const useChatStore = defineStore('chat', {
   state: () => ({
     rooms: {} as Record<string, IChatRoom>,
-    currentRoom: {} as IChatRoom,
+    currentRoom: null as IChatRoom | null,
     activeRoomId: null as string | null,
     isOpen: false,
     error: null as string | null,
@@ -16,21 +16,21 @@ export const useChatStore = defineStore('chat', {
     totalPages: 1,
     messageLimit: 50,
     totalMessages: 0,
+    locales: useI18n(),
   }),
 
   getters: {
-    activeRoom: (state) => (state.activeRoomId ? (state.currentRoom = state.rooms[state.activeRoomId]) : null),
+    activeRoom: (state) => state.currentRoom,
     sortedRooms: (state) => {
-      return Object.values(state.rooms).sort(
-        (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime()
-      );
+      const roomsArray = Object.values(state.rooms);
+      return roomsArray.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
     },
     sortedMessages: (state) => {
-      if (!state.activeRoomId || !state.rooms[state.activeRoomId]) return [];
-      return [...(state.rooms[state.activeRoomId].messages || [])].sort((a, b) => a.timestamp - b.timestamp);
+      if (!state.currentRoom) return [];
+      return [...(state.currentRoom.messages || [])].sort((a, b) => a.timestamp - b.timestamp);
     },
     hasMoreMessages: (state) => {
-      return state.currentRoom.messages.length < state.currentRoom.messageCount;
+      return state.currentRoom ? state.currentRoom.messages.length < state.currentRoom.messageCount : false;
     },
   },
 
@@ -50,15 +50,10 @@ export const useChatStore = defineStore('chat', {
           this.totalPages = totalPages;
         }
       } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Failed to load messages';
+        this.error = error instanceof Error ? error.message : this.locales.t('failedToLoadMessages');
       } finally {
         this.isLoading = false;
       }
-    },
-
-    resetPagination() {
-      this.currentPage = 1;
-      this.totalPages = 1;
     },
 
     async setActiveRoom(roomId: string | null) {
@@ -74,15 +69,17 @@ export const useChatStore = defineStore('chat', {
             this.rooms[roomId].messageCount = totalCount;
             this.currentPage = currentPage;
             this.totalPages = totalPages;
-            console.log(`Set active room. Current page: ${this.currentPage}, Total pages: ${this.totalPages}`);
+            this.currentRoom = this.rooms[roomId];
           } else if (response.error) {
             this.error = response.error;
           }
         } catch (error) {
-          this.error = error instanceof Error ? error.message : 'Failed to fetch room messages';
+          this.error = error instanceof Error ? error.message : this.locales.t('failedToFetchRoomMessages');
         } finally {
           this.isLoading = false;
         }
+      } else {
+        this.currentRoom = null;
       }
     },
 
@@ -95,7 +92,7 @@ export const useChatStore = defineStore('chat', {
           { _id: otherUser._id, username: otherUser.username }
         );
         if (response.data) {
-          const room = response.data;
+          const room = response.data.room;
           this.rooms[room._id.toString()] = room;
           await this.setActiveRoom(room._id.toString());
           this.currentUserId = currentUser._id;
@@ -103,7 +100,7 @@ export const useChatStore = defineStore('chat', {
           this.error = response.error;
         }
       } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Failed to create or get room';
+        this.error = error instanceof Error ? error.message : this.locales.t('failedToCreateOrGetRoom');
       } finally {
         this.isLoading = false;
       }
@@ -123,7 +120,7 @@ export const useChatStore = defineStore('chat', {
           this.error = response.error;
         }
       } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Failed to fetch rooms';
+        this.error = error instanceof Error ? error.message : this.locales.t('failedToFetchRooms');
       } finally {
         this.isLoading = false;
       }
@@ -131,13 +128,13 @@ export const useChatStore = defineStore('chat', {
 
     async sendMessage(content: string) {
       if (!this.activeRoomId) {
-        this.error = 'No active room';
+        this.error = this.locales.t('noActiveRoom');
         return;
       }
 
       const userStore = useUserStore();
       if (!userStore.user) {
-        this.error = 'User not authenticated';
+        this.error = this.locales.t('userNotAuthenticated');
         return;
       }
 
@@ -150,7 +147,7 @@ export const useChatStore = defineStore('chat', {
         }
         // Сообщение будет добавлено через SSE
       } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Failed to send message';
+        this.error = error instanceof Error ? error.message : this.locales.t('failedToSendMessage');
       } finally {
         this.isLoading = false;
       }
@@ -172,11 +169,13 @@ export const useChatStore = defineStore('chat', {
       this.rooms[room._id.toString()] = room;
     },
 
+    resetPagination() {
+      this.currentPage = 1;
+      this.totalPages = 1;
+    },
+
     toggleChat() {
       this.isOpen = !this.isOpen;
-      if (this.isOpen) {
-        this.fetchRooms();
-      }
     },
 
     closeChat() {
