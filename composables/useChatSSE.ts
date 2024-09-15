@@ -1,5 +1,7 @@
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useChatStore } from '~/store/chat';
+import { useAuthStore } from '~/store/auth';
+import { useUserStore } from '~/store/user';
 
 interface ChatSSEReturn {
   closeSSE: () => void;
@@ -7,12 +9,21 @@ interface ChatSSEReturn {
 
 export function useChatSSE(): ChatSSEReturn {
   const chatStore = useChatStore();
+  const authStore = useAuthStore();
+  const userStore = useUserStore();
   const eventSource = ref<EventSource | null>(null);
 
   const setupSSE = () => {
+    if (!authStore.isAuthenticated || !userStore.user?.isOnline) {
+      closeSSE();
+      return;
+    }
+
     eventSource.value = new EventSource('/api/sse/chat');
 
-    eventSource.value.onopen = (event) => {};
+    eventSource.value.onopen = (event) => {
+      console.log('Chat SSE connection opened');
+    };
 
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -25,11 +36,12 @@ export function useChatSSE(): ChatSSEReturn {
           chatStore.addRoom(data.data);
           break;
         default:
-          console.log('Unhandled game event type:', data.type);
+          console.log('Unhandled chat event type:', data.type);
       }
     };
 
     eventSource.value.onerror = (error) => {
+      console.error('Chat SSE error:', error);
       closeSSE();
       setTimeout(setupSSE, 5000);
     };
@@ -43,10 +55,36 @@ export function useChatSSE(): ChatSSEReturn {
   };
 
   onMounted(() => {
-    setupSSE();
+    if (authStore.isAuthenticated && userStore.user?.isOnline) {
+      setupSSE();
+    }
   });
 
   onUnmounted(closeSSE);
+
+  watch(
+    () => authStore.isAuthenticated,
+    (newValue) => {
+      if (!newValue) {
+        closeSSE();
+      } else if (userStore.user?.isOnline) {
+        setupSSE();
+      }
+    }
+  );
+
+  watch(
+    () => userStore.user?.isOnline,
+    (newValue) => {
+      if (authStore.isAuthenticated) {
+        if (newValue) {
+          setupSSE();
+        } else {
+          closeSSE();
+        }
+      }
+    }
+  );
 
   return {
     closeSSE,

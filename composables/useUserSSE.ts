@@ -1,7 +1,9 @@
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useUserStore } from '~/store/user';
 import { useInvitationStore } from '~/store/invitation';
 import { useFriendsStore } from '~/store/friends';
+import { useAuthStore } from '~/store/auth';
+
 interface UserSSEReturn {
   closeSSE: () => void;
 }
@@ -10,12 +12,20 @@ export function useUserSSE(): UserSSEReturn {
   const userStore = useUserStore();
   const friendsStore = useFriendsStore();
   const invitationStore = useInvitationStore();
+  const authStore = useAuthStore();
   const eventSource = ref<EventSource | null>(null);
 
   const setupSSE = () => {
+    if (!authStore.isAuthenticated || !userStore.user?.isOnline) {
+      closeSSE();
+      return;
+    }
+
     eventSource.value = new EventSource('/api/sse/user-status');
 
-    eventSource.value.onopen = (event) => {};
+    eventSource.value.onopen = (event) => {
+      console.log('User SSE connection opened');
+    };
 
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -57,7 +67,7 @@ export function useUserSSE(): UserSSEReturn {
     eventSource.value.onerror = (error) => {
       console.error('User SSE error:', error);
       closeSSE();
-      setTimeout(setupSSE, 20000); // Попытка переподключения через 5 секунд
+      setTimeout(setupSSE, 20000);
     };
   };
 
@@ -68,8 +78,37 @@ export function useUserSSE(): UserSSEReturn {
     }
   };
 
-  onMounted(setupSSE);
+  onMounted(() => {
+    if (authStore.isAuthenticated && userStore.user?.isOnline) {
+      setupSSE();
+    }
+  });
+
   onUnmounted(closeSSE);
+
+  watch(
+    () => authStore.isAuthenticated,
+    (newValue) => {
+      if (!newValue) {
+        closeSSE();
+      } else if (userStore.user?.isOnline) {
+        setupSSE();
+      }
+    }
+  );
+
+  watch(
+    () => userStore.user?.isOnline,
+    (newValue) => {
+      if (authStore.isAuthenticated) {
+        if (newValue) {
+          setupSSE();
+        } else {
+          closeSSE();
+        }
+      }
+    }
+  );
 
   return {
     closeSSE,
