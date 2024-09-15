@@ -12,7 +12,7 @@ export const registerUser = async (
     const user = new User({ username, email, password });
     await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();
-
+    console.log('JWT Secret:', config.jwtSecret);
     const token = jwt.sign({ userId: user._id }, config.jwtSecret, { expiresIn: '1d' });
     return { data: { user: user.toObject(), token }, error: null };
   } catch (error) {
@@ -40,7 +40,7 @@ export const loginUser = async (email: string, password: string): Promise<ApiRes
 
     await sseManager.sendUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
     await user.save();
-
+    console.log('JWT Secret:', config.jwtSecret);
     const token = jwt.sign({ userId: user._id.toString() }, config.jwtSecret, { expiresIn: '30d' });
 
     return { data: { user: user.toObject(), token }, error: null };
