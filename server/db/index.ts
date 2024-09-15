@@ -4,7 +4,8 @@ import { startUserStatusSync } from '../services/user.status.service';
 export default async () => {
   const config = useRuntimeConfig();
   try {
-    await mongoose.connect(config.mongodbUri);
+    const mongoURI = config.mongodbUri! || process.env.MONGODB_URI!;
+    await mongoose.connect(mongoURI);
     startUserStatusSync();
     console.log('Connected to MongoDB');
   } catch (error) {

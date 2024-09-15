@@ -24,7 +24,9 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    apiBase: '/api' || process.env.API_BASE,
+    public: {
+      apiBase: '/api' || process.env.API_BASE,
+    },
     mongodbUri: 'mongodb://localhost:27017/chess_game' || process.env.MONGODB_URI,
     jwtSecret: 'your_secret_key_here' || process.env.JWT_SECRET,
   },
