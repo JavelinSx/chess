@@ -1,7 +1,7 @@
 import type { AuthData, ApiResponse } from '~/server/types/auth';
 import User from '~/server/db/models/user.model.js';
 import jwt from 'jsonwebtoken';
-
+import { useRuntimeConfig } from '#app';
 export const registerUser = async (
   username: string,
   email: string,
