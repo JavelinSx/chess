@@ -8,7 +8,7 @@ export async function apiRequest<T>(
   customHeaders: Record<string, string> = {}
 ): Promise<ApiResponse<T>> {
   const config = useRuntimeConfig();
-  const url = `${config.public.apiBase}${endpoint}`;
+  const url = `${config.apiBase}${endpoint}`;
   const headers: Record<string, string> = {
     ...customHeaders,
   };
