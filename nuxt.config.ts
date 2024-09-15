@@ -1,4 +1,6 @@
 import svgLoader from 'vite-svg-loader';
+import 'dotenv/config';
+
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui', '@nuxtjs/i18n'],
   css: ['~/app/styles/global.css'],
