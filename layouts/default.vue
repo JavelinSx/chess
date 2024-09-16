@@ -2,7 +2,7 @@
     <div class="min-h-screen flex flex-col">
         <UContainer>
             <nav class="py-4 flex items-center justify-between w-full">
-                <NuxtLink to="/" class="text-base font-bold mr-4 text-center sm:text-lg">ChessNexus</NuxtLink>
+                <NuxtLink to="/" class="font-bold mr-4 text-center text-2xl">ChessNexus</NuxtLink>
 
                 <!-- Desktop menu -->
                 <div class="hidden md:flex items-center space-x-4">
@@ -17,7 +17,7 @@
                 </div>
 
                 <!-- Mobile burger menu -->
-                <UButton @click="isMenuOpen = !isMenuOpen" size="lg" color="gray" variant="solid" class="md:hidden"
+                <UButton @click="isMenuOpen = !isMenuOpen" size="xl" color="gray" variant="solid" class="md:hidden"
                     aria-label="Menu">
                     <UIcon v-if="!isMenuOpen" name="i-heroicons-bars-3" />
                     <UIcon v-else name="i-heroicons-x-mark" />

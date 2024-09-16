@@ -1,7 +1,6 @@
 <!-- pages/index.vue -->
 <template>
     <div class="flex flex-col items-center justify-center gap-4">
-        <h1>{{ t('welcome') }}</h1>
         <p v-if="isAuthenticated">
             {{ t('hello') }} {{ user?.username }}!
         </p>
