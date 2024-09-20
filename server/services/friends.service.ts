@@ -145,7 +145,7 @@ export const friendsService = {
   },
 
   async getFriendRequests(userId: string): Promise<FriendRequest[]> {
-    const user = await User.findById(userId).populate('friendRequests.from', 'username');
+    const user = await User.findById(userId).select('friendRequests');
     if (!user) {
       throw new Error('User not found');
     }

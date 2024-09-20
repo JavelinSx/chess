@@ -21,6 +21,7 @@ export interface IChatRoom extends mongoose.Document {
   createdAt: Date;
   updatedAt: Date;
   lastMessageAt: Date;
+  isBlocked: boolean;
 }
 
 export interface UserChatMessage {

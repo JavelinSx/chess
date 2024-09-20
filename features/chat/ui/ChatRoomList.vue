@@ -4,24 +4,26 @@
         <template v-else>
             <ul v-if="chatStore.sortedRooms.length > 0">
                 <li v-for="room in chatStore.sortedRooms" :key="room._id.toString()"
-                    @click="openRoom(room._id.toString())"
                     class="cursor-pointer p-2 rounded hover:bg-slate-500 transition">
-                    <div class="flex items-center">
-                        <UAvatar :src="getOtherUserAvatar(room)" :alt="getOtherUsername(room)" class="mr-2" />
-                        <div>
-                            <p class="font-semibold">{{ getOtherUsername(room) }}</p>
-                            <p class="text-sm">{{ getLastMessage(room) }}</p>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center" @click="openRoom(room._id.toString())">
+                            <UAvatar :src="getOtherUserAvatar(room)" :alt="getOtherUsername(room)" class="mr-2" />
+                            <div>
+                                <p class="font-semibold">{{ getOtherUsername(room) }}</p>
+                                <p class="text-sm">{{ getLastMessage(room) }}</p>
+                            </div>
                         </div>
+                        <UButton icon="i-heroicons-trash" color="red" variant="ghost"
+                            @click.stop="openDeleteConfirmation(room._id.toString())" />
                     </div>
-                    <UDivider class="mt-2" :ui="{
-                        border: {
-                            base: 'flex border-gray-400 dark:border-gray-200'
-                        }
-                    }" />
+                    <UDivider class="mt-2" />
                 </li>
             </ul>
             <p v-else class="text-center text-gray-500">{{ t('noChatRoomsAvailable') }}</p>
         </template>
+        <ConfirmationModal v-model="isConfirmationModalOpen" :title="t('deleteRoomTitle')"
+            :message="t('deleteRoomMessage')" :confirm-text="t('delete')" :cancel-text="t('cancel')"
+            @confirm="deleteRoom" @cancel="cancelDeleteRoom" />
     </div>
 </template>
 
@@ -29,6 +31,7 @@
 import { onMounted, watch } from 'vue';
 import { useChatStore } from '~/store/chat';
 import { useUserStore } from '~/store/user';
+import ConfirmationModal from '~/shared/ui/ConfirmationModal.vue';
 import type { IChatRoom } from '~/server/types/chat';
 const { t } = useI18n();
 const chatStore = useChatStore();
@@ -47,6 +50,27 @@ watch(() => userStore.user, async (newUser) => {
         await chatStore.fetchRooms();
     }
 });
+
+const isConfirmationModalOpen = ref(false);
+const roomToDelete = ref<string | null>(null);
+
+const openDeleteConfirmation = (roomId: string) => {
+    roomToDelete.value = roomId;
+    isConfirmationModalOpen.value = true;
+};
+
+const deleteRoom = async () => {
+    if (roomToDelete.value) {
+        await chatStore.deleteRoom(roomToDelete.value);
+        roomToDelete.value = null;
+        isConfirmationModalOpen.value = false;
+    }
+};
+
+const cancelDeleteRoom = () => {
+    roomToDelete.value = null;
+    isConfirmationModalOpen.value = false;
+};
 
 const openRoom = (roomId: string) => {
     chatStore.setActiveRoom(roomId);

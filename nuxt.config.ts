@@ -44,8 +44,6 @@ export default defineNuxtConfig({
     },
   },
 
-  devtools: { enabled: true },
-
   vite: {
     define: {
       'process.env.DEBUG': JSON.stringify(process.env.DEBUG),

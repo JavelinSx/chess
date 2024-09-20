@@ -1,7 +1,6 @@
-<!-- RegisterForm.vue -->
 <template>
     <UCard class="auth-form">
-        <UForm :state="formState" @submit="handleRegister" :validate="validateForm" class="flex flex-col gap-4">
+        <UForm :state="formState" @submit="handleRegister" class="flex flex-col gap-4">
             <h2 class="text-2xl font-bold mb-6 text-center">{{ t('register') }}</h2>
 
             <UFormGroup :label="t('username')" name="username">
@@ -16,24 +15,30 @@
 
             <UFormGroup :label="t('password')" name="password">
                 <UInput v-model="formState.password" type="password" :placeholder="t('enterPassword')"
-                    autocomplete="new-password" required :minlength="8" size="lg" />
+                    autocomplete="new-password" required size="lg" />
             </UFormGroup>
 
             <UButton type="submit" color="primary" block :loading="isLoading" class="mt-3 mb-6 h-11 text-base">
                 {{ t('register') }}
             </UButton>
         </UForm>
+
+        <UAlert v-if="alert.alert.value.type" :type="alert.alert.value.type" color="red" variant="soft"
+            :title="t(alert.alert.value.message)" :icon="getAlertIcon(alert.alert.value.type)" class="mt-4"
+            :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'gray', variant: 'link' }"
+            @close="alert.forceCloseAlert" />
     </UCard>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-const { t } = useI18n()
+import { useAlert } from '~/composables/useAlert';
+
+const { t } = useI18n();
 const authStore = useAuth();
+const alert = useAlert(5000);  // алерт будет автоматически закрываться через 5 секунд
 const isLoading = ref(false);
-const error = ref('');
-const success = ref(false);
 
 const formState = reactive({
     username: '',
@@ -41,40 +46,35 @@ const formState = reactive({
     password: '',
 });
 
-const validateForm = () => {
-    const errors: { [key: string]: string } = {};
-    if (!formState.username) {
-        errors.username = 'Username is required';
-    } else if (formState.username.length < 3) {
-        errors.username = 'Username must be at least 3 characters long';
+const getAlertIcon = (type: string | null) => {
+    switch (type) {
+        case 'error':
+            return 'i-heroicons-exclamation-circle';
+        case 'success':
+            return 'i-heroicons-check-circle';
+        default:
+            return 'i-heroicons-information-circle';
     }
-    if (!formState.email) {
-        errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+/.test(formState.email)) {
-        errors.email = 'Invalid email format';
-    }
-    if (!formState.password) {
-        errors.password = 'Password is required';
-    } else if (formState.password.length < 8) {
-        errors.password = 'Password must be at least 8 characters long';
-    }
-
-    return Object.keys(errors).map(key => ({
-        path: key,
-        message: errors[key]
-    }));
 };
 
 const handleRegister = async () => {
     isLoading.value = true;
-    error.value = '';
-    success.value = false;
     try {
         await authStore.register(formState.username, formState.email, formState.password);
-        success.value = true;
-        navigateTo('/login')
+        alert.setAlert('success', 'registrationSuccessful');
+        setTimeout(() => {
+            navigateTo('/login');
+        }, 2000);
     } catch (e) {
-        error.value = e instanceof Error ? e.message : 'An error occurred during registration';
+        if (e instanceof Error) {
+            if (e.message.includes("Password must be at least 8 characters long")) {
+                alert.setAlert('error', 'passwordTooShort');
+            } else {
+                alert.setAlert('error', 'registrationFailed');
+            }
+        } else {
+            alert.setAlert('error', 'unknownError');
+        }
     } finally {
         isLoading.value = false;
     }

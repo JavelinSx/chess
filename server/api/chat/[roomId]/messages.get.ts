@@ -2,7 +2,7 @@
 import { chatService } from '~/server/services/chat.service';
 
 export default defineEventHandler(async (event) => {
-  const roomId = event.context.params?.roomId;
+  const { roomId } = getRouterParams(event);
   const query = getQuery(event);
   const page = Number(query.page) || 1;
   const limit = Number(query.limit) || 50;
@@ -14,22 +14,26 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  const userId = event.context.auth?.userId;
+  if (!userId) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+    });
+  }
+
   try {
-    const { messages, totalCount, currentPage, totalPages } = await chatService.getRoomMessages(roomId, page, limit);
+    const result = await chatService.getRoomMessages(roomId, userId, page, limit);
+
     return {
-      data: {
-        messages,
-        totalCount,
-        currentPage,
-        totalPages,
-      },
+      data: result,
       error: null,
     };
   } catch (error) {
     console.error('Error fetching room messages:', error);
-    return {
-      data: null,
-      error: error instanceof Error ? error.message : 'Failed to fetch room messages',
-    };
+    throw createError({
+      statusCode: 500,
+      statusMessage: error instanceof Error ? error.message : 'Failed to fetch room messages',
+    });
   }
 });

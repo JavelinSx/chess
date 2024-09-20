@@ -1,4 +1,3 @@
-<!-- FloatingChat.vue -->
 <template>
     <div v-if="chatStore.isOpen"
         class="fixed bottom-4 right-4 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">

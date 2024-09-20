@@ -1,5 +1,10 @@
 <template>
     <div class="h-full flex flex-col">
+        <div v-if="chatStore.isRoomBlocked(chatStore.activeRoomId!)"
+            class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+            <p class="font-bold">{{ t('privacyWarning') }}</p>
+            <p>{{ t('cannotSendMessagePrivacy') }}</p>
+        </div>
         <div ref="messagesContainer" class="flex-grow overflow-y-auto p-4" @scroll="handleScroll">
             <div class="flex flex-col space-y-4">
                 <template v-for="message in chatStore.sortedMessages" :key="message._id">
@@ -30,8 +35,10 @@
         <div class="p-4 bg-white">
             <UForm :state="formState" @submit="sendMessage">
                 <div class="flex items-center">
-                    <UInput v-model="formState.content" placeholder="Type a message..." class="flex-grow mr-2" />
-                    <UButton type="submit" color="primary" :loading="isSending" :disabled="!formState.content.trim()"
+                    <UInput v-model="formState.content" :placeholder="t('typeMessage')" class="flex-grow mr-2"
+                        :disabled="isRoomBlocked" />
+                    <UButton type="submit" color="primary" :loading="isSending"
+                        :disabled="!formState.content.trim() || isRoomBlocked"
                         icon="i-heroicons-paper-airplane-20-solid">
                         {{ t('send') }}
                     </UButton>
@@ -45,7 +52,8 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useChatStore } from '~/store/chat';
 import { useUserStore } from '~/store/user';
-const { t } = useI18n()
+
+const { t } = useI18n();
 const chatStore = useChatStore();
 const userStore = useUserStore();
 const messagesContainer = ref<HTMLElement | null>(null);
@@ -55,15 +63,17 @@ const formState = ref({
     content: '',
 });
 
+const isRoomBlocked = computed(() => chatStore.isRoomBlocked(chatStore.activeRoomId!));
+
 const isCurrentUserMessage = (message: any) => {
     return message._id === userStore.user?._id || message.username === userStore.user?.username;
 };
 
 const sendMessage = async () => {
-    if (!formState.value.content.trim()) return;
+    if (!formState.value.content.trim() || isRoomBlocked.value) return;
     isSending.value = true;
     try {
-        await chatStore.sendMessage(formState.value.content);
+        await chatStore.sendMessage(chatStore.activeRoomId!, formState.value.content);
         formState.value.content = '';
         nextTick(scrollToBottom);
     } catch (error) {
@@ -110,21 +120,17 @@ onMounted(() => {
     });
 });
 
-
 watch(() => chatStore.activeRoomId, (newRoomId) => {
     if (newRoomId) {
         chatStore.loadMoreMessages();
     }
 });
 
-
 watch(() => chatStore.sortedMessages, (newMessages, oldMessages) => {
     if (newMessages.length > oldMessages.length) {
         nextTick(scrollToBottom);
     }
 }, { deep: true });
-
-
 </script>
 
 <style scoped>

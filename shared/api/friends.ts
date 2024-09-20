@@ -4,11 +4,19 @@ import { apiRequest } from './api';
 
 export const friendsApi = {
   async getFriends(): Promise<ApiResponse<FriendsData>> {
-    return apiRequest<FriendsData>('/friends', 'GET');
+    console.log('friendsApi.getFriends called');
+    try {
+      const response = await apiRequest<FriendsData>('/friends', 'GET');
+      console.log('friendsApi.getFriends response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error in friendsApi.getFriends:', error);
+      throw error;
+    }
   },
 
-  async sendFriendRequest(toUserId: string): Promise<ApiResponse<FriendRequestClient>> {
-    return apiRequest<FriendRequestClient>('/friends/requests', 'POST', { toUserId });
+  async sendFriendRequest(fromUserId: string, toUserId: string): Promise<ApiResponse<FriendRequestClient>> {
+    return apiRequest<FriendRequestClient>('/friends/requests', 'POST', { fromUserId, toUserId });
   },
 
   async respondToFriendRequest(requestId: string, accept: boolean): Promise<ApiResponse<void>> {

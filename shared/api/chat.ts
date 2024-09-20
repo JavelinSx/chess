@@ -26,12 +26,25 @@ export const chatApi = {
     if (!user) {
       throw new Error('User not authenticated');
     }
-    return apiRequest<ChatMessage>('/chat/send-message', 'POST', {
-      roomId,
-      content,
-      _id: user._id,
-      username: user.username,
-    });
+    try {
+      const response = await apiRequest<ChatMessage>('/chat/send-message', 'POST', {
+        roomId,
+        content,
+        _id: user._id,
+        username: user.username,
+      });
+
+      if (response.error && response.error.includes('privacy settings')) {
+        throw new Error('Cannot send message due to privacy settings');
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof Error) {
+        return { data: null, error: error.message };
+      }
+      return { data: null, error: 'An unknown error occurred' };
+    }
   },
 
   async getRooms(): Promise<ApiResponse<IChatRoom[]>> {
@@ -42,10 +55,25 @@ export const chatApi = {
     roomId: string,
     page: number = 1,
     limit: number = 50
-  ): Promise<ApiResponse<{ messages: ChatMessage[]; totalCount: number; currentPage: number; totalPages: number }>> {
-    return apiRequest<{ messages: ChatMessage[]; totalCount: number; currentPage: number; totalPages: number }>(
-      `/chat/${roomId}/messages?page=${page}&limit=${limit}`,
-      'GET'
-    );
+  ): Promise<
+    ApiResponse<{
+      messages: ChatMessage[];
+      totalCount: number;
+      currentPage: number;
+      totalPages: number;
+      isBlocked: boolean;
+    }>
+  > {
+    return apiRequest<{
+      messages: ChatMessage[];
+      totalCount: number;
+      currentPage: number;
+      totalPages: number;
+      isBlocked: boolean;
+    }>(`/chat/${roomId}/messages?page=${page}&limit=${limit}`, 'GET');
+  },
+
+  async deleteRoom(roomId: string): Promise<ApiResponse<{ success: boolean }>> {
+    return apiRequest<{ success: boolean }>('/chat/delete-room', 'POST', { roomId });
   },
 };

@@ -1,66 +1,75 @@
-<!-- LoginForm.vue -->
 <template>
-    <UCard class="auth-form ">
-        <UForm :state="formState" @submit="handleLogin" :validate="validateForm" class="flex flex-col gap-4">
+    <UCard class="auth-form">
+        <UForm :state="formState" @submit="handleLogin" class="flex flex-col gap-4">
             <h2 class="text-2xl font-bold mb-6 text-center">{{ t('login') }}</h2>
-            <UFormGroup :label="t('email')" name="email" required>
+            <UFormGroup :label="t('email')" name="email">
                 <UInput v-model="formState.email" type="email" :placeholder="t('enterEmail')" autocomplete="email"
                     size="lg" required />
             </UFormGroup>
 
-            <UFormGroup :label="t('password')" name="password" required>
+            <UFormGroup :label="t('password')" name="password">
                 <UInput v-model="formState.password" type="password" :placeholder="t('enterPassword')"
-                    autocomplete="current-password" required :minlength="8" size="lg" />
+                    autocomplete="current-password" required size="lg" />
             </UFormGroup>
 
             <UButton type="submit" color="primary" block :loading="isLoading" class="mt-3 mb-6 h-11 text-base">
                 {{ t('login') }}
             </UButton>
         </UForm>
+
+        <UAlert v-if="alert.alert.value.type" :type="alert.alert.value.type" :title="t(alert.alert.value.message)"
+            color="red" variant="soft" :icon="getAlertIcon(alert.alert.value.type)" class="mt-4"
+            :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'red', variant: 'link' }"
+            @close="alert.forceCloseAlert" />
     </UCard>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
 import { useAuth } from '~/composables/useAuth';
-const { t } = useI18n()
+import { useAlert } from '~/composables/useAlert';
+
+const { t } = useI18n();
 const authStore = useAuth();
+const alert = useAlert(5000);  // алерт будет автоматически закрываться через 5 секунд
 const isLoading = ref(false);
-const error = ref('');
 
 const formState = reactive({
     email: '',
     password: '',
 });
 
-const validateForm = (state: typeof formState) => {
-    const errors: { [key: string]: string } = {};
-    if (!state.email) {
-        errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+/.test(state.email)) {
-        errors.email = 'Invalid email format';
+const getAlertIcon = (type: string | null) => {
+    switch (type) {
+        case 'error':
+            return 'i-heroicons-exclamation-circle';
+        case 'success':
+            return 'i-heroicons-check-circle';
+        default:
+            return 'i-heroicons-information-circle';
     }
-    if (!state.password) {
-        errors.password = 'Password is required';
-    } else if (state.password.length < 8) {
-        errors.password = 'Password must be at least 8 characters long';
-    }
-    return Object.keys(errors).map(key => ({
-        path: key,
-        message: errors[key]
-    }));
 };
 
 const handleLogin = async () => {
     isLoading.value = true;
-    error.value = '';
     try {
         await authStore.login(formState.email, formState.password);
         if (authStore.isAuthenticated) {
-            navigateTo('/');
+            alert.setAlert('success', 'loginSuccessful');
+            setTimeout(() => {
+                navigateTo('/');
+            }, 1000);
         }
     } catch (e) {
-        error.value = e instanceof Error ? e.message : 'An error occurred during login';
+        if (e instanceof Error) {
+            if (e.message.includes("Password must be at least 8 characters long")) {
+                alert.setAlert('error', 'passwordTooShort');
+            } else {
+                alert.setAlert('error', 'invalidCredentials');
+            }
+        } else {
+            alert.setAlert('error', 'unknownError');
+        }
     } finally {
         isLoading.value = false;
     }

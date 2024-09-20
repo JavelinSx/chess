@@ -29,8 +29,17 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
   chatRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' }],
 });
 
-// Добавляем индекс для поля chatRooms
 userSchema.index({ chatRooms: 1 });
+userSchema.index(
+  { 'friendRequests.from': 1, 'friendRequests.to': 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      'friendRequests.from': { $exists: true },
+      'friendRequests.to': { $exists: true },
+    },
+  }
+);
 
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {

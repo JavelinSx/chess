@@ -1,8 +1,8 @@
 <template>
-    <div class="min-h-screen flex flex-col">
+    <div class="min-h-screen flex flex-col relative">
         <UContainer>
             <nav class="py-4 flex items-center justify-between w-full">
-                <NuxtLink to="/" class="font-bold mr-4 text-center text-2xl">ChessNexus</NuxtLink>
+                <NuxtLink to="/" class="text-base font-bold mr-4 text-center sm:text-lg">ChessNexus</NuxtLink>
 
                 <!-- Desktop menu -->
                 <div class="hidden md:flex items-center space-x-4">
@@ -17,12 +17,11 @@
                 </div>
 
                 <!-- Mobile burger menu -->
-                <UButton @click="isMenuOpen = !isMenuOpen" size="xl" color="gray" variant="solid" class="md:hidden"
+                <UButton @click="isMenuOpen = !isMenuOpen" size="lg" color="gray" variant="solid" class="md:hidden"
                     aria-label="Menu">
                     <UIcon v-if="!isMenuOpen" name="i-heroicons-bars-3" />
                     <UIcon v-else name="i-heroicons-x-mark" />
                 </UButton>
-
             </nav>
         </UContainer>
 
@@ -59,6 +58,12 @@
                 <p>{{ t('copyright', { year: new Date().getFullYear() }) }}</p>
             </UContainer>
         </footer>
+        <UButton v-if="isAuthenticated && !chatStore.isOpen" @click="toggleChat" color="primary" variant="soft"
+            size="xl" icon="i-heroicons-chat-bubble-left-ellipsis" class="fixed right-4 bottom-4">
+            {{ t('chat') }}
+            <UBadge v-if="chatStore.unreadMessagesCount > 0" :label="chatStore.unreadMessagesCount" color="red"
+                class="absolute -top-2 -right-2" size="sm" />
+        </UButton>
     </div>
 </template>
 
@@ -66,6 +71,7 @@
 import { useAuthStore } from '../store/auth';
 import { useUserStore } from '~/store/user';
 import { useGameStore } from '~/store/game';
+import { useChatStore } from '~/store/chat';
 import { computed, ref } from 'vue';
 import FloatingChat from '~/features/chat/ui/FloatingChat.vue';
 import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'
@@ -75,8 +81,10 @@ const { t } = useI18n();
 const authStore = useAuthStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
+const chatStore = useChatStore();
 
 const isAuthenticated = computed(() => authStore.isAuthenticated);
+const chatIsOpen = computed(() => chatStore.isOpen)
 const isMenuOpen = ref(false);
 
 const activeGameId = computed(() => {
@@ -98,5 +106,9 @@ const logout = async () => {
     await userStore.updateUserStatus(false, false);
     await authStore.logout();
     isMenuOpen.value = false;
+};
+
+const toggleChat = () => {
+    chatStore.toggleChat();
 };
 </script>

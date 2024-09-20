@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 export interface FriendsData {
   friends: Friend[];
-  friendRequests: FriendRequestClient[];
+  friendsRequests: FriendRequestClient[];
 }
 
 export interface Friend {

@@ -27,7 +27,11 @@ const openChat = async () => {
             username: props.username,
         };
         await chatStore.createOrGetRoom(currentUser, otherUser);
-        chatStore.toggleChat();
+        if (chatStore.isOpen) {
+            chatStore.setActiveRoom(chatStore.currentRoom?._id.toString() || null);
+        } else {
+            chatStore.toggleChat();
+        }
     }
 };
 </script>

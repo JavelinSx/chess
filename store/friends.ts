@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { Friend, FriendRequestClient } from '~/server/types/friends';
 import { friendsApi } from '~/shared/api/friends';
+import { useUserStore } from './user';
 
 interface FriendsState {
   friends: Friend[];
@@ -18,7 +19,7 @@ interface ChatState extends FriendsState {
 export const useFriendsStore = defineStore('friends', {
   state: (): ChatState => ({
     friends: [],
-    friendRequests: [] as FriendRequestClient[],
+    friendRequests: [],
     receivedRequests: [],
     sentRequests: [],
     isLoading: false,
@@ -32,14 +33,17 @@ export const useFriendsStore = defineStore('friends', {
       try {
         const response = await friendsApi.getFriends();
         if (response.data) {
-          const { friends, friendRequests } = response.data;
+          const { friends, friendsRequests } = response.data;
           this.friends = friends;
-          this.friendRequests = friendRequests;
-        } else if (response.error) {
-          this.error = response.error;
+
+          const userStore = useUserStore();
+          const currentUserId = userStore.user?._id;
+
+          this.receivedRequests = friendsRequests.filter((req) => req.to === currentUserId);
+          this.sentRequests = friendsRequests.filter((req) => req.from === currentUserId);
         }
       } catch (error) {
-        this.error = this.locales.t('failedToFetchFriends');
+        this.error = 'Failed to fetch friends';
       } finally {
         this.isLoading = false;
       }
@@ -48,19 +52,34 @@ export const useFriendsStore = defineStore('friends', {
     async sendFriendRequest(toUserId: string) {
       this.isLoading = true;
       this.error = null;
+      const userStore = useUserStore();
+      const fromUserId = userStore.user?._id;
+
+      if (!fromUserId) {
+        this.error = this.locales.t('userNotAuthenticated');
+        this.isLoading = false;
+        return;
+      }
+
       try {
-        const response = await friendsApi.sendFriendRequest(toUserId);
+        const response = await friendsApi.sendFriendRequest(fromUserId, toUserId);
         if (response.data) {
-          this.sentRequests.push(response.data);
+          if (typeof response.data === 'object' && 'message' in response.data) {
+            if ('alreadyExists' in response.data && response.data.alreadyExists) {
+              this.error = this.locales.t('friendRequestAlreadyExists');
+            } else {
+              const newRequest = response.data as FriendRequestClient;
+              const existingRequest = this.sentRequests.find((req) => req.to === toUserId);
+              if (!existingRequest) {
+                this.sentRequests.push(newRequest);
+              }
+            }
+          }
         } else if (response.error) {
           this.error = response.error;
         }
       } catch (error) {
-        if (error instanceof Error && error.message === 'Friend request already exists') {
-          this.error = this.locales.t('friendRequestAlreadyExists');
-        } else {
-          this.error = this.locales.t('failedToSendFriendRequest');
-        }
+        this.error = this.locales.t('failedToSendFriendRequest');
       } finally {
         this.isLoading = false;
       }
@@ -90,7 +109,6 @@ export const useFriendsStore = defineStore('friends', {
       this.isLoading = true;
       try {
         const response = await friendsApi.removeFriend(friendId);
-
         if (response.data && response.data.success) {
           this.friends = this.friends.filter((friend) => friend._id !== friendId);
           await this.fetchFriends();
@@ -106,22 +124,24 @@ export const useFriendsStore = defineStore('friends', {
       }
     },
 
-    // Методы для обработки SSE событий
+    // SSE event handlers
     handleFriendRequest(request: FriendRequestClient) {
-      if (!this.receivedRequests.some((req) => req._id === request._id)) {
+      const userStore = useUserStore();
+      const currentUserId = userStore.user?._id;
+
+      if (request.to === currentUserId && !this.receivedRequests.some((req) => req._id === request._id)) {
         this.receivedRequests.push(request);
+      } else if (request.from === currentUserId && !this.sentRequests.some((req) => req._id === request._id)) {
+        this.sentRequests.push(request);
       }
     },
 
     handleFriendRequestsUpdate(updatedRequests: FriendRequestClient[]) {
-      this.friendRequests = updatedRequests;
+      this.updateFriendRequests(updatedRequests);
     },
 
     handleFriendRequestUpdate(updatedRequest: FriendRequestClient) {
       const updateRequest = (list: FriendRequestClient[]) => {
-        if (!Array.isArray(list)) {
-          return;
-        }
         const index = list.findIndex((req) => req._id === updatedRequest._id);
         if (index !== -1) {
           if (updatedRequest.status === 'accepted' || updatedRequest.status === 'rejected') {
@@ -131,10 +151,6 @@ export const useFriendsStore = defineStore('friends', {
           }
         }
       };
-
-      if (!this.receivedRequests) this.receivedRequests = [];
-      if (!this.sentRequests) this.sentRequests = [];
-      if (!this.friendRequests) this.friendRequests = [];
 
       updateRequest(this.receivedRequests);
       updateRequest(this.sentRequests);
@@ -149,6 +165,15 @@ export const useFriendsStore = defineStore('friends', {
       if (Array.isArray(updatedFriends) && updatedFriends.length > 0) {
         this.friends = updatedFriends;
       }
+    },
+
+    updateFriendRequests(requests: FriendRequestClient[]) {
+      const userStore = useUserStore();
+      const currentUserId = userStore.user?._id;
+
+      this.receivedRequests = requests.filter((req) => req.to === currentUserId);
+      this.sentRequests = requests.filter((req) => req.from === currentUserId);
+      this.friendRequests = requests;
     },
 
     async initializeFriendData() {
