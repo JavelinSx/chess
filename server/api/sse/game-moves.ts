@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const gameId = query.gameId as string;
   const userId = event.context.auth?.userId;
-
+  console.log('hello1');
   if (!gameId || !userId) {
     throw createError({
       statusCode: 400,
@@ -14,12 +14,21 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const game = await GameService.getGame(gameId);
+  const gameResponse = await GameService.getGame(gameId);
 
-  if (!game) {
+  if (!gameResponse.data) {
     throw createError({
       statusCode: 404,
-      statusMessage: 'Game not found',
+      statusMessage: gameResponse.error || 'Game not found',
+    });
+  }
+
+  const game = gameResponse.data;
+
+  if (!game.players || typeof game.players.white === 'undefined' || typeof game.players.black === 'undefined') {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Invalid game data: players information is missing',
     });
   }
 

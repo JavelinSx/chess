@@ -1,12 +1,12 @@
 <template>
     <div class="h-full overflow-y-auto p-4">
-        <p v-if="chatStore.isLoading" class="text-center">{{ t('loadingChatRooms') }}</p>
+        <p v-if="chatStore.isLoading" class="text-center">{{ t('chat.loadingChatRooms') }}</p>
         <template v-else>
-            <ul v-if="chatStore.sortedRooms.length > 0">
-                <li v-for="room in chatStore.sortedRooms" :key="room._id.toString()"
+            <ul v-if="sortedRooms.length > 0">
+                <li v-for="room in sortedRooms" :key="room._id.toString()"
                     class="cursor-pointer p-2 rounded hover:bg-slate-500 transition">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center" @click="openRoom(room._id.toString())">
+                    <div class="flex items-center justify-between" @click="openRoom(room._id.toString())">
+                        <div class="flex items-center">
                             <UAvatar :src="getOtherUserAvatar(room)" :alt="getOtherUsername(room)" class="mr-2" />
                             <div>
                                 <p class="font-semibold">{{ getOtherUsername(room) }}</p>
@@ -15,14 +15,15 @@
                         </div>
                         <UButton icon="i-heroicons-trash" color="red" variant="ghost"
                             @click.stop="openDeleteConfirmation(room._id.toString())" />
+                        <UBadge v-if="!canInteract(room)" color="red">{{ t('chat.blocked') }}</UBadge>
                     </div>
                     <UDivider class="mt-2" />
                 </li>
             </ul>
-            <p v-else class="text-center text-gray-500">{{ t('noChatRoomsAvailable') }}</p>
+            <p v-else class="text-center text-gray-500">{{ t('chat.noChatRoomsAvailable') }}</p>
         </template>
-        <ConfirmationModal v-model="isConfirmationModalOpen" :title="t('deleteRoomTitle')"
-            :message="t('deleteRoomMessage')" :confirm-text="t('delete')" :cancel-text="t('cancel')"
+        <ConfirmationModal v-model="isConfirmationModalOpen" :title="t('chat.deleteRoomTitle')"
+            :message="t('chat.deleteRoomMessage')" :confirm-text="t('chat.delete')" :cancel-text="t('chat.cancel')"
             @confirm="deleteRoom" @cancel="cancelDeleteRoom" />
     </div>
 </template>
@@ -33,26 +34,23 @@ import { useChatStore } from '~/store/chat';
 import { useUserStore } from '~/store/user';
 import ConfirmationModal from '~/shared/ui/ConfirmationModal.vue';
 import type { IChatRoom } from '~/server/types/chat';
+
 const { t } = useI18n();
 const chatStore = useChatStore();
 const userStore = useUserStore();
 
-onMounted(async () => {
-    if (userStore.user) {
-        chatStore.currentUserId = userStore.user._id;
-        await chatStore.fetchRooms();
-    }
-});
 
-watch(() => userStore.user, async (newUser) => {
-    if (newUser) {
-        chatStore.currentUserId = newUser._id;
-        await chatStore.fetchRooms();
-    }
-});
+const sortedRooms = computed(() => chatStore.sortedRooms);
 
 const isConfirmationModalOpen = ref(false);
 const roomToDelete = ref<string | null>(null);
+
+const canInteract = async (room: IChatRoom) => {
+    const currentUser = userStore.user;
+    const otherParticipant = room.participants.find(p => p._id.toString() !== currentUser?._id);
+    if (!currentUser || !otherParticipant) return false;
+    return await chatStore.checkCanInteract(currentUser.chatSetting, otherParticipant.chatSetting, otherParticipant._id.toString());
+};
 
 const openDeleteConfirmation = (roomId: string) => {
     roomToDelete.value = roomId;
@@ -61,7 +59,7 @@ const openDeleteConfirmation = (roomId: string) => {
 
 const deleteRoom = async () => {
     if (roomToDelete.value) {
-        await chatStore.deleteRoom(roomToDelete.value);
+        await chatStore.deleteRoom(roomToDelete.value)
         roomToDelete.value = null;
         isConfirmationModalOpen.value = false;
     }
@@ -87,9 +85,9 @@ const getOtherUserAvatar = (room: IChatRoom) => {
 };
 
 const getLastMessage = (room: IChatRoom) => {
-    if (room.lastMessage) {
+    if (room.lastMessage && room.lastMessage.content) {
         return room.lastMessage.content.substring(0, 20) + (room.lastMessage.content.length > 20 ? '...' : '');
     }
-    return t('noMessageYet');
+    return t('chat.noMessageYet');
 };
 </script>

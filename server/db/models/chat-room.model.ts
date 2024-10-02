@@ -2,12 +2,13 @@ import mongoose from 'mongoose';
 import type { IChatRoom, ChatMessage, ChatParticipant } from '~/server/types/chat';
 
 const chatParticipantSchema = new mongoose.Schema<ChatParticipant>({
-  _id: { type: mongoose.Schema.Types.ObjectId, required: true },
+  _id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   username: { type: String, required: true },
+  chatSetting: { type: String, enum: ['all', 'friends_only', 'nobody'], required: true },
 });
 
 const chatMessageSchema = new mongoose.Schema<ChatMessage>({
-  _id: { type: mongoose.Schema.Types.ObjectId },
+  _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
   username: { type: String, required: true },
   content: { type: String, required: true },
   timestamp: { type: Number, default: Date.now },

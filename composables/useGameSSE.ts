@@ -1,24 +1,16 @@
+// composables/useGameSSE.ts
 import { ref, onUnmounted } from 'vue';
 import { useGameStore } from '~/store/game';
+import { useRouter } from 'vue-router';
 
-interface GameSSEReturn {
-  closeSSE: () => void;
-}
-
-export function useGameSSE(gameId: string): GameSSEReturn {
+export function useGameSSE(gameId: string) {
   const gameStore = useGameStore();
+  const router = useRouter();
   const eventSource = ref<EventSource | null>(null);
 
   const setupSSE = () => {
+    if (eventSource.value) return;
     eventSource.value = new EventSource(`/api/sse/game-moves?gameId=${gameId}`);
-
-    eventSource.value.onopen = (event) => {};
-
-    eventSource.value.onerror = (error) => {
-      console.error('SSE error:', error);
-      eventSource.value?.close();
-      setTimeout(setupSSE, 5000); // Попытка переподключения через 5 секунд
-    };
 
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -30,7 +22,6 @@ export function useGameSSE(gameId: string): GameSSEReturn {
         case 'game_end':
           gameStore.handleGameEnd(data.result);
           closeSSE();
-          navigateTo('/');
           break;
         default:
           console.log('Unhandled game event type:', data.type);
@@ -38,6 +29,7 @@ export function useGameSSE(gameId: string): GameSSEReturn {
     };
 
     eventSource.value.onerror = (error) => {
+      console.error('SSE error:', error);
       closeSSE();
     };
   };

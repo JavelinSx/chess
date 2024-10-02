@@ -1,7 +1,7 @@
 import { H3Event } from 'h3';
 import type { ChessGame } from '../types/game';
 import type { GameResult } from '../types/game';
-import { updateUserStatus } from '~/server/services/user.service';
+import { UserService } from '../services/user.service';
 import { GameService } from '../services/game.service';
 
 export class GameSSEManager {
@@ -12,6 +12,7 @@ export class GameSSEManager {
       this.gameConnections.set(gameId, new Map());
     }
     this.gameConnections.get(gameId)!.set(userId, event);
+    console.log(this.gameConnections);
   }
 
   removeGameConnection(gameId: string, userId: string) {
@@ -44,12 +45,12 @@ export class GameSSEManager {
       });
 
       try {
-        const game = await GameService.getGame(gameId);
+        const gameResponse = await GameService.getGame(gameId);
 
-        if (game && game.players.white && game.players.black) {
+        if (gameResponse.data && gameResponse.data.players.white && gameResponse.data.players.black) {
           await Promise.all([
-            updateUserStatus(game.players.white, true, false),
-            updateUserStatus(game.players.black, true, false),
+            UserService.updateUserStatus(gameResponse.data.players.white, true, false),
+            UserService.updateUserStatus(gameResponse.data.players.black, true, false),
           ]);
         } else {
           console.error(`Game with id ${gameId} not found or has invalid player data`);

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { useCookie } from '#app';
-import type { AuthData, ApiResponse } from '~/server/types/auth';
+import type { AuthData } from '~/server/types/auth';
+import type { ApiResponse } from '~/server/types/api';
 import { authApi } from '~/shared/api/auth';
 import { useUserStore } from './user';
 import { useChatStore } from './chat';
@@ -31,11 +32,6 @@ export const useAuthStore = defineStore('auth', {
 
     async logout() {
       const userStore = useUserStore();
-      if (userStore.user) {
-        await userStore.updateUserStatus(false, false);
-      }
-      const chatStore = useChatStore();
-      const friendsStore = useFriendsStore();
       localStorage.clear();
       userStore.user = null;
       const authCookie = useCookie('auth_token');

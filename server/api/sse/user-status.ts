@@ -1,5 +1,6 @@
 // server/api/sse/user-status.ts
 import { sseManager } from '~/server/utils/SSEManager';
+import { UserService } from '~/server/services/user.service';
 
 export default defineEventHandler(async (event) => {
   const userId = event.context.auth?.userId;
@@ -16,9 +17,19 @@ export default defineEventHandler(async (event) => {
 
   sseManager.addUserConnection(userId, event);
   sseManager.addInvitationConnection(userId, event);
+  sseManager.broadcastUserStatusUpdate(userId, { isOnline: true, isGame: false });
 
-  const closeHandler = () => {
-    sseManager.removeUserConnection(userId);
+  await UserService.updateUserStatus(userId, true, false);
+
+  const closeHandler = async () => {
+    try {
+      sseManager.removeUserConnection(userId);
+      sseManager.removeInvitationConnection(userId);
+      sseManager.broadcastUserStatusUpdate(userId, { isOnline: false, isGame: false });
+      await UserService.updateUserStatus(userId, false, false);
+    } catch (error) {
+      console.error('Error in SSE close handler:', error);
+    }
   };
 
   event.node.req.on('close', closeHandler);

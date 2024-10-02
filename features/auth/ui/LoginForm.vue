@@ -1,24 +1,25 @@
 <template>
-    <UCard class="auth-form">
+    <UCard class="auth-form sm:w-96">
         <UForm :state="formState" @submit="handleLogin" class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold mb-6 text-center">{{ t('login') }}</h2>
-            <UFormGroup :label="t('email')" name="email">
-                <UInput v-model="formState.email" type="email" :placeholder="t('enterEmail')" autocomplete="email"
+            <h2 class="text-2xl font-bold mb-6 text-center">{{ t('auth.login') }}</h2>
+            <UFormGroup :label="t('auth.email')" name="email">
+                <UInput v-model="formState.email" type="email" :placeholder="t('auth.enterEmail')" autocomplete="email"
                     size="lg" required />
             </UFormGroup>
 
-            <UFormGroup :label="t('password')" name="password">
-                <UInput v-model="formState.password" type="password" :placeholder="t('enterPassword')"
+            <UFormGroup :label="t('auth.password')" name="password">
+                <UInput v-model="formState.password" type="password" :placeholder="t('auth.enterPassword')"
                     autocomplete="current-password" required size="lg" />
             </UFormGroup>
 
             <UButton type="submit" color="primary" block :loading="isLoading" class="mt-3 mb-6 h-11 text-base">
-                {{ t('login') }}
+                {{ t('auth.login') }}
             </UButton>
         </UForm>
 
         <UAlert v-if="alert.alert.value.type" :type="alert.alert.value.type" :title="t(alert.alert.value.message)"
-            color="red" variant="soft" :icon="getAlertIcon(alert.alert.value.type)" class="mt-4"
+            :color="authStore.isAuthenticated ? 'green' : 'red'" variant="soft"
+            :icon="getAlertIcon(alert.alert.value.type)" class="mt-4"
             :close-button="{ icon: 'i-heroicons-x-mark-20-solid', color: 'red', variant: 'link' }"
             @close="alert.forceCloseAlert" />
     </UCard>

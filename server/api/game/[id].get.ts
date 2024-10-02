@@ -1,5 +1,3 @@
-// server/api/game/[id].get.ts
-
 import { GameService } from '~/server/services/game.service';
 
 export default defineEventHandler(async (event) => {
@@ -13,22 +11,27 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const game = await GameService.getGame(gameId);
+  try {
+    const gameResponse = await GameService.getGame(gameId);
+    if (!gameResponse.data) {
+      throw new Error(gameResponse.error || 'Game not found');
+    }
 
-  if (!game) {
+    const game = gameResponse.data;
+
+    if (game.players.white !== userId && game.players.black !== userId) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'You are not a participant of this game',
+      });
+    }
+
+    return { data: game, error: null };
+  } catch (error) {
+    console.error('Error fetching game:', error);
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Game not found',
+      statusCode: 500,
+      statusMessage: error instanceof Error ? error.message : 'An unknown error occurred',
     });
   }
-
-  // Проверяем, является ли пользователь участником игры
-  if (game.players.white !== userId && game.players.black !== userId) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'You are not a participant of this game',
-    });
-  }
-
-  return { data: game, error: null };
 });

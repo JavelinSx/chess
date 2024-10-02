@@ -1,5 +1,5 @@
 // server/api/chat/room/[roomId]/messages.get.ts
-import { chatService } from '~/server/services/chat.service';
+import { ChatService } from '~/server/services/chat.service';
 
 export default defineEventHandler(async (event) => {
   const { roomId } = getRouterParams(event);
@@ -23,12 +23,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const result = await chatService.getRoomMessages(roomId, userId, page, limit);
+    const result = await ChatService.getRoomMessages(roomId, userId, page, limit);
 
-    return {
-      data: result,
-      error: null,
-    };
+    return result;
   } catch (error) {
     console.error('Error fetching room messages:', error);
     throw createError({

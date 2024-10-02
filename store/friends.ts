@@ -3,27 +3,14 @@ import type { Friend, FriendRequestClient } from '~/server/types/friends';
 import { friendsApi } from '~/shared/api/friends';
 import { useUserStore } from './user';
 
-interface FriendsState {
-  friends: Friend[];
-  receivedRequests: FriendRequestClient[];
-  sentRequests: FriendRequestClient[];
-  friendRequests: FriendRequestClient[];
-  isLoading: boolean;
-  error: string | null;
-}
-
-interface ChatState extends FriendsState {
-  locales: ReturnType<typeof useI18n>;
-}
-
 export const useFriendsStore = defineStore('friends', {
-  state: (): ChatState => ({
-    friends: [],
-    friendRequests: [],
-    receivedRequests: [],
-    sentRequests: [],
-    isLoading: false,
-    error: null,
+  state: () => ({
+    friends: [] as Friend[],
+    friendRequests: [] as FriendRequestClient[],
+    receivedRequests: [] as FriendRequestClient[],
+    sentRequests: [] as FriendRequestClient[],
+    isLoading: false as boolean,
+    error: null as string | null,
     locales: useI18n(),
   }),
 
@@ -33,14 +20,10 @@ export const useFriendsStore = defineStore('friends', {
       try {
         const response = await friendsApi.getFriends();
         if (response.data) {
-          const { friends, friendsRequests } = response.data;
-          this.friends = friends;
-
-          const userStore = useUserStore();
-          const currentUserId = userStore.user?._id;
-
-          this.receivedRequests = friendsRequests.filter((req) => req.to === currentUserId);
-          this.sentRequests = friendsRequests.filter((req) => req.from === currentUserId);
+          this.friends = response.data.friends || [];
+          this.updateFriendRequests(response.data.friendsRequests || []);
+        } else if (response.error) {
+          this.error = response.error;
         }
       } catch (error) {
         this.error = 'Failed to fetch friends';
@@ -174,6 +157,7 @@ export const useFriendsStore = defineStore('friends', {
       this.receivedRequests = requests.filter((req) => req.to === currentUserId);
       this.sentRequests = requests.filter((req) => req.from === currentUserId);
       this.friendRequests = requests;
+      console.log(requests);
     },
 
     async initializeFriendData() {

@@ -15,7 +15,7 @@
 
         <!-- Кнопка для выбора английского языка -->
         <UButton :color="locale === 'en' ? 'violet' : 'gray'" :variant="locale === 'en' ? 'solid' : 'outline'" size="md"
-            @click="setLocale('en')">
+            @click="setLocaleClient('en')">
             En
         </UButton>
     </div>
@@ -26,14 +26,14 @@ import { useI18n } from 'vue-i18n'
 import { ref, computed } from 'vue'
 
 // Используем $i18n для получения текущего языка
-const { locales, locale } = useI18n()
+const { locales, locale, setLocale } = useI18n()
 
 // Активный и неактивный классы для кнопок
 const activeClass = 'bg-violet-500 text-white rounded-md'
 const inactiveClass = 'bg-gray-200 text-black rounded-md hover:bg-gray-300'
 
 // Функция для смены языка
-const setLocale = (newLocale) => {
-    locale.value = newLocale
+const setLocaleClient = (newLocale) => {
+    setLocale(newLocale)
 }
 </script>

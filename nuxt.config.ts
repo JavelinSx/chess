@@ -3,17 +3,30 @@ import 'dotenv/config';
 
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui', '@nuxtjs/i18n'],
+
   css: ['~/app/styles/global.css'],
+
   nitro: {
     plugins: ['~/server/db/index.ts'],
+    experimental: {
+      websocket: true,
+    },
   },
 
   i18n: {
     locales: [
-      { code: 'en', iso: 'en-US', file: 'en.json' },
-      { code: 'ru', iso: 'ru-RU', file: 'ru.json' },
+      {
+        code: 'en',
+        iso: 'en-US',
+        file: 'en.json',
+      },
+      {
+        code: 'ru',
+        iso: 'ru-RU',
+        file: 'ru.json',
+      },
     ],
-    langDir: 'locales/',
+    langDir: 'locales',
     defaultLocale: 'ru',
     strategy: 'no_prefix',
   },

@@ -1,13 +1,13 @@
 <template>
     <div class="flex flex-wrap items-center gap-4">
-        <UInput v-model="searchQuery" :placeholder="t('searchByUsername')" icon="i-heroicons-magnifying-glass"
+        <UInput v-model="searchQuery" :placeholder="t('userList.searchByUsername')" icon="i-heroicons-magnifying-glass"
             class="w-full sm:w-auto " />
-        <USelect v-model="sortCriteria" :options="localizedSortOptions" :placeholder="t('sortBy')"
+        <USelect v-model="sortCriteria" :options="localizedSortOptions" :placeholder="t('userList.sortBy')"
             class="w-full sm:w-auto " />
         <UButton @click="toggleSortDirection" icon="i-heroicons-arrows-up-down"
-            :aria-label="t('toggleSortDirection')" />
-        <UCheckbox v-model="onlineOnly" :label="t('onlineOnly')" />
-        <USelect v-model="itemsPerPage" :options="localizedItemsPerPageOptions" :label="t('itemsPerPage')"
+            :aria-label="t('userList.toggleSortDirection')" />
+        <UCheckbox v-model="onlineOnly" :label="t('userList.onlineOnly')" />
+        <USelect v-model="itemsPerPage" :options="localizedItemsPerPageOptions" :label="t('userList.itemsPerPage')"
             class="w-full sm:w-auto " />
     </div>
 </template>
@@ -19,15 +19,15 @@ const { t } = useI18n();
 const paginationStore = usePaginationStore();
 
 const sortOptions = [
-    { label: 'rating', value: 'rating' },
-    { label: 'gamesPlayed', value: 'gamesPlayed' },
-    { label: 'freePlayers', value: 'isGame' },
+    { label: t('profile.rating'), value: 'rating' },
+    { label: t('profile.gamesPlayed'), value: 'gamesPlayed' },
+    { label: t('userList.freePlayers'), value: 'isGame' },
 ];
 const localizedSortOptions = computed(() =>
     sortOptions.map(option => ({ ...option, label: t(option.label) }))
 );
 const localizedItemsPerPageOptions = computed(() =>
-    itemsPerPageOptions.map(option => ({ ...option, label: t('itemsPerPageOption', { count: option.label }) }))
+    itemsPerPageOptions.map(option => ({ ...option, label: t('pagination.itemsPerPageOption', { count: option.label }) }))
 );
 const itemsPerPageOptions = [
     { label: '10', value: 9 },

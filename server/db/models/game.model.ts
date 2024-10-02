@@ -11,8 +11,12 @@ const gameSchema = new mongoose.Schema<ChessGame>(
       black: { type: String, ref: 'User' },
     },
     status: { type: String, enum: ['waiting', 'active', 'completed'], required: true },
-    winner: { type: String, ref: 'User', default: null },
-    loser: { type: String, ref: 'User', default: null },
+    result: {
+      winner: { type: String, ref: 'User', default: null },
+      loser: { type: String, ref: 'User', default: null },
+      reason: { type: String, enum: ['checkmate', 'stalemate', 'draw', 'forfeit', 'timeout'] },
+    },
+
     inviterId: { type: String, ref: 'User', required: true },
     inviteeId: { type: String, ref: 'User', required: true },
     moveCount: { type: Number, default: 0 },
@@ -37,6 +41,42 @@ const gameSchema = new mongoose.Schema<ChessGame>(
       from: { type: [Number], default: null },
       to: { type: [Number], default: null },
       promoteTo: { type: String, default: null },
+    },
+    moveHistory: [
+      {
+        from: { type: [Number], required: true },
+        to: { type: [Number], required: true },
+        piece: {
+          type: { type: String, enum: ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'], required: true },
+          color: { type: String, enum: ['white', 'black'], required: true },
+        },
+        capturedPiece: {
+          type: { type: String, enum: ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'] },
+          color: { type: String, enum: ['white', 'black'] },
+        },
+        isCheck: { type: Boolean, required: true },
+        isCheckmate: { type: Boolean, required: true },
+        isCastling: { type: Boolean, required: true },
+        isEnPassant: { type: Boolean, required: true },
+        isPromotion: { type: Boolean, required: true },
+        promotedTo: { type: String, enum: ['queen', 'rook', 'knight', 'bishop'] },
+        player: { type: String, required: true },
+      },
+    ],
+    timeControl: {
+      type: {
+        type: String,
+        enum: ['timed', 'untimed'],
+        required: true,
+      },
+      initialTime: {
+        type: Number,
+        enum: [15, 30, 45, 90],
+      },
+    },
+    startedAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true }

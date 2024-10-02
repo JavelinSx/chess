@@ -2,6 +2,7 @@ import { defineEventHandler, readBody, createError } from 'h3';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
 import { GameService } from '~/server/services/game.service';
 import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
+import { sseManager } from '~/server/utils/SSEManager';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -11,10 +12,12 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
     }
 
-    let game = await GameService.getGame(gameId);
-    if (!game) {
-      throw new Error('Game not found');
+    const gameResponse = await GameService.getGame(gameId);
+    if (!gameResponse.data) {
+      throw new Error(gameResponse.error || 'Game not found');
     }
+
+    let game = gameResponse.data;
 
     const isWhiteTurn = game.currentTurn === 'white';
     const isPlayersTurn =
@@ -30,7 +33,11 @@ export default defineEventHandler(async (event) => {
       game = performMove(game, from, to);
     }
 
-    await GameService.saveGame(game);
+    const saveResponse = await GameService.saveGame(game);
+    if (saveResponse.error) {
+      throw new Error(saveResponse.error);
+    }
+
     // Отправляем обновление игры через SSE
     await sseManager.broadcastGameUpdate(gameId, game);
     return { data: game, error: null };

@@ -1,10 +1,14 @@
+// composables/useChatSSE.ts
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useChatStore } from '~/store/chat';
 import { useAuthStore } from '~/store/auth';
 import { useUserStore } from '~/store/user';
+import { useCookie } from '#app';
 
 interface ChatSSEReturn {
+  setupSSE: () => void;
   closeSSE: () => void;
+  refreshRooms: () => Promise<void>;
 }
 
 export function useChatSSE(): ChatSSEReturn {
@@ -12,11 +16,19 @@ export function useChatSSE(): ChatSSEReturn {
   const authStore = useAuthStore();
   const userStore = useUserStore();
   const eventSource = ref<EventSource | null>(null);
+  const authToken = useCookie('auth_token');
+  const isInitialized = ref(false);
+
+  const isAuthenticated = computed(() => !!authToken.value);
 
   const setupSSE = () => {
-    if (!authStore.isAuthenticated || !userStore.user?.isOnline) {
+    if (!isAuthenticated.value || !userStore.user?.isOnline) {
       closeSSE();
       return;
+    }
+
+    if (eventSource.value) {
+      return; // SSE уже установлен
     }
 
     eventSource.value = new EventSource('/api/sse/chat');
@@ -27,13 +39,15 @@ export function useChatSSE(): ChatSSEReturn {
 
     eventSource.value.onmessage = (event) => {
       const data = JSON.parse(event.data);
-
       switch (data.type) {
         case 'new_message':
           chatStore.addMessageToRoom(data.data.roomId, data.data.message);
           break;
         case 'room_created':
           chatStore.addRoom(data.data);
+          break;
+        case 'chat_room_update':
+          chatStore.handleChatRoomUpdate(data.roomId);
           break;
         default:
           console.log('Unhandled chat event type:', data.type);
@@ -54,39 +68,20 @@ export function useChatSSE(): ChatSSEReturn {
     }
   };
 
-  onMounted(() => {
-    if (authStore.isAuthenticated && userStore.user?.isOnline) {
-      setupSSE();
+  const refreshRooms = async () => {
+    if (isAuthenticated.value && userStore.user && chatStore.rooms.length === 0) {
+      await chatStore.fetchRooms();
     }
+  };
+
+  onUnmounted(() => {
+    closeSSE();
+    isInitialized.value = false;
   });
 
-  onUnmounted(closeSSE);
-
-  watch(
-    () => authStore.isAuthenticated,
-    (newValue) => {
-      if (!newValue) {
-        closeSSE();
-      } else if (userStore.user?.isOnline) {
-        setupSSE();
-      }
-    }
-  );
-
-  watch(
-    () => userStore.user?.isOnline,
-    (newValue) => {
-      if (authStore.isAuthenticated) {
-        if (newValue) {
-          setupSSE();
-        } else {
-          closeSSE();
-        }
-      }
-    }
-  );
-
   return {
+    setupSSE,
     closeSSE,
+    refreshRooms,
   };
 }

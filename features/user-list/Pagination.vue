@@ -1,15 +1,14 @@
 <template>
     <div class="mt-4 flex justify-center" v-if="paginationStore.totalPages > 1">
-        <UPagination v-model="currentPage" :total="paginationStore.totalUsers" :per-page="paginationStore.itemsPerPage"
-            :ui="{}">
+        <UPagination v-model="currentPage" :total="paginationStore.totalUsers" :per-page="paginationStore.itemsPerPage">
             <template #prev="{ onClick }">
-                <UTooltip :text="t('previousPage')">
+                <UTooltip :text="t('pagination.previousPage')">
                     <UButton icon="i-heroicons-arrow-small-left-20-solid" color="primary" @click="onClick"
                         class="mr-2" />
                 </UTooltip>
             </template>
             <template #next="{ onClick }">
-                <UTooltip :text="t('nextPage')">
+                <UTooltip :text="t('pagination.nextPage')">
                     <UButton icon="i-heroicons-arrow-small-right-20-solid" color="primary" @click="onClick"
                         class="ml-2" />
                 </UTooltip>
@@ -17,7 +16,7 @@
         </UPagination>
     </div>
     <div class="mt-2 text-sm ">
-        {{ t('paginationInfo', {
+        {{ t('pagination.paginationInfo', {
             currentPage: paginationStore.currentPage,
             totalPages: paginationStore.totalPages,
             shownItems: paginationStore.paginatedUsers.length,

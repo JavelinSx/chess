@@ -1,15 +1,16 @@
 import { $fetch, FetchError } from 'ofetch';
-import type { ApiResponse } from '~/server/types/auth';
+import type { ApiResponse } from '~/server/types/api';
 
 export async function apiRequest<T>(
   endpoint: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
   body?: Record<string, unknown>,
+  queryParams?: Record<string, string>,
   customHeaders: Record<string, string> = {}
 ): Promise<ApiResponse<T>> {
   const config = useRuntimeConfig();
   const api = config.public.apiBase! || process.env.API_BASE!;
-  const url = `${api}${endpoint}`;
+  let url = `${api}${endpoint}`;
   const headers: Record<string, string> = {
     ...customHeaders,
   };
@@ -19,6 +20,11 @@ export async function apiRequest<T>(
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
+  }
+
+  if (queryParams) {
+    const searchParams = new URLSearchParams(queryParams);
+    url += `?${searchParams.toString()}`;
   }
 
   try {

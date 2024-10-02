@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import type { ChatSetting } from './user';
 
 export interface ChatMessage {
   _id: mongoose.Types.ObjectId;
@@ -10,6 +11,7 @@ export interface ChatMessage {
 export interface ChatParticipant {
   _id: mongoose.Types.ObjectId;
   username: string;
+  chatSetting: ChatSetting;
 }
 
 export interface IChatRoom extends mongoose.Document {
@@ -21,6 +23,12 @@ export interface IChatRoom extends mongoose.Document {
   createdAt: Date;
   updatedAt: Date;
   lastMessageAt: Date;
+  canSendMessage?: boolean;
+  isBlocked?: boolean;
+}
+
+export interface ChatRoomWithPrivacy extends IChatRoom {
+  canSendMessage: boolean;
   isBlocked: boolean;
 }
 

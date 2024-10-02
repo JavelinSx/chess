@@ -1,25 +1,24 @@
 <template>
     <UContainer class="py-8">
-        <h1 class="text-3xl font-bold mb-6 text-center">{{ t('chessGame') }}</h1>
         <UCard v-if="errorMessage" color="red" class="mb-4 ">
             <p>{{ t(errorMessage) }}</p>
         </UCard>
         <template v-if="gameStore.currentGame">
             <UCard v-if="gameStore.currentGame.status === 'waiting'" class="mb-4">
-                <p class="text-center">{{ t('waitingForOpponent') }}</p>
+                <p class="text-center">{{ t('game.waitingForOpponent') }}</p>
             </UCard>
             <template v-else>
                 <chess-board :game="gameStore.currentGame" :board="gameStore.currentGame.board"
                     :current-turn="gameStore.currentGame.currentTurn" @move="makeMove" class="mb-4" />
-
                 <captured-pieces :captured-pieces="gameStore.currentGame.capturedPieces" />
             </template>
         </template>
         <UCard v-else-if="!errorMessage" class="mb-4">
             <USkeleton class="h-64 w-full" />
-            <p class="text-center mt-2">{{ t('loadingGame') }}</p>
+            <p class="text-center mt-2">{{ t('game.loadingGame') }}</p>
         </UCard>
     </UContainer>
+    <GameResultModal v-if="gameStore.showResultModal" />
 </template>
 
 
@@ -28,6 +27,7 @@ import { ref, onMounted } from 'vue';
 import { useGameStore } from '~/store/game';
 import ChessBoard from '~/features/game/ui/ChessBoard.vue';
 import CapturedPieces from '~/features/game-logic/ui/CapturedPieces.vue';
+import GameResultModal from '~/features/game/ui/GameResultModal.vue';
 import { useGameSSE } from '~/composables/useGameSSE';
 
 const { t } = useI18n();

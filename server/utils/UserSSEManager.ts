@@ -23,19 +23,6 @@ export class UserSSEManager {
     return this.userConnections.has(userId);
   }
 
-  async sendUserStatusUpdate(userId: string, status: UserStatus) {
-    const event = this.userConnections.get(userId);
-    if (event) {
-      await this.sendEvent(
-        event,
-        JSON.stringify({
-          type: 'status_update',
-          userId,
-          ...status,
-        })
-      );
-    }
-  }
   async sendUserUpdate(userData: ClientUser) {
     const event = this.userConnections.get(userData._id);
     if (event) {
@@ -46,6 +33,17 @@ export class UserSSEManager {
           user: userData,
         })
       );
+    }
+  }
+  async broadcastUserStatusUpdate(userId: string, status: { isOnline: boolean; isGame: boolean }) {
+    const message = JSON.stringify({
+      type: 'user_status_update',
+      userId,
+      ...status,
+    });
+
+    for (const [_, connection] of this.userConnections) {
+      await this.sendEvent(connection, message);
     }
   }
   async broadcastUserListUpdate(users: ClientUser[]) {

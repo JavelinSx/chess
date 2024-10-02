@@ -1,23 +1,21 @@
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useUserStore } from '~/store/user';
 import { useInvitationStore } from '~/store/invitation';
 import { useFriendsStore } from '~/store/friends';
 import { useAuthStore } from '~/store/auth';
+import { useRouter } from 'vue-router';
 
-interface UserSSEReturn {
-  closeSSE: () => void;
-}
-
-export function useUserSSE(): UserSSEReturn {
+export function useUserSSE() {
   const userStore = useUserStore();
   const friendsStore = useFriendsStore();
   const invitationStore = useInvitationStore();
   const authStore = useAuthStore();
+  const router = useRouter();
   const eventSource = ref<EventSource | null>(null);
 
   const setupSSE = () => {
-    if (!authStore.isAuthenticated || !userStore.user?.isOnline) {
-      closeSSE();
+    if (eventSource.value) return;
+    if (!authStore.isAuthenticated || !userStore.user?.isOnline || eventSource.value) {
       return;
     }
 
@@ -31,8 +29,8 @@ export function useUserSSE(): UserSSEReturn {
       const data = JSON.parse(event.data);
 
       switch (data.type) {
-        case 'status_update':
-          userStore.updateUserInList(data.userId, data.isOnline, data.isGame);
+        case 'user_status_update':
+          userStore.updateUserStatus(data.userId, data.isOnline, data.isGame);
           break;
         case 'user_list_update':
           userStore.updateAllUsers(data.users);
@@ -41,10 +39,11 @@ export function useUserSSE(): UserSSEReturn {
           userStore.updateUserStats(data.stats);
           break;
         case 'game_invitation':
-          invitationStore.handleGameInvitation(data.fromInviteId, data.fromInviteName);
+          console.log('Received game invitation:', data);
+          invitationStore.handleGameInvitation(data.fromInviteId, data.fromInviteName, data.gameDuration);
           break;
         case 'game_start':
-          navigateTo(`/game/${data.gameId}`);
+          router.push(`/game/${data.gameId}`);
           break;
         case 'friend_request':
           friendsStore.handleFriendRequest(data.request);
@@ -67,7 +66,6 @@ export function useUserSSE(): UserSSEReturn {
     eventSource.value.onerror = (error) => {
       console.error('User SSE error:', error);
       closeSSE();
-      setTimeout(setupSSE, 20000);
     };
   };
 
@@ -77,14 +75,6 @@ export function useUserSSE(): UserSSEReturn {
       eventSource.value = null;
     }
   };
-
-  onMounted(() => {
-    if (authStore.isAuthenticated && userStore.user?.isOnline) {
-      setupSSE();
-    }
-  });
-
-  onUnmounted(closeSSE);
 
   watch(
     () => authStore.isAuthenticated,
@@ -110,7 +100,5 @@ export function useUserSSE(): UserSSEReturn {
     }
   );
 
-  return {
-    closeSSE,
-  };
+  return { setupSSE, closeSSE };
 }

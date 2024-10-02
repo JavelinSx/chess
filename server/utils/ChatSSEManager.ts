@@ -26,6 +26,19 @@ export class ChatSSEManager {
     }
   }
 
+  async sendChatRoomUpdateNotification(userId: string, roomId: string) {
+    const event = this.chatConnections.get(userId);
+    if (event) {
+      await this.sendEvent(
+        event,
+        JSON.stringify({
+          type: 'chat_room_update',
+          roomId: roomId,
+        })
+      );
+    }
+  }
+
   async sendChatRoomCreated(userId: string, room: IChatRoom) {
     const event = this.chatConnections.get(userId);
     if (event) {

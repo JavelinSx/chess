@@ -1,13 +1,14 @@
 <template>
     <UCard class="chess-board-container">
         <template #header>
-            <h3 class="text-lg font-semibold">{{ t('chessBoard') }}</h3>
+            <h3 class="text-lg font-semibold">{{ t('game.chessBoard') }}</h3>
         </template>
+
         <UCard :ui="{ header: { padding: 'py-4' } }" class="mb-4">
             <template #header>
                 <div class="flex items-center space-x-2">
                     <UAvatar :src="currentPlayerAvatar" :alt="currentPlayerName" size="sm" />
-                    <p class="text-sm">{{ t('playerTurn', { name: currentPlayerName }) }}</p>
+                    <p class="text-sm">{{ t('game.playerTurn', { name: currentPlayerName }) }}</p>
                 </div>
             </template>
         </UCard>
@@ -30,12 +31,14 @@
                 <div v-for="col in 'ABCDEFGH'" :key="col" class="cell">{{ col }}</div>
             </div>
         </div>
+
         <PawnPromotionDialog v-if="gameStore.promote"
             :color="gameStore.currentGame?.currentTurn === 'white' ? 'black' : 'white'" @select="handlePromotion" />
+
         <template #footer>
             <UButton v-if="gameStore.currentGame?.status === 'active'" color="red" icon="i-heroicons-flag"
-                @click="handleForcedEndGame">
-                {{ t('forfeitGame') }}
+                @click="handleEndGame('forfeit')">
+                {{ t('game.forfeitGame') }}
             </UButton>
         </template>
     </UCard>
@@ -43,13 +46,15 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
+import { gameApi } from '~/shared/api/game';
 import ChessPiece from './ChessPiece.vue';
 import PawnPromotionDialog from '~/features/game-logic/ui/PawnPromotionDialog.vue';
-import type { PieceType, Position } from '~/server/types/game';
+import type { PieceType, Position, GameResult, GameResultReason } from '~/server/types/game';
 import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
 import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
+
 const { t } = useI18n();
 const gameStore = useGameStore();
 const userStore = useUserStore();
@@ -59,14 +64,13 @@ const validMoves = ref<Position[]>([]);
 
 const currentGame = computed(() => gameStore.currentGame);
 const isCheck = computed(() => currentGame.value ? isKingInCheck(currentGame.value).inCheck : false);
-
 const isUserPlayingWhite = computed(() => gameStore.currentGame?.players.white === userStore.user?._id);
 
-const currentPlayerId = computed(() => {
-    return gameStore.currentGame?.currentTurn === 'white'
+const currentPlayerId = computed(() =>
+    gameStore.currentGame?.currentTurn === 'white'
         ? gameStore.currentGame.players.white
-        : gameStore.currentGame?.players.black;
-});
+        : gameStore.currentGame?.players.black
+);
 
 const currentPlayerName = computed(() => {
     if (currentPlayerId.value === userStore.user?._id) {
@@ -77,12 +81,7 @@ const currentPlayerName = computed(() => {
     }
 });
 
-const currentPlayerAvatar = computed(() => {
-    // Здесь логика получения аватара текущего игрока
-    // Пример: return userStore.getAvatarUrl(currentPlayerId.value);
-    return 'https://via.placeholder.com/40';
-});
-
+const currentPlayerAvatar = computed(() => 'https://via.placeholder.com/40');
 const isCurrentPlayerTurn = computed(() => currentPlayerId.value === userStore.user?._id);
 
 function getCellClasses(row: number, col: number) {
@@ -102,8 +101,14 @@ function getAdjustedPosition(row: number, col: number): Position {
 }
 
 function getPieceAt(row: number, col: number) {
+    if (!currentGame.value) return null;
     const [adjustedRow, adjustedCol] = getAdjustedPosition(row, col);
-    return currentGame.value?.board[adjustedRow][adjustedCol] ?? null;
+    return currentGame.value.board[adjustedRow]?.[adjustedCol] ?? null;
+}
+
+function isKing(row: number, col: number) {
+    const piece = getPieceAt(row, col);
+    return piece && piece.type === 'king' && piece.color === currentGame.value?.currentTurn;
 }
 
 function isSelected(row: number, col: number) {
@@ -112,11 +117,6 @@ function isSelected(row: number, col: number) {
 
 function isValidMove(row: number, col: number) {
     return validMoves.value.some(move => move[0] === row && move[1] === col);
-}
-
-function isKing(row: number, col: number) {
-    const piece = getPieceAt(row, col);
-    return piece && piece.type === 'king' && piece.color === currentGame.value?.currentTurn;
 }
 
 function isCheckingPiece(row: number, col: number) {
@@ -129,12 +129,21 @@ function handlePromotion(promoteTo: PieceType) {
     }
 }
 
-async function handleForcedEndGame() {
-    try {
-        await gameStore.forcedEndGame();
-    } catch (error) {
-        console.error('Error ending game:', error);
+function handleEndGame(reason: NonNullable<GameResultReason>) {
+    if (!gameStore.currentGame) return;
+
+    let result: GameResult = {
+        winner: null,
+        loser: null,
+        reason: reason
+    };
+
+    if (reason === 'checkmate' || reason === 'forfeit') {
+        result.winner = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.black : gameStore.currentGame.players.white;
+        result.loser = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.white : gameStore.currentGame.players.black;
     }
+
+    gameStore.handleGameEnd(result);
 }
 
 function handleCellClick(position: Position) {
@@ -164,6 +173,28 @@ watch(() => currentGame.value, () => {
     }
 }, { deep: true });
 
+watch(() => gameStore.gameResult, async (newResult) => {
+    if (newResult) {
+        try {
+            const updatedStats = await gameApi.updateGameStats(gameStore.currentGame!.id, newResult);
+            if (updatedStats.data && userStore.user) {
+                const currentUserStats = updatedStats.data[userStore.user._id];
+                if (currentUserStats) {
+                    userStore.updateUserStats(currentUserStats);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to update game stats:', error);
+        }
+    }
+});
+
+watch(() => gameStore.gameResult, (newResult) => {
+    if (newResult && newResult.reason) {
+        handleEndGame(newResult.reason);
+    }
+});
+
 onUnmounted(() => {
     gameStore.resetError();
 });
@@ -171,52 +202,47 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .chess-board-container {
-    @apply max-w-fit mx-auto;
+    @apply max-w-xl mx-auto w-full;
 }
 
 .chess-board {
-
     display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto 1fr;
     grid-template-areas:
-        ". h h h h h"
-        "v b b b b b"
-        "v b b b b b"
-        "v b b b b b"
-
+        ". h h"
+        "v b b";
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
 }
 
 .board-vertical-labels {
     grid-area: v;
+    display: flex;
+    flex-direction: column-reverse;
+    padding-right: 15px
 }
 
 .board-horizontal-labels {
     grid-area: h;
     display: flex;
+    padding-bottom: 10px;
 }
 
 .board-grid {
-    @apply inline-grid grid-cols-8;
     grid-area: b;
-
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    aspect-ratio: 1 / 1;
 }
 
-.board-labels {
-    @apply text-sm font-medium text-gray-600;
-
-    &.horizontal {
-        @apply flex mb-1;
-    }
-
-    &.vertical {
-        @apply flex flex-col-reverse mr-1;
-    }
-}
-
-.cell,
 .board-cell {
-    @apply relative flex justify-center items-center;
-    width: 2rem;
-    height: 2rem;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
 
     &.bg-beige {
         background-color: #f0d9b5;
@@ -254,37 +280,29 @@ onUnmounted(() => {
     }
 }
 
-@screen sm {
-
-    .cell,
-    .board-cell {
-        width: 2.5rem;
-        height: 2.5rem;
-    }
-}
-
-@screen md {
-
-    .cell,
-    .board-cell {
-        width: 3rem;
-        height: 3rem;
-    }
-}
-
-@screen lg {
-
-    .cell,
-    .board-cell {
-        width: 3.5rem;
-        height: 3.5rem;
-    }
+.cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
 }
 
 .board-labels {
+    @apply text-sm font-medium text-gray-600;
+
+    &.horizontal {
+        @apply flex mb-1;
+    }
+
+    &.vertical {
+        @apply flex flex-col-reverse mr-1;
+    }
+
     .cell {
         width: 100%;
         height: 100%;
     }
 }
-</style>
+
+// Удалены медиа-запросы для .cell и .board-cell, так как теперь используется grid и aspect-ratio</style>

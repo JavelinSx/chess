@@ -1,22 +1,22 @@
 <template>
     <UCard class="max-w-2xl mx-auto">
         <template #header>
-            <h2 class="text-2xl font-bold">{{ t('editProfile') }}</h2>
+            <h2 class="text-2xl font-bold">{{ t('profile.editProfile') }}</h2>
         </template>
 
         <UForm :state="profile" @submit="updateProfile" class="flex flex-col">
-            <UFormGroup :label="t('username')" name="username" class="mb-4">
+            <UFormGroup :label="t('auth.username')" name="username" class="mb-4">
                 <UInput v-model="profile.username" type="text" required size="lg" />
             </UFormGroup>
 
-            <UFormGroup :label="t('email')" name="email">
+            <UFormGroup :label="t('auth.email')" name="email">
                 <UInput v-model="profile.email" type="email" required size="lg" />
             </UFormGroup>
 
             <UCard class="mt-4">
-                <URadioGroup v-model="selectOptionChat" :options="localizedOptionsChat">
+                <URadioGroup v-model="profile.chatSetting" :options="chatSettingOptions">
                     <template #legend>
-                        <p class="mb-2">{{ t('chatPrivacySettings') }}</p>
+                        <p class="mb-2">{{ t('chat.chatPrivacySettings') }}</p>
                     </template>
                     <template #label="{ option }">
                         <div class="mb-2">
@@ -26,7 +26,7 @@
                 </URadioGroup>
             </UCard>
             <UButton type="submit" color="primary" size="lg" class="mt-4 justify-center" :disabled="!isProfileChanged">
-                {{ t('updateProfile') }}
+                {{ t('profile.updateProfile') }}
             </UButton>
         </UForm>
 
@@ -37,38 +37,38 @@
 
     <UCard class="max-w-2xl mx-auto mt-8">
         <template #header>
-            <h2 class="text-2xl font-bold">{{ t('userStatistics') }}</h2>
+            <h2 class="text-2xl font-bold">{{ t('profile.userStatistics') }}</h2>
         </template>
 
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <h3 class="font-semibold">{{ t('gamesPlayed') }}:</h3>
-                <p>{{ user.gamesPlayed }}</p>
+                <h3 class="font-semibold">{{ t('profile.gamesPlayed') }}:</h3>
+                <p>{{ userStore.user?.stats.gamesPlayed }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">{{ t('winRate') }}:</h3>
+                <h3 class="font-semibold">{{ t('profile.winRate') }}:</h3>
                 <p>{{ winRate }}%</p>
             </div>
             <div>
-                <h3 class="font-semibold">{{ t('gamesWon') }}:</h3>
-                <p class="">{{ user.gamesWon }}</p>
+                <h3 class="font-semibold">{{ t('profile.gamesWon') }}:</h3>
+                <p class="">{{ userStore.user?.stats.gamesWon }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">{{ t('gamesLost') }}:</h3>
-                <p class="">{{ user.gamesLost }}</p>
+                <h3 class="font-semibold">{{ t('profile.gamesLost') }}:</h3>
+                <p class="">{{ userStore.user?.stats.gamesLost }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">{{ t('gamesDrawn') }}:</h3>
-                <p class="">{{ user.gamesDraw }}</p>
+                <h3 class="font-semibold">{{ t('profile.gamesDrawn') }}:</h3>
+                <p class="">{{ userStore.user?.stats.gamesDraw }}</p>
             </div>
             <div>
-                <h3 class="font-semibold">{{ t('rating') }}:</h3>
-                <p class="">{{ user.rating }}</p>
+                <h3 class="font-semibold">{{ t('profile.rating') }}:</h3>
+                <p class="">{{ userStore.user?.rating }}</p>
             </div>
         </div>
 
         <template #footer>
-            <h3 class="font-semibold">{{ t('lastLogin') }}:</h3>
+            <h3 class="font-semibold">{{ t('profile.lastLogin') }}:</h3>
             <p class="">{{ formattedLastLogin }}</p>
         </template>
 
@@ -80,56 +80,39 @@ import { ref, reactive, computed } from 'vue'
 import { useUserStore } from '~/store/user';
 import ChangePassword from './ChangePassword.vue';
 import { useAlert } from '~/composables/useAlert';
+import type { ChatSetting } from '~/server/types/user';
 import type { ClientUser } from '~/server/types/user';
-const { t } = useI18n()
+
 const props = defineProps<{
     user: ClientUser
 }>();
 
-const localizedOptionsChat = computed(() => [
-    {
-        value: true,
-        label: t('all')
-    },
-    {
-        value: false,
-        label: t('onlyFriends')
-    }
-]);
-
+const { t } = useI18n()
+const userStore = useUserStore();
 const { alert, setAlert, clearAlert } = useAlert()
 
-const optionsChat = [
-    {
-        value: true,
-        label: 'All'
-    },
-    {
-        value: false,
-        label: 'Only friends'
-    }
-]
-
-const userStore = useUserStore()
-
-const selectOptionChat = ref(props.user.chatSetting ?? true)
+const chatSettingOptions = computed(() => [
+    { value: 'all', label: t('chat.all') },
+    { value: 'friends_only', label: t('chat.onlyFriends') },
+    { value: 'nobody', label: t('chat.nobody') }
+]);
 
 const originalProfile = {
-    username: props.user.username || '',
-    email: props.user.email || '',
-    chatSetting: props.user.chatSetting ?? true
+    username: userStore.user?.username || '',
+    email: userStore.user?.email || '',
+    chatSetting: userStore.user?.chatSetting || 'all' as ChatSetting
 }
 
 const profile = reactive({
     username: originalProfile.username,
     email: originalProfile.email,
+    chatSetting: originalProfile.chatSetting
 })
-
 
 const isProfileChanged = computed(() => {
     return profile.username !== originalProfile.username ||
         profile.email !== originalProfile.email ||
-        selectOptionChat.value !== originalProfile.chatSetting
+        profile.chatSetting !== originalProfile.chatSetting
 })
 
 const updateProfile = async () => {
@@ -139,9 +122,9 @@ const updateProfile = async () => {
     }
 
     try {
-        await userStore.updateProfile(profile.username, profile.email, selectOptionChat.value)
+        await userStore.updateProfile(profile.username, profile.email, profile.chatSetting)
         setAlert('success', 'Profile updated successfully!')
-        Object.assign(originalProfile, { ...profile, chatSetting: selectOptionChat.value })
+        Object.assign(originalProfile, { ...profile })
     } catch (err) {
         setAlert('error', 'Failed to update profile')
         console.error(err)
@@ -149,13 +132,14 @@ const updateProfile = async () => {
 }
 
 const winRate = computed(() => {
-    if (props.user.gamesPlayed === 0) return 0
-    return ((props.user.gamesWon / props.user.gamesPlayed) * 100).toFixed(2)
+    if (userStore.user?.stats.gamesPlayed === 0) return 0
+    return ((userStore.user?.stats.gamesWon! / userStore.user?.stats.gamesPlayed!) * 100).toFixed(2)
 })
 
 const formattedLastLogin = computed(() => {
-    if (!props.user.lastLogin) return 'N/A'
-    return new Date(props.user.lastLogin).toLocaleString()
+    if (!userStore.user?.lastLogin) return 'N/A'
+    return new Date(userStore.user?.lastLogin).toLocaleString()
 })
+
 
 </script>

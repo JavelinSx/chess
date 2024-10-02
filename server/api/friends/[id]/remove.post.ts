@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const result = await friendsService.removeFriend(userId, friendId);
-    return { data: result, error: null };
+    return result;
   } catch (error) {
     console.error('Error removing friend:', error);
     return {

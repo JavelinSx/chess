@@ -1,18 +1,10 @@
-import type { ApiResponse } from '~/server/types/auth';
+import type { ApiResponse } from '~/server/types/api';
 import type { Friend, FriendRequestClient, FriendsData } from '~/server/types/friends';
 import { apiRequest } from './api';
 
 export const friendsApi = {
   async getFriends(): Promise<ApiResponse<FriendsData>> {
-    console.log('friendsApi.getFriends called');
-    try {
-      const response = await apiRequest<FriendsData>('/friends', 'GET');
-      console.log('friendsApi.getFriends response:', response);
-      return response;
-    } catch (error) {
-      console.error('Error in friendsApi.getFriends:', error);
-      throw error;
-    }
+    return apiRequest<FriendsData>('/friends', 'GET');
   },
 
   async sendFriendRequest(fromUserId: string, toUserId: string): Promise<ApiResponse<FriendRequestClient>> {

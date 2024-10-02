@@ -8,7 +8,7 @@
         },
     }">
         <template #header>
-            <h2 class="text-xl font-bold mb-4">{{ t('onlinePlayers') }}</h2>
+            <h2 class="text-xl font-bold mb-4">{{ t('userList.onlinePlayers') }}</h2>
             <SortingPlayers />
         </template>
         <UCard class="mb-4">
@@ -19,10 +19,10 @@
         <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
             <li v-if="paginationStore.paginatedUsers.length > 0" v-for="user in paginationStore.paginatedUsers"
                 :key="user._id">
-                <UserCard :user="user" :current-user-id="currentUserId" @invite="inviteToGame" />
+                <UserCard :user="user" :current-user-id="currentUserId" />
             </li>
             <li v-else class="col-span-full text-center mt-10 mb-10">
-                {{ t('noOnlinePlayers') }}
+                {{ t('userList.noOnlinePlayers') }}
             </li>
         </ul>
         <Pagination />
@@ -33,27 +33,18 @@
 import { computed, onMounted } from 'vue';
 import { useUserStore } from '~/store/user';
 import { usePaginationStore } from '~/store/pagination';
-import { useInvitationStore } from '~/store/invitation';
 import SortingPlayers from './SortingPlayers.vue';
 import UserCard from '../user/ui/UserCard.vue';
 import Pagination from './Pagination.vue';
 import FriendsList from '../friends/ui/FriendsList.vue';
 import FriendRequest from '../friends/ui/FriendRequest.vue';
 
-const { t } = useI18n()
+const { t } = useI18n();
 const userStore = useUserStore();
 const paginationStore = usePaginationStore();
-const invitationStore = useInvitationStore();
 
 const currentUserId = computed(() => userStore.user?._id);
 
-function inviteToGame(inviteeId: string) {
-    invitationStore.sendGameInvitation(inviteeId);
-}
-
-onMounted(async () => {
-    await userStore.fetchUsersList();
-});
 </script>
 
 <style scoped>

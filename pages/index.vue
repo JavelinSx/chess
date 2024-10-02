@@ -2,7 +2,7 @@
 <template>
     <div class="flex flex-col items-center justify-center gap-4">
         <p v-if="isAuthenticated">
-            {{ t('hello') }} {{ user?.username }}!
+            {{ t('common.hello') }} {{ user?.username }}!
         </p>
         <p v-else>
             <NuxtLink to="/login">{{ t('login') }}</NuxtLink> {{ t('or') }}
@@ -17,13 +17,12 @@
 <script setup lang="ts">
 const { t } = useI18n()
 import { onMounted } from 'vue';
-import { useChatSSE } from '#imports';
 import { useUserStore } from '~/store/user';
 import { useAuthStore } from '~/store/auth';
 import { useInvitationStore } from '~/store/invitation';
 import UserList from '~/features/user-list/UserList.vue';
-import GameInvitationModal from '~/features/invite-modal/GameInvitationModal.vue';
-useChatSSE()
+import GameInvitationModal from '~/features/invite/GameInvitationModal.vue';
+
 const invitationStore = useInvitationStore()
 const userStore = useUserStore();
 const authStore = useAuthStore();
@@ -37,9 +36,8 @@ const setupUserListInterval = () => {
 
 onMounted(async () => {
     if (authStore.isAuthenticated) {
-
         await userStore.fetchUsersList();
-        await userStore.updateUserStatus(true, false);
+        await userStore.updateUserStatus(user.value?._id!, true, false);
         setupUserListInterval();
     }
 });
@@ -55,7 +53,7 @@ onUnmounted(() => {
 if (import.meta.client) {
     window.addEventListener('beforeunload', async () => {
         if (authStore.isAuthenticated) {
-            await userStore.updateUserStatus(false, false);
+            await userStore.updateUserStatus(user.value?._id!, false, false);
         }
     });
 }

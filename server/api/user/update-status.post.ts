@@ -1,4 +1,4 @@
-import { updateUserStatus } from '~/server/services/user.service';
+import { UserService } from '~/server/services/user.service';
 
 export default defineEventHandler(async (event) => {
   const { userId, isOnline, isGame } = await readBody(event);
@@ -8,6 +8,6 @@ export default defineEventHandler(async (event) => {
       statusMessage: 'Invalid input types',
     });
   }
-  await updateUserStatus(userId, isOnline, isGame);
+  await UserService.updateUserStatus(userId, isOnline, isGame);
   return { success: true };
 });

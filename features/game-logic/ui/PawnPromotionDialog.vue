@@ -2,7 +2,7 @@
     <UModal v-model="isOpen">
         <UCard>
             <template #header>
-                <h3 class="text-lg font-semibold">Promote Pawn</h3>
+                <h3 class="text-lg font-semibold">{{ t('game.promotionPawn') }}</h3>
             </template>
             <div class="flex justify-around">
                 <button v-for="piece in promotionOptions" :key="piece" @click="selectPiece(piece)"
@@ -17,6 +17,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { PieceType, PieceColor } from '~/server/types/game';
+
+const { t } = useI18n();
 
 const props = defineProps<{
     color: PieceColor;

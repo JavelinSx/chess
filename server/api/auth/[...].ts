@@ -1,5 +1,6 @@
-import type { ApiResponse, AuthData } from '~/server/types/auth';
+import type { ApiResponse } from '~/server/types/api';
 import { registerUser, loginUser, logoutUser } from '~/server/services/auth.service';
+
 import { z } from 'zod';
 import { registerSchema, loginSchema } from '~/server/schemas/auth.schema';
 

@@ -6,11 +6,29 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true, select: false },
-  rating: { type: Number, default: 1200 },
-  gamesPlayed: { type: Number, default: 0 },
-  gamesWon: { type: Number, default: 0 },
-  gamesLost: { type: Number, default: 0 },
-  gamesDraw: { type: Number, default: 0 },
+  rating: { type: Number, default: 0 },
+  title: { type: String, default: 'Begginer' },
+  stats: {
+    gamesPlayed: { type: Number, default: 0 },
+    gamesWon: { type: Number, default: 0 },
+    gamesLost: { type: Number, default: 0 },
+    gamesDraw: { type: Number, default: 0 },
+    capturedPawns: { type: Number, default: 0 },
+    checksGiven: { type: Number, default: 0 },
+    castlingsMade: { type: Number, default: 0 },
+    promotions: { type: Number, default: 0 },
+    averageMovesPerGame: { type: Number, default: 0 },
+    longestGame: { type: Number, default: 0 },
+    shortestWin: { type: Number, default: 0 },
+    comebacks: { type: Number, default: 0 },
+    queenSacrifices: { type: Number, default: 0 },
+    enPassantCaptures: { type: Number, default: 0 },
+    stalemateCaused: { type: Number, default: 0 },
+    averageRatingChange: { type: Number, default: 0 },
+    winStreakBest: { type: Number, default: 0 },
+    currentWinStreak: { type: Number, default: 0 },
+    resignations: { type: Number, default: 0 },
+  },
   lastLogin: { type: Date, default: Date.now },
   isOnline: { type: Boolean, default: false },
   isGame: { type: Boolean, default: false },
@@ -25,7 +43,11 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
       createdAt: { type: Date, default: Date.now },
     },
   ],
-  chatSetting: { type: Boolean, defaul: false },
+  chatSetting: {
+    type: String,
+    enum: ['all', 'friends_only', 'nobody'],
+    default: 'all',
+  },
   chatRooms: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ChatRoom' }],
 });
 
@@ -40,7 +62,12 @@ userSchema.index(
     },
   }
 );
-
+userSchema.set('toObject', {
+  transform: function (doc, ret, options) {
+    delete ret.password;
+    return ret;
+  },
+});
 userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     this.password = await hashPassword(this.password);

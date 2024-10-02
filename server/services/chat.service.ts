@@ -1,252 +1,297 @@
-import ChatRoomModel from '~/server/db/models/chat-room.model';
+import ChatRoom from '../db/models/chat-room.model';
 import User from '../db/models/user.model';
-import type { IChatRoom, ChatMessage, UserChatMessage, ChatParticipant } from '~/server/types/chat';
-import type { IUser } from '../types/user';
+import type { IChatRoom, ChatMessage, ChatParticipant } from '../types/chat';
+import type { Friend } from '../types/friends';
+import type { ChatSetting } from '../types/user';
+import type { ApiResponse } from '~/server/types/api';
 import mongoose from 'mongoose';
 
-class ChatService {
-  async addMessage(roomId: string, user: { _id: string; username: string }, content: string): Promise<ChatMessage> {
-    const room = await ChatRoomModel.findById(roomId).select('-messages');
+export class ChatService {
+  static async createOrGetRoomWithPrivacyCheck(
+    currentUserId: string,
+    otherUserId: string,
+    currentUserChatSetting: ChatSetting,
+    otherUserChatSetting: ChatSetting
+  ): Promise<ApiResponse<{ room: IChatRoom | null; canInteract: boolean }>> {
+    try {
+      const canInteract = this.canInteract(currentUserChatSetting, otherUserChatSetting);
 
-    if (!room) {
-      throw new Error('Chat room not found');
+      let room = await ChatRoom.findOne({
+        'participants._id': { $all: [currentUserId, otherUserId] },
+      });
+
+      if (!room && canInteract) {
+        const currentUser = await User.findById(currentUserId);
+        const otherUser = await User.findById(otherUserId);
+
+        if (!currentUser || !otherUser) {
+          return { data: null, error: 'One or both users not found' };
+        }
+
+        room = new ChatRoom({
+          participants: [
+            { _id: currentUserId, username: currentUser.username, chatSetting: currentUser.chatSetting },
+            { _id: otherUserId, username: otherUser.username, chatSetting: otherUser.chatSetting },
+          ],
+          messages: [],
+          messageCount: 0,
+          lastMessage: null,
+        });
+
+        await room.save();
+      }
+
+      return { data: { room: room?.toObject() || null, canInteract }, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred in createOrGetRoomWithPrivacyCheck',
+      };
     }
+  }
 
-    // Проверяем настройки приватности получателя
-    const otherParticipant = room.participants.find((p) => p._id.toString() !== user._id);
-    if (otherParticipant) {
-      const receiver = await User.findById(otherParticipant._id).select('chatSetting friends');
-      if (receiver) {
-        const canSendMessage =
-          receiver.chatSetting || receiver.friends.some((friendId) => friendId.toString() === user._id);
-        if (!canSendMessage) {
-          throw new Error("Cannot send message due to receiver's privacy settings");
+  static async updateUserChatPrivacy(userId: string, newChatSetting: ChatSetting): Promise<ApiResponse<void>> {
+    try {
+      // Находим все комнаты, в которых участвует пользователь
+      const rooms = await ChatRoom.find({ 'participants._id': userId }).populate(
+        'participants',
+        '_id username chatSetting'
+      );
+
+      // Обновляем настройки пользователя в каждой комнате
+      for (const room of rooms) {
+        const userParticipant = room.participants.find((p) => p._id.toString() === userId);
+        if (userParticipant) {
+          userParticipant.chatSetting = newChatSetting;
+          await sseManager.sendChatRoomUpdateNotification(userParticipant?._id.toString(), room._id.toString());
+          await room.save();
+        }
+
+        // Отправляем уведомление другому участнику комнаты
+        const otherParticipant = room.participants.find((p) => p._id.toString() !== userId);
+        if (otherParticipant) {
+          await sseManager.sendChatRoomUpdateNotification(otherParticipant._id.toString(), room._id.toString());
         }
       }
-    }
 
-    const message: ChatMessage = {
-      _id: new mongoose.Types.ObjectId(),
-      username: user.username,
-      content,
-      timestamp: Date.now(),
-    };
-
-    await ChatRoomModel.findByIdAndUpdate(roomId, {
-      $push: { messages: message },
-      $set: {
-        lastMessageAt: new Date(),
-        lastMessage: message,
-      },
-      $inc: { messageCount: 1 },
-    });
-
-    return message;
-  }
-
-  async createOrGetRoom(user1: UserChatMessage, user2: UserChatMessage): Promise<IChatRoom | null> {
-    try {
-      const [userDoc1, userDoc2] = await Promise.all([
-        User.findById(user1._id).select('chatSetting chatRooms friends'),
-        User.findById(user2._id).select('chatSetting chatRooms friends'),
-      ]);
-
-      if (!userDoc1 || !userDoc2) {
-        return null;
-      }
-
-      // Проверяем настройки приватности обоих пользователей
-      if (!userDoc1.chatSetting && !userDoc1.friends.some((friendId) => friendId.toString() === user2._id)) {
-        throw new Error("Cannot create chat room due to user1's privacy settings");
-      }
-      if (!userDoc2.chatSetting && !userDoc2.friends.some((friendId) => friendId.toString() === user1._id)) {
-        throw new Error("Cannot create chat room due to user2's privacy settings");
-      }
-
-      const existingRoom = await ChatRoomModel.findOne({
-        'participants._id': { $all: [new mongoose.Types.ObjectId(user1._id), new mongoose.Types.ObjectId(user2._id)] },
-      });
-
-      if (existingRoom) {
-        return existingRoom;
-      }
-
-      const newRoom = new ChatRoomModel({
-        participants: [
-          { _id: new mongoose.Types.ObjectId(user1._id), username: user1.username },
-          { _id: new mongoose.Types.ObjectId(user2._id), username: user2.username },
-        ],
-        messages: [],
-        messageCount: 0,
-        lastMessage: null,
-        lastMessageAt: new Date(),
-      });
-
-      await newRoom.save();
-
-      await User.updateMany({ _id: { $in: [user1._id, user2._id] } }, { $push: { chatRooms: newRoom._id } });
-
-      return newRoom;
+      return { data: undefined, error: null };
     } catch (error) {
-      console.error('Error in createOrGetRoom:', error);
-      throw error;
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred while updating chat privacy',
+      };
     }
   }
 
-  async getRooms(userId: string): Promise<IChatRoom[]> {
+  static async getRoomsWithPrivacyCheck(
+    userId: string,
+    userChatSetting: ChatSetting
+  ): Promise<ApiResponse<IChatRoom[]>> {
     try {
-      const userObjectId = new mongoose.Types.ObjectId(userId);
-      const user = await User.findById(userId).select('chatSetting friends').lean();
+      const rooms = await ChatRoom.find({
+        'participants._id': userId,
+      })
+        .populate('participants', '_id username chatSetting')
+        .lean();
 
+      const user = await User.findById(userId).populate('friends').lean();
       if (!user) {
-        throw new Error('User not found');
+        return { data: null, error: 'User not found' };
       }
 
-      const rooms = await ChatRoomModel.aggregate([
-        { $match: { 'participants._id': userObjectId } },
-        { $sort: { lastMessageAt: -1 } },
-        {
-          $lookup: {
-            from: 'users',
-            let: {
-              otherParticipantId: {
-                $arrayElemAt: [
-                  {
-                    $filter: {
-                      input: '$participants._id',
-                      cond: { $ne: ['$$this', userObjectId] },
-                    },
-                  },
-                  0,
-                ],
-              },
-            },
-            pipeline: [
-              { $match: { $expr: { $eq: ['$_id', '$$otherParticipantId'] } } },
-              { $project: { chatSetting: 1, _id: 0 } },
-            ],
-            as: 'otherParticipant',
-          },
-        },
-        {
-          $addFields: {
-            otherParticipant: { $arrayElemAt: ['$otherParticipant', 0] },
-            isBlocked: {
-              $and: [
-                { $ne: ['$otherParticipant.chatSetting', true] },
-                { $ne: [user.chatSetting, true] },
-                { $not: { $in: ['$otherParticipant._id', user.friends] } },
-              ],
-            },
-          },
-        },
-        { $project: { otherParticipant: 0 } },
-      ]);
+      const roomsWithInteractionStatus = rooms.map((room) => {
+        const otherParticipant = room.participants.find((p: any) => p._id.toString() !== userId);
 
-      return rooms;
+        // Ensure canInteract is always boolean (true/false)
+        const canInteract = this.canInteract(userChatSetting, otherParticipant?.chatSetting!) ?? false; // Fallback to false if undefined
+
+        return {
+          ...room,
+          canSendMessage: canInteract, // Always returns a boolean
+        };
+      });
+
+      return { data: roomsWithInteractionStatus, error: null };
     } catch (error) {
-      console.error('Error in getRooms:', error);
-      throw error;
+      console.error('Error in getRoomsWithPrivacyCheck:', error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred in getRoomsWithPrivacyCheck',
+      };
     }
   }
 
-  async isRoomBlocked(roomId: string, userId: string): Promise<boolean> {
-    const room = await ChatRoomModel.findById(roomId).lean();
-    if (!room) {
-      throw new Error('Room not found');
+  static async addMessage(
+    roomId: string,
+    user: { _id: string; username: string; chatSetting: ChatSetting },
+    content: string
+  ): Promise<ApiResponse<{ success: boolean; message: string; chatMessage: ChatMessage }>> {
+    try {
+      const room = await ChatRoom.findById(roomId).populate('participants', 'chatSetting');
+      if (!room) {
+        return { data: null, error: 'Chat room not found' };
+      }
+
+      const otherParticipant = room.participants.find((p) => p._id.toString() !== user._id);
+      if (!otherParticipant) {
+        return { data: null, error: 'Other participant not found' };
+      }
+
+      if (!this.canInteract(user.chatSetting, otherParticipant.chatSetting)) {
+        return { data: null, error: 'Cannot send message due to privacy settings' };
+      }
+
+      if (!otherParticipant.chatSetting) {
+        const otherUser = await User.findById(otherParticipant._id).select('chatSetting');
+        if (otherUser) {
+          otherParticipant.chatSetting = otherUser.chatSetting;
+        } else {
+          return { data: null, error: 'Failed to fetch other participant chat settings' };
+        }
+      }
+
+      const chatMessage: ChatMessage = {
+        _id: new mongoose.Types.ObjectId(),
+        username: user.username,
+        content,
+        timestamp: Date.now(),
+      };
+
+      const updatedRoom = await ChatRoom.findByIdAndUpdate(
+        roomId,
+        {
+          $push: { messages: chatMessage },
+          $set: { lastMessage: chatMessage, lastMessageAt: new Date() },
+          $inc: { messageCount: 1 },
+        },
+        { new: true }
+      );
+
+      if (!updatedRoom) {
+        return { data: null, error: 'Failed to update chat room' };
+      }
+      await sseManager.sendChatMessage(roomId, chatMessage);
+
+      return {
+        data: {
+          success: true,
+          message: 'Message sent successfully',
+          chatMessage: chatMessage,
+        },
+        error: null,
+      };
+    } catch (error) {
+      console.error('Error in addMessage:', error);
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred in addMessage',
+      };
     }
-
-    const [user, otherUser] = await Promise.all([
-      User.findById(userId).select('chatSetting friends').lean(),
-      User.findOne({ _id: { $in: room.participants.map((p) => p._id), $ne: userId } })
-        .select('chatSetting')
-        .lean(),
-    ]);
-
-    if (!user || !otherUser) {
-      throw new Error('User not found');
-    }
-
-    // Чат разблокирован, если оба пользователя имеют открытые настройки или являются друзьями
-    return (
-      !(user.chatSetting && otherUser.chatSetting) &&
-      !user.friends.some((friendId) => friendId.toString() === otherUser._id.toString())
-    );
   }
 
-  async getRoomMessages(
+  static canInteract(userChatSetting: ChatSetting, otherChatSetting: ChatSetting): boolean {
+    if (userChatSetting === 'all' && otherChatSetting === 'all') {
+      return true;
+    }
+    if (userChatSetting === 'nobody' || otherChatSetting === 'nobody') {
+      return false;
+    }
+    if (userChatSetting === 'friends_only' || otherChatSetting === 'friends_only') {
+      return true;
+    }
+    return true;
+  }
+
+  static async getRoomMessages(
     roomId: string,
     userId: string,
     page: number = 1,
     limit: number = 50
-  ): Promise<{
-    messages: ChatMessage[];
-    totalCount: number;
-    currentPage: number;
-    totalPages: number;
-    isBlocked: boolean;
-  }> {
-    if (!roomId || !userId) {
-      throw new Error('Invalid roomId or userId');
-    }
-
+  ): Promise<
+    ApiResponse<{
+      messages: ChatMessage[];
+      totalCount: number;
+      currentPage: number;
+      totalPages: number;
+      isBlocked: boolean;
+    }>
+  > {
     try {
-      const room = await ChatRoomModel.findById(roomId).select('messageCount participants').lean();
+      const room = await ChatRoom.findById(roomId).populate('participants', 'chatSetting');
       if (!room) {
-        throw new Error('Chat room not found');
+        return { data: null, error: 'Chat room not found' };
       }
+
+      const otherParticipant = room.participants.find((p) => p._id.toString() !== userId);
+      if (!otherParticipant) {
+        return { data: null, error: 'Invalid room participants' };
+      }
+
+      const user = await User.findById(userId).select('chatSetting');
+      if (!user) {
+        return { data: null, error: 'User not found' };
+      }
+
+      const canInteract = await this.canInteract(user.chatSetting, otherParticipant.chatSetting);
 
       const totalCount = room.messageCount;
       const totalPages = Math.ceil(totalCount / limit);
       const skip = (page - 1) * limit;
 
-      const messagesResult = await ChatRoomModel.findById(roomId)
-        .select('messages')
-        .slice('messages', totalCount <= limit ? -totalCount : [skip, limit])
-        .lean();
+      let messages: ChatMessage[] = [];
 
-      if (!messagesResult) {
-        throw new Error('Failed to fetch messages');
-      }
-
-      const isBlocked = await this.isRoomBlocked(roomId, userId);
+      messages = room.messages.slice(Math.max(0, totalCount - skip - limit), totalCount - skip).reverse();
 
       return {
-        messages: messagesResult.messages.reverse(),
-        totalCount,
-        currentPage: page,
-        totalPages,
-        isBlocked,
+        data: {
+          messages,
+          totalCount,
+          currentPage: page,
+          totalPages,
+          isBlocked: !canInteract,
+        },
+        error: null,
       };
     } catch (error) {
-      console.error('Error in getRoomMessages:', error);
-      throw error;
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred in getRoomMessages',
+      };
     }
   }
 
-  async getRoomByParticipants(_id1: string, _id2: string): Promise<IChatRoom | null> {
-    const participantIds = [_id1, _id2].map((id) => new mongoose.Types.ObjectId(id)).sort();
-    return ChatRoomModel.findOne({
-      'participants._id': { $all: participantIds },
-    }).select('_id participants lastMessage messageCount createdAt updatedAt lastMessageAt');
+  static async getRoomByParticipants(userId1: string, userId2: string): Promise<ApiResponse<IChatRoom | null>> {
+    try {
+      const room = await ChatRoom.findOne({
+        'participants._id': { $all: [userId1, userId2] },
+      }).select('_id participants lastMessage messageCount createdAt updatedAt lastMessageAt');
+
+      return { data: room, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred in getRoomByParticipants',
+      };
+    }
   }
 
-  async deleteRoom(roomId: string, userId: string): Promise<void> {
-    const room = await ChatRoomModel.findById(roomId);
-    if (!room) {
-      throw new Error('Chat room not found');
+  static async deleteRoom(roomId: string, userId: string): Promise<ApiResponse<void>> {
+    try {
+      const room = await ChatRoom.findById(roomId);
+      if (!room) {
+        return { data: null, error: 'Chat room not found' };
+      }
+
+      if (!room.participants.some((p) => p._id.toString() === userId)) {
+        return { data: null, error: 'User is not a participant of this room' };
+      }
+
+      await ChatRoom.findByIdAndDelete(roomId);
+      await User.updateMany({ _id: { $in: room.participants.map((p) => p._id) } }, { $pull: { chatRooms: roomId } });
+
+      return { data: undefined, error: null };
+    } catch (error) {
+      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred in deleteRoom' };
     }
-
-    if (!room.participants.some((p) => p._id.toString() === userId)) {
-      throw new Error('User is not a participant of this room');
-    }
-
-    // Удаляем комнату
-    await ChatRoomModel.findByIdAndDelete(roomId);
-
-    // Удаляем ссылку на комнату у обоих участников
-    await User.updateMany({ _id: { $in: room.participants.map((p) => p._id) } }, { $pull: { chatRooms: roomId } });
   }
 }
-
-export const chatService = new ChatService();

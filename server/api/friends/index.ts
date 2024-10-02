@@ -16,13 +16,13 @@ export default defineEventHandler(async (event) => {
       friendsService.getFriends(userId),
       friendsService.getFriendRequests(userId),
     ]);
-
+    const response = {
+      friends: friends.data,
+      friendsRequests: friendsRequests.data,
+    };
     return {
-      success: true,
-      data: {
-        friends,
-        friendsRequests,
-      },
+      data: response,
+      erron: null,
     };
   } catch (error) {
     console.error('Error fetching friends:', error);

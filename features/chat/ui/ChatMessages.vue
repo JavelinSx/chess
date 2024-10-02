@@ -1,9 +1,8 @@
 <template>
     <div class="h-full flex flex-col">
-        <div v-if="chatStore.isRoomBlocked(chatStore.activeRoomId!)"
-            class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
-            <p class="font-bold">{{ t('privacyWarning') }}</p>
-            <p>{{ t('cannotSendMessagePrivacy') }}</p>
+        <div v-if="!canInteract" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+            <p class="font-bold">{{ t('chat.privacyWarning') }}</p>
+            <p>{{ t('chat.cannotSendMessagePrivacy') }}</p>
         </div>
         <div ref="messagesContainer" class="flex-grow overflow-y-auto p-4" @scroll="handleScroll">
             <div class="flex flex-col space-y-4">
@@ -35,12 +34,11 @@
         <div class="p-4 bg-white">
             <UForm :state="formState" @submit="sendMessage">
                 <div class="flex items-center">
-                    <UInput v-model="formState.content" :placeholder="t('typeMessage')" class="flex-grow mr-2"
+                    <UInput v-model="formState.content" :placeholder="t('chat.typeMessage')" class="flex-grow mr-2"
                         :disabled="isRoomBlocked" />
                     <UButton type="submit" color="primary" :loading="isSending"
-                        :disabled="!formState.content.trim() || isRoomBlocked"
-                        icon="i-heroicons-paper-airplane-20-solid">
-                        {{ t('send') }}
+                        :disabled="!formState.content.trim() || isRoomBlocked">
+                        {{ t('chat.send') }}
                     </UButton>
                 </div>
             </UForm>
@@ -63,19 +61,30 @@ const formState = ref({
     content: '',
 });
 
-const isRoomBlocked = computed(() => chatStore.isRoomBlocked(chatStore.activeRoomId!));
+const isRoomBlocked = computed(() => {
+    if (!chatStore.currentRoom) return true;
+    return chatStore.blockedRooms.has(chatStore.currentRoom._id.toString());
+});
 
 const isCurrentUserMessage = (message: any) => {
     return message._id === userStore.user?._id || message.username === userStore.user?.username;
 };
 
+const canInteract = computed(() => {
+    return chatStore.currentRoom?.canSendMessage ?? false;
+});
+
 const sendMessage = async () => {
     if (!formState.value.content.trim() || isRoomBlocked.value) return;
     isSending.value = true;
     try {
-        await chatStore.sendMessage(chatStore.activeRoomId!, formState.value.content);
-        formState.value.content = '';
-        nextTick(scrollToBottom);
+        const result = await chatStore.sendMessage(chatStore.activeRoomId!, formState.value.content);
+        if (result && result.error) {
+            console.error('Error sending message:', result.error);
+        } else {
+            formState.value.content = '';
+            nextTick(scrollToBottom);
+        }
     } catch (error) {
         console.error('Error sending message:', error);
     } finally {
@@ -84,13 +93,15 @@ const sendMessage = async () => {
 };
 
 const formatTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (!timestamp) return 'Invalid Date';
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 const handleScroll = async () => {
     if (messagesContainer.value) {
         const { scrollTop, scrollHeight, clientHeight } = messagesContainer.value;
-        if (scrollTop < 400 && chatStore.hasMoreMessages && !chatStore.isLoading) {
+        if (scrollTop < 600 && chatStore.hasMoreMessages && !chatStore.isLoading) {
             const oldScrollHeight = scrollHeight;
             const oldScrollTop = scrollTop;
             await chatStore.loadMoreMessages();
@@ -110,6 +121,13 @@ const scrollToBottom = () => {
         messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
     }
 };
+
+onBeforeUnmount(() => {
+    // Очистка всех подписок и таймеров
+    if (chatStore.activeRoomId) {
+        chatStore.setActiveRoom(null);
+    }
+});
 
 onMounted(() => {
     if (chatStore.activeRoomId) {

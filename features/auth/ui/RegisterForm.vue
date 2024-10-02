@@ -1,25 +1,25 @@
 <template>
-    <UCard class="auth-form">
+    <UCard class="auth-form sm:w-96">
         <UForm :state="formState" @submit="handleRegister" class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold mb-6 text-center">{{ t('register') }}</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center">{{ t('auth.register') }}</h2>
 
-            <UFormGroup :label="t('username')" name="username">
-                <UInput v-model="formState.username" type="text" :placeholder="t('enterUsername')"
+            <UFormGroup :label="t('auth.username')" name="username">
+                <UInput v-model="formState.username" type="text" :placeholder="t('auth.enterUsername')"
                     autocomplete="username" size="lg" required />
             </UFormGroup>
 
-            <UFormGroup :label="t('email')" name="email">
-                <UInput v-model="formState.email" type="email" :placeholder="t('enterEmail')" autocomplete="email"
+            <UFormGroup :label="t('auth.email')" name="email">
+                <UInput v-model="formState.email" type="email" :placeholder="t('auth.enterEmail')" autocomplete="email"
                     size="lg" required />
             </UFormGroup>
 
-            <UFormGroup :label="t('password')" name="password">
-                <UInput v-model="formState.password" type="password" :placeholder="t('enterPassword')"
+            <UFormGroup :label="t('auth.password')" name="password">
+                <UInput v-model="formState.password" type="password" :placeholder="t('auth.enterPassword')"
                     autocomplete="new-password" required size="lg" />
             </UFormGroup>
 
             <UButton type="submit" color="primary" block :loading="isLoading" class="mt-3 mb-6 h-11 text-base">
-                {{ t('register') }}
+                {{ t('auth.register') }}
             </UButton>
         </UForm>
 

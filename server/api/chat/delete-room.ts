@@ -1,6 +1,6 @@
 // server/api/chat/delete-room.ts
 
-import { chatService } from '~/server/services/chat.service';
+import { ChatService } from '~/server/services/chat.service';
 
 export default defineEventHandler(async (event) => {
   const { roomId } = await readBody(event);
@@ -14,10 +14,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await chatService.deleteRoom(roomId, userId);
-    return { success: true };
+    const response = await ChatService.deleteRoom(roomId, userId);
+    return response;
   } catch (error) {
-    console.error('Error deleting chat room:', error);
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to delete chat room',

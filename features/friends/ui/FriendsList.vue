@@ -2,7 +2,7 @@
     <UAccordion :items="accordionItems" :ui="accordionUI" class="mb-4">
         <template #default="{ open, toggle }">
             <UButton class="w-full flex justify-between items-center" color="gray" variant="ghost" @click="toggle">
-                <span>{{ t('friends') }} ({{ onlineFriendsCount }} {{ t('online') }})</span>
+                <span>{{ t('friends.friends') }} ({{ onlineFriendsCount }} {{ t('common.online') }})</span>
                 <UIcon :name="open ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" />
             </UButton>
         </template>
@@ -17,7 +17,7 @@
                             </div>
                             <div class="flex items-center gap-3">
                                 <UBadge :color="friend.isOnline ? 'green' : 'gray'" size="sm">
-                                    {{ friend.isOnline ? t('online') : t('offline') }}
+                                    {{ friend.isOnline ? t('common.online') : t('common.offline') }}
                                 </UBadge>
                                 <UButton color="red" variant="soft" icon="i-heroicons-user-minus"
                                     @click="removeFriend(friend._id)">
@@ -25,16 +25,14 @@
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 w-full">
-                            <UButton :disabled="!canInvite(friend)" @click="inviteToGame(friend._id)" color="violet"
-                                variant="soft" icon="i-heroicons-envelope">
-                                {{ t('invite') }}
-                            </UButton>
-                            <ChatButton :username="friend.username" :user-id="friend._id" class="flex-grow" />
+                            <InviteButton :user-id="friend._id" />
+                            <ChatButton :username="friend.username" :user-id="friend._id"
+                                :chat-setting="getChatSetting(friend._id)" class="flex-grow" />
                         </div>
                     </div>
                 </UCard>
             </div>
-            <p v-else class="text-center">{{ t('noFriends') }}</p>
+            <p v-else class="text-center">{{ t('friends.noFriends') }}</p>
         </template>
     </UAccordion>
 </template>
@@ -43,18 +41,25 @@
 import { onMounted, computed } from 'vue';
 import { useFriendsStore } from '~/store/friends';
 import { useUserStore } from '~/store/user';
-import { useInvitationStore } from '~/store/invitation';
 import { storeToRefs } from 'pinia';
 import ChatButton from '~/features/chat/ui/ChatButton.vue';
+import InviteButton from '~/features/invite/InviteButton.vue';
+
 const { t } = useI18n()
 const friendsStore = useFriendsStore();
 const userStore = useUserStore();
-const invitationStore = useInvitationStore();
 const { friends } = storeToRefs(friendsStore);
 const { usersList } = storeToRefs(userStore);
-const { user } = storeToRefs(userStore);
 
-const onlineFriendsCount = computed(() => friends.value.filter(friend => friend.isOnline).length);
+
+const onlineFriendsCount = computed(() =>
+    Array.isArray(friends.value) ? friends.value.filter(friend => friend.isOnline).length : 0
+);
+
+const getChatSetting = (id: string) => {
+    const user = usersList.value.find((user) => user._id === id)
+    return user ? user.chatSetting : 'all';
+}
 
 const accordionItems = computed(() => [
     {
@@ -72,17 +77,8 @@ const accordionUI = {
     },
 };
 
-const canInvite = (friend: any) => {
-    return friend.isOnline && !friend.isGame && friend._id !== user.value?._id;
-};
-
-function inviteToGame(friendId: string) {
-    invitationStore.sendGameInvitation(friendId);
-}
-
 onMounted(async () => {
     await friendsStore.fetchFriends();
-    await userStore.fetchUsersList();
 });
 
 const removeFriend = (friendId: string) => {

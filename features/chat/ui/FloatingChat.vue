@@ -2,7 +2,7 @@
     <div v-if="chatStore.isOpen"
         class="fixed bottom-4 right-4 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
         <div class="p-4 rounded-t-lg flex justify-between items-center">
-            <h2 class="text-lg font-semibold">{{ t('chatTitle') }}</h2>
+            <h2 class="text-lg font-semibold">{{ t('chat.chatTitle') }}</h2>
             <UButton v-if="chatStore.activeRoomId" icon="i-heroicons-arrow-left" @click="backToRoomList" color="gray"
                 variant="ghost" class="hover" />
             <UButton icon="i-heroicons-x-mark" color="gray" variant="ghost" @click="closeChat" class="hover" />
@@ -32,12 +32,16 @@ const closeChat = () => {
     chatStore.closeChat();
 };
 
-onMounted(() => {
-    if (userStore.user) {
-        chatStore.currentUserId = userStore.user._id;
-        chatStore.fetchRooms();
-    }
+onBeforeUnmount(() => {
+    chatStore.closeChat();
 });
+
+// onMounted(() => {
+//     if (userStore.user) {
+//         chatStore.currentUserId = userStore.user._id;
+//         chatStore.fetchRooms();
+//     }
+// });
 
 onUnmounted(() => {
     chatStore.closeChat();

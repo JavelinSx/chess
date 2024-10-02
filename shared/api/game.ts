@@ -1,26 +1,29 @@
 import { apiRequest } from './api';
-import type { ApiResponse } from '~/server/types/auth';
-import type { ChessGame } from '~/entities/game/model/game.model';
-import type { Position } from '~/features/game-logic/model/pieces/types';
-import type { PieceType } from '~/entities/game/model/board.model';
+import type { ApiResponse } from '~/server/types/api';
+import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
+import type { UserStats } from '~/server/types/user';
 
 export const gameApi = {
-  async acceptInvitation(inviterId: string): Promise<ApiResponse<{ gameId: string }>> {
-    return apiRequest<{ gameId: string }>('/game/accept-invite', 'POST', { inviterId });
+  async acceptInvitation(
+    inviterId: string,
+    timeControl: { type: 'timed' | 'untimed'; initialTime?: GameDuration }
+  ): Promise<ApiResponse<{ gameId: string }>> {
+    return apiRequest<{ gameId: string }>('/game/accept-invite', 'POST', { inviterId, timeControl });
   },
-  async sendInvitation(toInviteId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId });
+
+  async sendInvitation(toInviteId: string, gameDuration: GameDuration): Promise<ApiResponse<{ success: boolean }>> {
+    return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId, gameDuration });
   },
+
   async getGame(gameId: string): Promise<ApiResponse<ChessGame>> {
     return apiRequest<ChessGame>(`/game/${gameId}`, 'GET');
   },
 
   async makeMove(gameId: string, from: Position, to: Position, promoteTo?: PieceType): Promise<ApiResponse<ChessGame>> {
-    const response = await apiRequest<ChessGame>('/game/move', 'POST', { gameId, from, to, promoteTo });
-    return response;
+    return apiRequest<ChessGame>('/game/move', 'POST', { gameId, from, to, promoteTo });
   },
 
-  async forcedEndGame(gameId: string): Promise<ApiResponse<{ message: string }>> {
-    return apiRequest<{ message: string }>('/game/forced-end-game', 'POST', { gameId });
+  async updateGameStats(gameId: string, result: GameResult): Promise<ApiResponse<{ [key: string]: UserStats }>> {
+    return apiRequest<{ [key: string]: UserStats }>('/game/update-stats', 'POST', { gameId, result });
   },
 };

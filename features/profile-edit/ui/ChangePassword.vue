@@ -1,27 +1,27 @@
 <template>
     <div class="mt-4">
-        <h2 class="text-xl font-semibold mb-4">{{ t('changePassword') }}</h2>
+        <h2 class="text-xl font-semibold mb-4">{{ t('profile.changePassword') }}</h2>
         <UForm :state="formState" @submit.prevent="changePassword" class="flex flex-col gap-2">
-            <UFormGroup :label="t('currentPassword')" name="currentPassword">
+            <UFormGroup :label="t('profile.currentPassword')" name="currentPassword">
                 <UInput v-model="formState.currentPassword" type="password" required />
             </UFormGroup>
 
-            <UFormGroup :label="t('newPassword')" name="newPassword">
+            <UFormGroup :label="t('profile.newPassword')" name="newPassword">
                 <UInput v-model="formState.newPassword" type="password" required />
             </UFormGroup>
 
-            <UFormGroup :label="t('confirmNewPassword')" name="confirmNewPassword">
+            <UFormGroup :label="t('profile.confirmNewPassword')" name="confirmNewPassword">
                 <UInput v-model="formState.confirmNewPassword" type="password" required />
             </UFormGroup>
 
             <UButton class="mt-4 justify-center" size="lg" type="submit" color="primary" :loading="isLoading">
-                {{ t('changePassword') }}
+                {{ t('profile.changePassword') }}
             </UButton>
         </UForm>
 
         <UAlert v-if="error" color="red" :title="error" icon="i-heroicons-exclamation-circle" class="mt-4" />
-        <UAlert v-if="success" color="green" :title="t('passwordChangedSuccessfully')" icon="i-heroicons-check-circle"
-            class="mt-4" />
+        <UAlert v-if="success" color="green" :title="t('profile.passwordChangedSuccessfully')"
+            icon="i-heroicons-check-circle" class="mt-4" />
     </div>
 </template>
 
@@ -44,7 +44,7 @@ const formState = reactive({
 
 const changePassword = async () => {
     if (formState.newPassword !== formState.confirmNewPassword) {
-        error.value = t('newPasswordsDoNotMatch');
+        error.value = t('profile.newPasswordsDoNotMatch');
         return;
     }
 
@@ -59,7 +59,7 @@ const changePassword = async () => {
         formState.newPassword = '';
         formState.confirmNewPassword = '';
     } catch (err) {
-        error.value = err instanceof Error ? err.message : t('failedToChangePassword');
+        error.value = err instanceof Error ? err.message : t('profile.failedToChangePassword');
     } finally {
         isLoading.value = false;
     }

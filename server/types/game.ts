@@ -16,9 +16,25 @@ export function initializeBoard(): ChessBoard {
   return board;
 }
 
+export type GameDuration = 15 | 30 | 45 | 90;
 export type PieceType = 'pawn' | 'rook' | 'knight' | 'bishop' | 'queen' | 'king';
 export type PieceColor = 'white' | 'black';
 export type Position = [number, number];
+export type GameResultReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
+
+export interface MoveHistoryEntry {
+  from: Position;
+  to: Position;
+  piece: ChessPiece;
+  capturedPiece?: ChessPiece;
+  isCheck: boolean;
+  isCheckmate: boolean;
+  isCastling: boolean;
+  isEnPassant: boolean;
+  isPromotion: boolean;
+  promotedTo?: PieceType;
+  player: string;
+}
 
 export interface MoveValidationParams {
   game: ChessGame;
@@ -35,7 +51,7 @@ export type ChessBoard = (ChessPiece | null)[][];
 export interface GameResult {
   winner: string | null;
   loser: string | null;
-  reason: 'checkmate' | 'stalemate' | 'draw' | 'forfeit';
+  reason: GameResultReason | null;
 }
 
 export interface CastlingRights {
@@ -54,8 +70,7 @@ export interface ChessGame {
     black: string | null;
   };
   status: 'waiting' | 'active' | 'completed';
-  winner: string | null;
-  loser: string | null;
+  result: GameResult;
   inviterId: string;
   inviteeId: string;
   moveCount: number;
@@ -76,6 +91,14 @@ export interface ChessGame {
     to: [Number] | null;
     promoteTo: string | null;
   };
+  moveHistory: MoveHistoryEntry[];
+  timeControl: TimeControl | null;
+  startedAt: Date | null;
+}
+
+export interface TimeControl {
+  type: 'timed' | 'untimed';
+  initialTime?: 15 | 30 | 45 | 90;
 }
 
 export function initializeGame(id: string, inviterId: string, inviteeId: string): ChessGame {
@@ -88,8 +111,11 @@ export function initializeGame(id: string, inviterId: string, inviteeId: string)
       black: null,
     },
     status: 'waiting',
-    winner: null,
-    loser: null,
+    result: {
+      winner: null,
+      loser: null,
+      reason: null,
+    },
     inviterId,
     inviteeId,
     moveCount: 0,
@@ -115,5 +141,8 @@ export function initializeGame(id: string, inviterId: string, inviteeId: string)
       to: null,
       promoteTo: null,
     },
+    moveHistory: [],
+    timeControl: null,
+    startedAt: null,
   };
 }

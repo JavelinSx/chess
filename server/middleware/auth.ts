@@ -31,7 +31,6 @@ export default defineEventHandler(async (event) => {
     const decoded = jwt.verify(token, jwtSecret);
     // Добавляем информацию о пользователе в контекст события
     event.context.auth = decoded;
-
     // Если пользователь аутентифицирован и пытается получить доступ к страницам входа/регистрации
     if (event.path === '/login' || event.path === '/register') {
       return sendRedirect(event, '/');

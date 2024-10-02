@@ -1,4 +1,5 @@
-import type { AuthData, ApiResponse } from '~/server/types/auth';
+import type { AuthData } from '~/server/types/auth';
+import type { ApiResponse } from '~/server/types/api';
 import { apiRequest } from './api';
 
 export const authApi = {
@@ -8,5 +9,9 @@ export const authApi = {
 
   async login(email: string, password: string): Promise<ApiResponse<AuthData>> {
     return apiRequest<AuthData>('/auth/login', 'POST', { email, password });
+  },
+
+  async logout(): Promise<ApiResponse<{ message: string }>> {
+    return apiRequest<{ message: string }>('/auth/logout', 'POST');
   },
 };

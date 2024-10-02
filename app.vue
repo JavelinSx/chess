@@ -7,29 +7,18 @@
 </template>
 
 <script setup lang="ts">
-import { useUserSSE } from '~/composables/useUserSSE';
 import { useAuthStore } from '~/store/auth';
 import { useUserStore } from '~/store/user';
-import { watch } from 'vue';
-
+import { useSSEManagement } from './composables/useSSeManagement';
 const authStore = useAuthStore();
 const userStore = useUserStore();
 
-const { closeSSE } = useUserSSE();
+useSSEManagement();
 
-watch(() => authStore.isAuthenticated, (newValue) => {
-    if (!newValue) {
-        closeSSE();
-    }
-});
-
-watch(() => userStore.user?.isOnline, (newValue) => {
-    if (!newValue) {
-        closeSSE();
+// Fetch user data if authenticated
+onMounted(async () => {
+    if (authStore.isAuthenticated && userStore.user) {
+        await userStore.getUser(userStore.user._id);
     }
 });
 </script>
-
-<style>
-/* Здесь могут быть глобальные стили */
-</style>
