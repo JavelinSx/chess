@@ -19,9 +19,9 @@ const { t } = useI18n();
 const paginationStore = usePaginationStore();
 
 const sortOptions = [
-    { label: t('profile.rating'), value: 'rating' },
-    { label: t('profile.gamesPlayed'), value: 'gamesPlayed' },
-    { label: t('userList.freePlayers'), value: 'isGame' },
+    { label: 'profile.rating', value: 'rating' },
+    { label: 'profile.gamesPlayed', value: 'gamesPlayed' },
+    { label: 'userList.freePlayers', value: 'isGame' },
 ];
 const localizedSortOptions = computed(() =>
     sortOptions.map(option => ({ ...option, label: t(option.label) }))

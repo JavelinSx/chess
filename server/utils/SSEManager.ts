@@ -10,6 +10,7 @@ import type { ChessGame } from '../types/game';
 import type { UserStatus } from './UserSSEManager';
 import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
 import type { ChatMessage, IChatRoom } from '../types/chat';
+import { user } from '@yandex-cloud/nodejs-sdk/dist/generated/yandex/cloud/datasphere';
 
 export class SSEManager {
   private userManager: UserSSEManager;
@@ -48,6 +49,10 @@ export class SSEManager {
 
   getActiveConnections(): Set<string> {
     return this.activeConnections;
+  }
+
+  async broadcastUserDeleted(userId: string) {
+    await this.userManager.broadcastUserDeleted(userId);
   }
 
   async broadcastUserStatusUpdate(userId: string, status: UserStatus) {

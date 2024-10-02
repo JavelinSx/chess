@@ -95,7 +95,12 @@
     "gamesDrawn": "Games Drawn",
     "winRate": "Win Rate",
     "rating": "Rating",
-    "lastLogin": "Last Login"
+    "lastLogin": "Last Login",
+    "deleteAccount": "Delete Account",
+    "deleteAccountWarning": "Warning: This action is irreversible. All your data will be permanently deleted.",
+    "deleteAccountButton": "Delete My Account",
+    "confirmDeleteAccount": "Confirm Account Deletion",
+    "deleteAccountConfirmation": "Are you sure you want to delete your account? This action cannot be undone."
   },
   "friends": {
     "friends": "Friends",
@@ -119,7 +124,13 @@
     "chatPrivacySettings": "Chat privacy settings",
     "all": "All",
     "nobody": "Nobody",
-    "onlyFriends": "Only friends"
+    "onlyFriends": "Only friends",
+    "deleteRoomTitle": "Delete Chat Room",
+    "deleteRoomMessage": "Are you sure you want to delete this chat room?",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "privacyWarning": "Privacy Warning",
+    "cannotSendMessagePrivacy": "You cannot send messages due to privacy settings"
   },
   "errors": {
     "error": "Error",
@@ -168,7 +179,8 @@
     "searchByUsername": "Search by username",
     "sortBy": "Sort by",
     "toggleSortDirection": "Toggle sort direction",
-    "onlineOnly": "Online only"
+    "onlineOnly": "Online only",
+    "itemsPerPage": "Items per page"
   },
   "misc": {
     "welcome": "Welcome to ChessNexus",

@@ -110,7 +110,16 @@ export class UserSSEManager {
     } else {
     }
   }
+  async broadcastUserDeleted(userId: string) {
+    const message = JSON.stringify({
+      type: 'user_deleted',
+      userId,
+    });
 
+    for (const [_, connection] of this.userConnections) {
+      await this.sendEvent(connection, message);
+    }
+  }
   private async sendEvent(event: H3Event, data: string) {
     await event.node.res.write(`data: ${data}\n\n`);
   }

@@ -22,7 +22,7 @@
                             </UButton>
                             <UButton color="red" variant="soft" icon="i-heroicons-x-mark"
                                 @click="respondToRequest(request._id, false)">
-                                {{ t('common.reject') }}
+                                {{ t('common.decline') }}
                             </UButton>
                         </div>
                     </div>

@@ -188,7 +188,21 @@ export class ChatService {
       };
     }
   }
+  static async handleDeletedUser(userId: string): Promise<void> {
+    const rooms = await ChatRoom.find({ 'participants._id': userId });
 
+    for (const room of rooms) {
+      const participantIndex = room.participants.findIndex((p) => p._id.toString() === userId);
+      if (participantIndex !== -1) {
+        room.participants[participantIndex] = {
+          _id: new mongoose.Types.ObjectId(userId),
+          username: 'Deleted User',
+          chatSetting: 'nobody',
+        };
+        await room.save();
+      }
+    }
+  }
   static canInteract(userChatSetting: ChatSetting, otherChatSetting: ChatSetting): boolean {
     if (userChatSetting === 'all' && otherChatSetting === 'all') {
       return true;

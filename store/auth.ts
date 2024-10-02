@@ -35,6 +35,8 @@ export const useAuthStore = defineStore('auth', {
       localStorage.clear();
       userStore.user = null;
       const authCookie = useCookie('auth_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('userList');
       authCookie.value = null;
       await navigateTo('/login');
     },

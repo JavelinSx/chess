@@ -58,6 +58,9 @@ export function useUserSSE() {
             friendsStore.fetchFriends();
           }
           break;
+        case 'user_deleted':
+          userStore.handleUserDeleted(data.userId);
+          break;
         default:
           console.log('Unhandled user event type:', data.type);
       }

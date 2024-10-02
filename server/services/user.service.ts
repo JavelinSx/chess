@@ -5,6 +5,7 @@ import type { FlattenMaps } from 'mongoose';
 import User from '../db/models/user.model';
 import { sseManager } from '~/server/utils/SSEManager';
 import { ChatService } from './chat.service';
+import { GameService } from './game.service';
 import type { ApiResponse } from '../types/api';
 
 export class UserService {
@@ -37,7 +38,38 @@ export class UserService {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
   }
+  static async deleteAccount(userId: string): Promise<ApiResponse<void>> {
+    try {
+      // Получаем пользователя
+      const user = await User.findById(userId);
+      if (!user) {
+        return { data: null, error: 'User not found' };
+      }
 
+      // Обновляем чаты
+      await ChatService.handleDeletedUser(userId);
+
+      // Обновляем игры
+      await GameService.handleDeletedUser(userId);
+
+      // Удаляем пользователя из списков друзей других пользователей
+      await User.updateMany({ friends: userId }, { $pull: { friends: userId } });
+
+      // Удаляем запросы на добавление в друзья
+      await User.updateMany({ 'friendRequests.from': userId }, { $pull: { friendRequests: { from: userId } } });
+      await User.updateMany({ 'friendRequests.to': userId }, { $pull: { friendRequests: { to: userId } } });
+
+      // Удаляем пользователя
+      await User.findByIdAndDelete(userId);
+
+      // Отправляем уведомление об удалении пользователя
+      await sseManager.broadcastUserDeleted(userId);
+
+      return { data: undefined, error: null };
+    } catch (error) {
+      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    }
+  }
   static async updateUserProfile(
     id: string,
     updateData: { username?: string; email?: string; chatSetting?: IUser['chatSetting'] }

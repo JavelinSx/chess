@@ -58,6 +58,14 @@ export class GameService {
         return { data: null, error: 'Invalid game data: players information is missing' };
       }
 
+      // Заменяем информацию об удаленных пользователях
+      if (game.players.white === 'Deleted User' || !(await User.findById(game.players.white))) {
+        game.players.white = 'Deleted User';
+      }
+      if (game.players.black === 'Deleted User' || !(await User.findById(game.players.black))) {
+        game.players.black = 'Deleted User';
+      }
+
       return { data: game, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
@@ -216,7 +224,19 @@ export class GameService {
       session.endSession();
     }
   }
+  static async handleDeletedUser(userId: string): Promise<void> {
+    const games = await Game.find({ $or: [{ 'players.white': userId }, { 'players.black': userId }] });
 
+    for (const game of games) {
+      if (game.players.white === userId) {
+        game.players.white = 'Deleted User';
+      }
+      if (game.players.black === userId) {
+        game.players.black = 'Deleted User';
+      }
+      await game.save();
+    }
+  }
   private static async updatePlayerStats(playerId: string, game: ChessGame, result: GameResult): Promise<any> {
     const player = await User.findById(playerId);
     if (!player) throw new Error('Player not found');

@@ -84,7 +84,7 @@ const gameStore = useGameStore();
 const chatStore = useChatStore();
 const route = useRoute();
 
-const isAuthenticated = computed(() => authStore.isAuthenticated);
+const { isAuthenticated } = storeToRefs(authStore);
 const isMenuOpen = ref(false);
 
 const isGamePage = computed(() => {

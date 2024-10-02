@@ -71,7 +71,7 @@
             <h3 class="font-semibold">{{ t('profile.lastLogin') }}:</h3>
             <p class="">{{ formattedLastLogin }}</p>
         </template>
-
+        <DeleteAccount />
     </UCard>
 </template>
 
@@ -79,6 +79,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useUserStore } from '~/store/user';
 import ChangePassword from './ChangePassword.vue';
+import DeleteAccount from './DeleteAccount.vue';
 import { useAlert } from '~/composables/useAlert';
 import type { ChatSetting } from '~/server/types/user';
 import type { ClientUser } from '~/server/types/user';

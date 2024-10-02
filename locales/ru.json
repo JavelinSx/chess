@@ -95,7 +95,12 @@
     "gamesDrawn": "Ничьи",
     "winRate": "Процент побед",
     "rating": "Рейтинг",
-    "lastLogin": "Последний вход"
+    "lastLogin": "Последний вход",
+    "deleteAccount": "Удалить аккаунт",
+    "deleteAccountWarning": "Внимание: Это действие необратимо. Все ваши данные будут удалены безвозвратно.",
+    "deleteAccountButton": "Удалить мой аккаунт",
+    "confirmDeleteAccount": "Подтвердите удаление аккаунта",
+    "deleteAccountConfirmation": "Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить."
   },
   "friends": {
     "friends": "Друзья",
@@ -119,7 +124,13 @@
     "chatPrivacySettings": "Настройки приватности чата",
     "all": "Все",
     "nobody": "Никто",
-    "onlyFriends": "Только друзья"
+    "onlyFriends": "Только друзья",
+    "deleteRoomTitle": "Удалить чат",
+    "deleteRoomMessage": "Вы уверены, что хотите удалить этот чат?",
+    "delete": "Удалить",
+    "cancel": "Отмена",
+    "privacyWarning": "Предупреждение о конфиденциальности",
+    "cannotSendMessagePrivacy": "Вы не можете отправлять сообщения из-за настроек конфиденциальности"
   },
   "errors": {
     "error": "Ошибка",
@@ -168,7 +179,8 @@
     "searchByUsername": "Поиск по имени пользователя",
     "sortBy": "Сортировать по",
     "toggleSortDirection": "Изменить направление сортировки",
-    "onlineOnly": "Только онлайн"
+    "onlineOnly": "Только онлайн",
+    "itemsPerPage": "Элементов на странице"
   },
   "misc": {
     "welcome": "Добро пожаловать в ChessNexus",

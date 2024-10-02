@@ -199,10 +199,6 @@ export const useChatStore = defineStore('chat', {
         return { success: false, error: this.locales.t('roomNotFound') };
       }
 
-      if (!room.canSendMessage) {
-        return { success: false, error: this.locales.t('cannotSendMessagePrivacy') };
-      }
-
       const userStore = useUserStore();
       const currentUser = userStore.user;
       const otherParticipant = room.participants.find((p) => p._id.toString() !== currentUser?._id);
@@ -245,7 +241,6 @@ export const useChatStore = defineStore('chat', {
     },
 
     async handleChatRoomUpdate(roomId: string) {
-      console.log('hello4');
       // Проверяем, существует ли комната в текущем списке
       const roomIndex = this.rooms.findIndex((r) => r._id.toString() === roomId);
       if (roomIndex === -1) return; // Если комнаты нет, ничего не делаем
@@ -279,23 +274,25 @@ export const useChatStore = defineStore('chat', {
         console.error('Error updating chat room:', error);
       }
     },
-    async checkCanInteract(
-      userChatSetting: ChatSetting,
-      otherChatSetting: ChatSetting,
-      otherUserId: string
-    ): Promise<boolean> {
+    checkCanInteract(currentUserSetting: ChatSetting, otherUserSetting: ChatSetting, otherUserId: string): boolean {
       const userStore = useUserStore();
 
-      if (userChatSetting === 'all' && otherChatSetting === 'all') {
-        return true;
-      }
-      if (userChatSetting === 'nobody' || otherChatSetting === 'nobody') {
+      // Если у одного из пользователей установлено 'nobody', общение невозможно
+      if (currentUserSetting === 'nobody' || otherUserSetting === 'nobody') {
         return false;
       }
-      if (userChatSetting === 'friends_only' || otherChatSetting === 'friends_only') {
-        // Проверяем, являются ли пользователи друзьями
+
+      // Если у текущего пользователя 'friends_only', проверяем, является ли другой пользователь другом
+      if (currentUserSetting === 'friends_only') {
         return userStore.user?.friends.some((friend) => friend._id === otherUserId) || false;
       }
+
+      // Если у другого пользователя 'friends_only', проверяем, является ли текущий пользователь его другом
+      if (otherUserSetting === 'friends_only') {
+        return userStore.user?.friends.some((friend) => friend._id === otherUserId) || false;
+      }
+
+      // В остальных случаях (оба 'all' или комбинация 'all' и 'friends_only') разрешаем общение
       return true;
     },
     async deleteRoom(roomId: string) {

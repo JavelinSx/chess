@@ -1,6 +1,6 @@
 <template>
     <div class="h-full flex flex-col">
-        <div v-if="!canInteract" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
+        <div v-if="showPrivacyWarning" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4">
             <p class="font-bold">{{ t('chat.privacyWarning') }}</p>
             <p>{{ t('chat.cannotSendMessagePrivacy') }}</p>
         </div>
@@ -56,6 +56,7 @@ const chatStore = useChatStore();
 const userStore = useUserStore();
 const messagesContainer = ref<HTMLElement | null>(null);
 const isSending = ref(false);
+const showPrivacyWarning = ref(false);
 
 const formState = ref({
     content: '',
@@ -71,19 +72,31 @@ const isCurrentUserMessage = (message: any) => {
 };
 
 const canInteract = computed(() => {
-    return chatStore.currentRoom?.canSendMessage ?? false;
+    const currentUser = userStore.user;
+    const currentRoom = chatStore.currentRoom;
+    if (!currentUser || !currentRoom) return false;
+    const otherParticipant = currentRoom.participants.find(p => p._id.toString() !== currentUser._id);
+    if (!otherParticipant) return false;
+    return chatStore.checkCanInteract(currentUser.chatSetting, otherParticipant.chatSetting, otherParticipant._id.toString());
 });
+
+const checkInteractionWithDelay = () => {
+    showPrivacyWarning.value = false; // Сначала скрываем предупреждение
+    setTimeout(() => {
+        showPrivacyWarning.value = !canInteract.value;
+    }, 300); // Задержка в 300 мс
+};
 
 const sendMessage = async () => {
     if (!formState.value.content.trim() || isRoomBlocked.value) return;
     isSending.value = true;
     try {
         const result = await chatStore.sendMessage(chatStore.activeRoomId!, formState.value.content);
-        if (result && result.error) {
-            console.error('Error sending message:', result.error);
-        } else {
+        if (result.success) {
             formState.value.content = '';
             nextTick(scrollToBottom);
+        } else {
+            console.error('Error sending message:', result.error);
         }
     } catch (error) {
         console.error('Error sending message:', error);
@@ -132,10 +145,18 @@ onBeforeUnmount(() => {
 onMounted(() => {
     if (chatStore.activeRoomId) {
         chatStore.loadMoreMessages();
+        checkInteractionWithDelay();
     }
     nextTick(() => {
         scrollToBottom();
     });
+});
+
+watch(() => chatStore.activeRoomId, (newRoomId) => {
+    if (newRoomId) {
+        chatStore.loadMoreMessages();
+        checkInteractionWithDelay();
+    }
 });
 
 watch(() => chatStore.activeRoomId, (newRoomId) => {

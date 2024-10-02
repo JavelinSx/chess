@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { ClientUser, ChatSetting, UserStats } from '~/server/types/user';
 import { userApi } from '~/shared/api/user';
+import { useAuthStore } from './auth';
 
 export const useUserStore = defineStore('user', {
   state: () => ({
@@ -29,6 +30,7 @@ export const useUserStore = defineStore('user', {
 
     clearUser() {
       this.user = null;
+      this.usersList = [];
     },
 
     setUsersList(users: ClientUser[]) {
@@ -95,6 +97,40 @@ export const useUserStore = defineStore('user', {
       } catch (error) {
         console.error('Error updating profile:', error);
         throw error;
+      }
+    },
+
+    async deleteAccount() {
+      try {
+        const authStore = useAuthStore();
+        const response = await userApi.deleteAccount();
+        if (response.data && response.data.success) {
+          this.clearUser();
+          authStore.logout();
+          navigateTo('/login');
+        } else if (response.error) {
+          throw new Error(response.error);
+        }
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        throw error;
+      }
+    },
+
+    handleUserDeleted(deletedUserId: string) {
+      if (this.user && this.user._id === deletedUserId) {
+        this.clearUser();
+        navigateTo('/login');
+      }
+
+      // Обновляем список пользователей
+      this.usersList = this.usersList.map((user) =>
+        user._id === deletedUserId ? { ...user, username: 'Deleted User', isDeleted: true } : user
+      );
+
+      // Обновляем список друзей
+      if (this.user) {
+        this.user.friends = this.user.friends.filter((friend) => friend._id !== deletedUserId);
       }
     },
 
