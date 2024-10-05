@@ -1,7 +1,6 @@
 <template>
   <div class="container mx-auto px-4 py-8">
-    <ProfileEdit v-if="user" :user="user" />
-    <p v-else-if="error">Error: {{ error }}</p>
+    <ProfileEdit v-if="user" :user="userStore.user" />
   </div>
 </template>
 
@@ -13,17 +12,17 @@ import { useRoute } from 'vue-router';
 const userStore = useUserStore();
 const route = useRoute();
 const userId = route.params.id as string;
+const user = computed(() => userStore.user)
+// const { data: user, error } = await useAsyncData(
+//   'userProfile',
+//   async () => {
+//     if (userId) {
+//       const userData = await userStore.getUser(userId);
 
-const { data: user, error } = await useAsyncData(
-  'userProfile',
-  async () => {
-    if (userId) {
-      const userData = await userStore.getUser(userId);
+//       return userData;
+//     }
+//     return null;
+//   },
 
-      return userData;
-    }
-    return null;
-  },
-
-);
+// );
 </script>

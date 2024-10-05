@@ -30,25 +30,13 @@ const isAuthenticated = computed(() => authStore.isAuthenticated);
 const user = computed(() => userStore.user);
 const intervalId = ref<number | null>(null);
 
-const setupUserListInterval = () => {
-    intervalId.value = setInterval(() => userStore.fetchUsersList(), 30000) as unknown as number;
-};
 
 onMounted(async () => {
     if (authStore.isAuthenticated) {
-        await userStore.fetchUsersList();
         await userStore.updateUserStatus(user.value?._id!, true, false);
-        setupUserListInterval();
     }
 });
 
-onUnmounted(() => {
-    if (authStore.isAuthenticated) {
-        if (intervalId.value !== null) {
-            clearInterval(intervalId.value);
-        }
-    }
-});
 
 if (import.meta.client) {
     window.addEventListener('beforeunload', async () => {

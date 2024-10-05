@@ -1,3 +1,4 @@
+import { defineEventHandler, readBody } from 'h3';
 import { GameService } from '~/server/services/game.service';
 import { UserService } from '~/server/services/user.service';
 import { sseManager } from '~/server/utils/SSEManager';
@@ -21,14 +22,9 @@ export default defineEventHandler(async (event) => {
 
     const game = gameResponse.data;
 
-    // Назначаем цвета игрокам случайным образом
-    const isWhite = Math.random() < 0.5;
-    await GameService.setPlayerColor(game.id, inviterId, isWhite ? 'white' : 'black');
-    await GameService.setPlayerColor(game.id, inviteeId, isWhite ? 'black' : 'white');
+    await GameService.updateGameStatus(game._id.toString(), 'active');
+    const updatedGameResponse = await GameService.getGame(game._id.toString());
 
-    await GameService.updateGameStatus(game.id, 'active');
-
-    const updatedGameResponse = await GameService.getGame(game.id);
     if (!updatedGameResponse.data) {
       throw new Error(updatedGameResponse.error || 'Failed to get updated game');
     }
@@ -41,9 +37,9 @@ export default defineEventHandler(async (event) => {
     }
 
     // Отправляем уведомление о начале игры через пользовательский SSE канал
-    await sseManager.sendGameStartNotification(game.id, [inviterId, inviteeId]);
+    await sseManager.sendGameStartNotification(game._id.toString(), [inviterId, inviteeId]);
 
-    return { data: { gameId: game.id }, error: null };
+    return { data: { gameId: game._id.toString() }, error: null };
   } catch (error) {
     console.error('Error accepting game invitation:', error);
     throw createError({

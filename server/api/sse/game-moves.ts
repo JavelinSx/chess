@@ -6,7 +6,6 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const gameId = query.gameId as string;
   const userId = event.context.auth?.userId;
-  console.log('hello1');
   if (!gameId || !userId) {
     throw createError({
       statusCode: 400,
@@ -46,6 +45,7 @@ export default defineEventHandler(async (event) => {
   sseManager.addGameConnection(gameId, userId, event);
 
   const closeHandler = () => {
+    console.log(gameId, userId, 'close sse game-moves');
     sseManager.removeGameConnection(gameId, userId);
   };
 

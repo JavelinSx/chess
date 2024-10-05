@@ -34,11 +34,7 @@ export const useGameStore = defineStore('game', {
     },
 
     updateGameState(game: ChessGame) {
-      if (this.currentGame) {
-        Object.assign(this.currentGame, reactive(game));
-      } else {
-        this.currentGame = reactive(game);
-      }
+      this.currentGame = { ...game };
     },
 
     async makeMove(from: Position, to: Position) {
@@ -52,46 +48,20 @@ export const useGameStore = defineStore('game', {
       }
 
       try {
-        const response = await gameApi.makeMove(this.currentGame.id, from, to);
-        if (response.data) {
-          this.currentGame = response.data;
-        } else if (response.error) {
-          this.error = response.error;
-        }
+        await gameApi.makeMove(this.currentGame._id, from, to);
       } catch (error) {
         this.error = this.locales.t('failedToMakeMove');
       }
     },
 
     handleSSEUpdate(updatedGame: ChessGame) {
-      if (this.currentGame && this.currentGame.id === updatedGame.id) {
+      if (this.currentGame && this.currentGame._id === updatedGame._id) {
         this.currentGame = updatedGame;
 
         if (updatedGame.status === 'completed') {
           this.handleGameEnd(updatedGame.result);
         }
       }
-    },
-
-    async handleGameEnd(result: GameResult) {
-      this.gameResult = result;
-      this.showResultModal = true;
-
-      const userStore = useUserStore();
-      if (userStore.user && this.currentGame) {
-        try {
-          const updatedStats = await gameApi.updateGameStats(this.currentGame.id, result);
-          if (updatedStats.data) {
-            const currentUserStats = updatedStats.data[userStore.user._id];
-            if (currentUserStats) {
-              userStore.updateUserStats(currentUserStats);
-            }
-          }
-        } catch (error) {
-          console.error('Failed to update game stats:', error);
-        }
-      }
-      this.currentGame = null;
     },
 
     async promotePawn(promoteTo: PieceType) {
@@ -102,12 +72,7 @@ export const useGameStore = defineStore('game', {
       const { from, to } = this.pendingPromotion;
 
       try {
-        const response = await gameApi.makeMove(this.currentGame.id, from, to, promoteTo);
-        if (response.data) {
-          this.currentGame = response.data;
-        } else if (response.error) {
-          this.error = response.error;
-        }
+        await gameApi.makeMove(this.currentGame._id, from, to, promoteTo);
       } catch (error) {
         this.error = this.locales.t('failedToPromotePawn');
       } finally {
@@ -140,6 +105,34 @@ export const useGameStore = defineStore('game', {
       } else if (response.data && response.data.success) {
         console.log(this.locales.t('invitationSentSuccessfully'));
       }
+    },
+
+    async handleGameEnd(result: GameResult) {
+      console.log('Handling game end:', result);
+      this.gameResult = result;
+      this.showResultModal = true;
+
+      if (this.currentGame) {
+        try {
+          const response = await gameApi.endGame(this.currentGame._id, result);
+          if (response.error) {
+            console.error('Failed to end game on server:', response.error);
+          } else {
+            console.log('Game ended successfully on server');
+          }
+        } catch (error) {
+          console.error('Error ending game:', error);
+        }
+      }
+    },
+
+    clearGameState() {
+      this.currentGame = null;
+      this.error = null;
+      this.promote = false;
+      this.pendingPromotion = null;
+      this.isLoading = false;
+      this.$persist();
     },
 
     closeGameResult() {

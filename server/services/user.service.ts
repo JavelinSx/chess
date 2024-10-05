@@ -9,6 +9,44 @@ import { GameService } from './game.service';
 import type { ApiResponse } from '../types/api';
 
 export class UserService {
+  private static statusCache = new Map<string, { isOnline: boolean; isGame: boolean }>();
+
+  static async updateUserStatus(userId: string, isOnline: boolean, isGame: boolean): Promise<ApiResponse<void>> {
+    try {
+      const currentStatus = this.statusCache.get(userId);
+      if (currentStatus && currentStatus.isOnline === isOnline && currentStatus.isGame === isGame) {
+        return { data: undefined, error: null }; // No change, no need to update
+      }
+
+      await User.findByIdAndUpdate(userId, { isOnline, isGame });
+      this.statusCache.set(userId, { isOnline, isGame });
+
+      await sseManager.broadcastUserStatusUpdate(userId, { isOnline, isGame });
+
+      return { data: undefined, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+      };
+    }
+  }
+
+  static async syncAllUsersStatus(): Promise<ApiResponse<void>> {
+    try {
+      const users = await User.find({}, '_id isOnline isGame');
+      for (const user of users) {
+        const isOnline = sseManager.isUserConnected(user._id.toString());
+        if (user.isOnline !== isOnline || user.isGame !== this.statusCache.get(user._id.toString())?.isGame) {
+          await this.updateUserStatus(user._id.toString(), isOnline, user.isGame);
+        }
+      }
+      return { data: undefined, error: null };
+    } catch (error) {
+      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+    }
+  }
+
   static async profileUpdate(id: string, username: string, email: string): Promise<ApiResponse<UserProfileResponse>> {
     try {
       const user = await User.findByIdAndUpdate(id, { username, email }, { new: true }).lean();
@@ -102,29 +140,25 @@ export class UserService {
 
   static async getUsersList(): Promise<ApiResponse<ClientUser[]>> {
     try {
-      const users = await User.find({});
-      return { data: users, error: null };
+      const users = await User.find({}).lean();
+      const clientUsers = users.map((user) => ({
+        _id: user._id.toString(),
+        username: user.username,
+        isOnline: user.isOnline,
+        isGame: user.isGame,
+        email: user.email,
+        rating: user.rating,
+        stats: user.stats,
+        title: user.title,
+        lastLogin: user.lastLogin,
+        winRate: user.winRate,
+        friends: user.friends,
+        chatSetting: user.chatSetting,
+        // ... добавьте другие необходимые поля
+      }));
+      return { data: clientUsers, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
-    }
-  }
-
-  static async updateUserStatus(userId: string, isOnline: boolean, isGame: boolean): Promise<ApiResponse<void>> {
-    try {
-      await User.findByIdAndUpdate(userId, { isOnline, isGame });
-
-      // Отправляем обновление статуса через SSE только если статус действительно изменился
-      const user = await User.findById(userId);
-      if (user && (user.isOnline !== isOnline || user.isGame !== isGame)) {
-        await sseManager.broadcastUserStatusUpdate(userId, { isOnline, isGame });
-      }
-
-      return { data: undefined, error: null };
-    } catch (error) {
-      return {
-        data: null,
-        error: error instanceof Error ? error.message : 'An unknown error occurred',
-      };
     }
   }
 
@@ -207,23 +241,6 @@ export class UserService {
     }
   }
 
-  static async syncAllUsersStatus(): Promise<ApiResponse<void>> {
-    try {
-      const users = await User.find({});
-      for (const user of users) {
-        const isOnline = sseManager.isUserConnected(user._id.toString());
-        if (user.isOnline !== isOnline) {
-          user.isOnline = isOnline;
-          await user.save();
-          await this.updateUserStatus(user._id.toString(), isOnline, user.isGame);
-        }
-      }
-      return { data: undefined, error: null };
-    } catch (error) {
-      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
-    }
-  }
-
   static async getUsersCount(): Promise<ApiResponse<number>> {
     try {
       const count = await User.countDocuments();
@@ -282,5 +299,5 @@ export class UserService {
 }
 
 if (import.meta.client) {
-  setInterval(() => UserService.syncAllUsersStatus(), 6000);
+  setInterval(() => UserService.syncAllUsersStatus(), 5000);
 }

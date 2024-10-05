@@ -1,6 +1,6 @@
 // server/utils/UserSSEManager.ts
 import { H3Event } from 'h3';
-import type { ClientUser, IUser } from '~/server/types/user';
+import type { ClientUser, IUser, UserStats } from '~/server/types/user';
 import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
 
 export interface UserStatus {
@@ -23,6 +23,39 @@ export class UserSSEManager {
     return this.userConnections.has(userId);
   }
 
+  async broadcastUserListUpdate(users: ClientUser[]) {
+    const message = JSON.stringify({
+      type: 'user_list_update',
+      users: users,
+    });
+
+    for (const connection of this.userConnections.values()) {
+      await this.sendEvent(connection, message);
+    }
+  }
+
+  async broadcastUserAdded(user: ClientUser) {
+    const message = JSON.stringify({
+      type: 'user_added',
+      user: user,
+    });
+
+    for (const connection of this.userConnections.values()) {
+      await this.sendEvent(connection, message);
+    }
+  }
+
+  async broadcastUserRemoved(userId: string) {
+    const message = JSON.stringify({
+      type: 'user_removed',
+      userId: userId,
+    });
+
+    for (const connection of this.userConnections.values()) {
+      await this.sendEvent(connection, message);
+    }
+  }
+
   async sendUserUpdate(userData: ClientUser) {
     const event = this.userConnections.get(userData._id);
     if (event) {
@@ -35,27 +68,55 @@ export class UserSSEManager {
       );
     }
   }
-  async broadcastUserStatusUpdate(userId: string, status: { isOnline: boolean; isGame: boolean }) {
-    const message = JSON.stringify({
-      type: 'user_status_update',
-      userId,
-      ...status,
-    });
 
-    for (const [_, connection] of this.userConnections) {
+  async sendUserListUpdate(userId: string, users: ClientUser[]) {
+    const connection = this.userConnections.get(userId);
+    if (connection) {
+      const message = JSON.stringify({
+        type: 'user_list_update',
+        users: users,
+      });
       await this.sendEvent(connection, message);
     }
   }
-  async broadcastUserListUpdate(users: ClientUser[]) {
-    const message = JSON.stringify({
-      type: 'user_list_update',
-      users: users,
-    });
 
-    for (const event of this.userConnections.values()) {
-      await this.sendEvent(event, message);
+  async sendUserStatsUpdate(userId: string, updatedStats: UserStats) {
+    const event = this.userConnections.get(userId);
+    if (event) {
+      await this.sendEvent(
+        event,
+        JSON.stringify({
+          type: 'user_stats_update',
+          userId,
+          stats: updatedStats,
+        })
+      );
     }
   }
+
+  async broadcastUserStatusUpdate(userId: string, status: UserStatus) {
+    const message = JSON.stringify({
+      type: 'user_status_update',
+      userId,
+      status,
+    });
+
+    for (const connection of this.userConnections.values()) {
+      await this.sendEvent(connection, message);
+    }
+  }
+
+  async sendActiveUsersList(userId: string, activeUsers: any[]) {
+    const connection = this.userConnections.get(userId);
+    if (connection) {
+      const message = JSON.stringify({
+        type: 'active_users_list',
+        users: activeUsers,
+      });
+      await this.sendEvent(connection, message);
+    }
+  }
+
   async sendFriendRequestNotification(userId: string, request: FriendRequest) {
     const event = this.userConnections.get(userId);
     if (event) {
@@ -95,7 +156,6 @@ export class UserSSEManager {
         })),
       });
       await this.sendEvent(event, message);
-    } else {
     }
   }
 
@@ -107,7 +167,6 @@ export class UserSSEManager {
         requests,
       });
       await this.sendEvent(event, message);
-    } else {
     }
   }
   async broadcastUserDeleted(userId: string) {

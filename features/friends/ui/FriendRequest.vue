@@ -51,9 +51,6 @@ const accordionItem = computed(() => [{
     defaultOpen: true,
 }]);
 
-onMounted(async () => {
-    await friendsStore.fetchFriends()
-});
 
 const respondToRequest = async (requestId: string, accept: boolean) => {
     await friendsStore.respondToFriendRequest(requestId, accept);

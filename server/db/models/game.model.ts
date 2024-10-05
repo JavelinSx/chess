@@ -3,7 +3,6 @@ import type { ChessGame } from '~/server/types/game';
 
 const gameSchema = new mongoose.Schema<ChessGame>(
   {
-    id: { type: String, required: true, unique: true },
     board: { type: mongoose.Schema.Types.Mixed, required: true },
     currentTurn: { type: String, enum: ['white', 'black'], required: true },
     players: {

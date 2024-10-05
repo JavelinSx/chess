@@ -39,18 +39,9 @@ export const chatApi = {
         chatSetting: user.chatSetting, // Добавьте это поле
       });
 
-      console.log('Send message request:', {
-        roomId,
-        content,
-        _id: user._id,
-        username: user.username,
-        chatSetting: user.chatSetting,
-      });
-
       if (response.error && response.error.includes('privacy settings')) {
         throw new Error('Cannot send message due to privacy settings');
       }
-      console.log('Send message response:', response);
       return response;
     } catch (error) {
       console.error('Error in sendMessage:', error);

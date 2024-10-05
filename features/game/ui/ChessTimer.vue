@@ -1,50 +1,43 @@
 <template>
     <UCard :ui="{ base: 'bg-gray-100 dark:bg-gray-800 p-4 rounded-lg' }">
-        <div class="text-2xl font-bold">{{ formatTime(remainingTime) }}</div>
+        <div class="text-2xl font-bold">{{ formattedTime }}</div>
     </UCard>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { useGameStore } from '~/store/game';
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+import { useGameAdditionalStore } from '~/store/gameAdditional';
+import { storeToRefs } from 'pinia';
 
-const props = defineProps<{
-    duration: number;
-    playerColor: 'white' | 'black';
-}>();
+const gameAdditionalStore = useGameAdditionalStore();
+const { timeRemaining, gameStatus } = storeToRefs(gameAdditionalStore);
 
-const gameStore = useGameStore();
+const formattedTime = computed(() => {
+    const minutes = Math.floor(timeRemaining.value / 60);
+    const seconds = Math.floor(timeRemaining.value % 60);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+});
 
-const remainingTime = ref(props.duration * 60);
-let timer: ReturnType<typeof setInterval> | null = null;
-
-const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
+let intervalId: ReturnType<typeof setInterval> | null = null;
 
 const startTimer = () => {
-    if (timer === null && gameStore.currentGame?.currentTurn === props.playerColor) {
-        timer = setInterval(() => {
-            remainingTime.value--;
-            if (remainingTime.value <= 0) {
-                stopTimer();
-                gameStore.handleTimeUp(props.playerColor);
-            }
+    if (intervalId === null) {
+        intervalId = setInterval(() => {
+            gameAdditionalStore.updateGameTime();
         }, 1000);
     }
 };
 
 const stopTimer = () => {
-    if (timer !== null) {
-        clearInterval(timer);
-        timer = null;
+    if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
     }
 };
 
 onMounted(() => {
-    if (gameStore.currentGame?.currentTurn === props.playerColor) {
+    console.log("ChessTimer mounted, game status:", gameStatus.value);
+    if (gameStatus.value === 'active') {
         startTimer();
     }
 });
@@ -53,13 +46,12 @@ onUnmounted(() => {
     stopTimer();
 });
 
-watch(() => gameStore.currentGame?.currentTurn, (newTurn) => {
-    if (newTurn === props.playerColor) {
+watch(gameStatus, (newStatus) => {
+    console.log("Game status changed to:", newStatus);
+    if (newStatus === 'active') {
         startTimer();
     } else {
         stopTimer();
     }
 });
-
-defineExpose({ remainingTime });
 </script>

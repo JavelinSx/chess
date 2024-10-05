@@ -61,19 +61,19 @@ const handleRegister = async () => {
     isLoading.value = true;
     try {
         await authStore.register(formState.username, formState.email, formState.password);
-        alert.setAlert('success', 'registrationSuccessful');
+        alert.setAlert('success', 'auth.registrationSuccessful');
         setTimeout(() => {
             navigateTo('/login');
         }, 2000);
     } catch (e) {
         if (e instanceof Error) {
             if (e.message.includes("Password must be at least 8 characters long")) {
-                alert.setAlert('error', 'passwordTooShort');
+                alert.setAlert('error', 'auth.passwordTooShort');
             } else {
-                alert.setAlert('error', 'registrationFailed');
+                alert.setAlert('error', 'auth.registrationFailed');
             }
         } else {
-            alert.setAlert('error', 'unknownError');
+            alert.setAlert('error', 'errors.unknownError');
         }
     } finally {
         isLoading.value = false;

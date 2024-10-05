@@ -5,8 +5,6 @@ export default async () => {
   try {
     const mongoURI = config.mongodbUri! || process.env.MONGODB_URI!;
     await mongoose.connect(mongoURI);
-    console.log(sseManager.getActiveConnections());
-    // startUserStatusSync();
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
   }

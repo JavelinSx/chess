@@ -1,9 +1,13 @@
-import type { ApiResponse, AuthData } from '~/server/types/auth';
+import type { AuthData } from '~/server/types/auth';
+import type { ApiResponse } from '~/server/types/api';
 import { useAuthStore } from '~/store/auth';
+import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
+
 export const useAuth = () => {
   const authStore = useAuthStore();
   const userStore = useUserStore();
+  const gameStore = useGameStore();
 
   const register = async (username: string, email: string, password: string) => {
     try {
@@ -54,6 +58,7 @@ export const useAuth = () => {
       if (response.data) {
         authStore.logout();
         userStore.clearUser();
+        gameStore.clearGameState();
         navigateTo('/login');
       } else if (response.error) {
         throw new Error(response.error);

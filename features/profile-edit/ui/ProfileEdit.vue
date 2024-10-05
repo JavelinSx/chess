@@ -85,7 +85,7 @@ import type { ChatSetting } from '~/server/types/user';
 import type { ClientUser } from '~/server/types/user';
 
 const props = defineProps<{
-    user: ClientUser
+    user: any
 }>();
 
 const { t } = useI18n()

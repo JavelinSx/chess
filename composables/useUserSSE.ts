@@ -30,17 +30,32 @@ export function useUserSSE() {
 
       switch (data.type) {
         case 'user_status_update':
-          userStore.updateUserStatus(data.userId, data.isOnline, data.isGame);
+          userStore.updateUserStatus(data.userId, data.status.isOnline, data.status.isGame);
+          break;
+        case 'user_stats_update':
+          userStore.updateUserStats(data.stats);
+          break;
+        case 'user_update':
+          userStore.updateUser(data.user);
           break;
         case 'user_list_update':
           userStore.updateAllUsers(data.users);
           break;
-        case 'stats_update':
-          userStore.updateUserStats(data.stats);
+        case 'user_added':
+          userStore.addUser(data.user);
           break;
+        case 'user_removed':
+          userStore.removeUser(data.userId);
+          break;
+        case 'user_deleted':
+          userStore.handleUserDeleted(data.userId);
+          break;
+
         case 'game_invitation':
-          console.log('Received game invitation:', data);
           invitationStore.handleGameInvitation(data.fromInviteId, data.fromInviteName, data.gameDuration);
+          break;
+        case 'game_invitation_expired':
+          invitationStore.expireInvitation();
           break;
         case 'game_start':
           router.push(`/game/${data.gameId}`);
@@ -58,9 +73,7 @@ export function useUserSSE() {
             friendsStore.fetchFriends();
           }
           break;
-        case 'user_deleted':
-          userStore.handleUserDeleted(data.userId);
-          break;
+
         default:
           console.log('Unhandled user event type:', data.type);
       }

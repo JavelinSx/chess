@@ -4,11 +4,11 @@ export function initializeBoard(): ChessBoard {
   const board: ChessBoard = Array(8)
     .fill(null)
     .map(() => Array(8).fill(null));
-  const piecesOrder: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+  const piecesOrder: PieceType[] = ['king'];
 
   for (let i = 0; i < 8; i++) {
-    board[1][i] = { type: 'pawn', color: 'white' };
-    board[6][i] = { type: 'pawn', color: 'black' };
+    board[5][i] = { type: 'pawn', color: 'white' };
+    board[2][i] = { type: 'pawn', color: 'black' };
     board[0][i] = { type: piecesOrder[i], color: 'white' };
     board[7][i] = { type: piecesOrder[i], color: 'black' };
   }
@@ -63,12 +63,12 @@ export function updatePlayerStats(
   stats.longestGame = Math.max(stats.longestGame, game.moveCount);
 
   if (isWinner) {
-    stats.gameWon++;
+    stats.gamesWon++;
     stats.shortestWin = Math.min(stats.shortestWin, game.moveCount);
     stats.currentWinStreak++;
     stats.winStreakBest = Math.max(stats.winStreakBest, stats.currentWinStreak);
   } else {
-    stats.gameLose++;
+    stats.gamesLose++;
     stats.currentWinStreak = 0;
   }
 
@@ -76,6 +76,6 @@ export function updatePlayerStats(
     stats.resignations++;
   }
   if (game.result?.reason === 'draw') {
-    stats.gameDraw++;
+    stats.gamesDraw++;
   }
 }

@@ -1,7 +1,8 @@
 <template>
     <UCard class="chess-board-container">
         <template #header>
-            <h3 class="text-lg font-semibold">{{ t('game.chessBoard') }}</h3>
+            <ChessTimer :duration="gameStore.currentGame?.timeControl?.initialTime"
+                :player-color="gameStore.currentGame?.currentTurn!" />
         </template>
 
         <UCard :ui="{ header: { padding: 'py-4' } }" class="mb-4">
@@ -46,7 +47,6 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
-import { gameApi } from '~/shared/api/game';
 import ChessPiece from './ChessPiece.vue';
 import PawnPromotionDialog from '~/features/game-logic/ui/PawnPromotionDialog.vue';
 import type { PieceType, Position, GameResult, GameResultReason } from '~/server/types/game';
@@ -54,10 +54,13 @@ import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
 import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
+import ChessTimer from './ChessTimer.vue';
+import { useGameAdditionalStore } from '~/store/gameAdditional';
 
 const { t } = useI18n();
 const gameStore = useGameStore();
 const userStore = useUserStore();
+const gameAdditionalStore = useGameAdditionalStore()
 
 const selectedCell = ref<Position | null>(null);
 const validMoves = ref<Position[]>([]);
@@ -65,6 +68,7 @@ const validMoves = ref<Position[]>([]);
 const currentGame = computed(() => gameStore.currentGame);
 const isCheck = computed(() => currentGame.value ? isKingInCheck(currentGame.value).inCheck : false);
 const isUserPlayingWhite = computed(() => gameStore.currentGame?.players.white === userStore.user?._id);
+const promote = computed(() => gameStore.promote)
 
 const currentPlayerId = computed(() =>
     gameStore.currentGame?.currentTurn === 'white'
@@ -124,12 +128,13 @@ function isCheckingPiece(row: number, col: number) {
 }
 
 function handlePromotion(promoteTo: PieceType) {
-    if (isCurrentPlayerTurn.value) {
+    if (isCurrentPlayerTurn.value && gameStore.pendingPromotion) {
+        const { from, to } = gameStore.pendingPromotion;
         gameStore.promotePawn(promoteTo);
     }
 }
 
-function handleEndGame(reason: NonNullable<GameResultReason>) {
+async function handleEndGame(reason: NonNullable<GameResultReason>) {
     if (!gameStore.currentGame) return;
 
     let result: GameResult = {
@@ -143,7 +148,11 @@ function handleEndGame(reason: NonNullable<GameResultReason>) {
         result.loser = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.white : gameStore.currentGame.players.black;
     }
 
-    gameStore.handleGameEnd(result);
+    try {
+        await gameStore.handleGameEnd(result);
+    } catch (error) {
+        console.error('Error handling game end:', error);
+    }
 }
 
 function handleCellClick(position: Position) {
@@ -160,38 +169,60 @@ function handleCellClick(position: Position) {
         const from = selectedCell.value;
         const to: Position = [row, col];
         if (isValidMove(row, col) && (from[0] !== to[0] || from[1] !== to[1])) {
-            gameStore.makeMove(from, to);
+            const piece = currentGame.value.board[from[0]][from[1]];
+            if (piece?.type === 'pawn' && (to[0] === 0 || to[0] === 7)) {
+                // Пешка достигла последнего ряда, показываем диалог выбора фигуры
+                gameStore.pendingPromotion = { from, to };
+                gameStore.promote = true;
+            } else {
+                gameStore.makeMove(from, to);
+            }
         }
         selectedCell.value = null;
         validMoves.value = [];
     }
 }
 
-watch(() => currentGame.value, () => {
-    if (selectedCell.value && currentGame.value) {
-        validMoves.value = getValidMoves(currentGame.value, selectedCell.value);
-    }
-}, { deep: true });
+const isGameResult = (result: any): result is GameResult => {
+    return (
+        typeof result === 'object' &&
+        'winner' in result &&
+        'loser' in result &&
+        'reason' in result
+    );
+};
 
-watch(() => gameStore.gameResult, async (newResult) => {
-    if (newResult) {
-        try {
-            const updatedStats = await gameApi.updateGameStats(gameStore.currentGame!.id, newResult);
-            if (updatedStats.data && userStore.user) {
-                const currentUserStats = updatedStats.data[userStore.user._id];
-                if (currentUserStats) {
-                    userStore.updateUserStats(currentUserStats);
-                }
+const handleGameEnd = async (result: GameResult) => {
+    if (gameStore.currentGame) {
+        await gameStore.handleGameEnd(result);
+    }
+};
+
+watch(
+    () => [gameStore.gameResult, gameStore.currentGame?.status],
+    async ([newResult, newStatus], [oldResult, oldStatus]) => {
+        if (newResult && newStatus === 'completed' && oldStatus !== 'completed') {
+            if (isGameResult(newResult)) {
+                await handleGameEnd(newResult);
             }
-        } catch (error) {
-            console.error('Failed to update game stats:', error);
         }
+    },
+    { deep: true }
+);
+
+onMounted(() => {
+    if (gameStore.currentGame) {
+        console.log("ChessBoard mounted, initializing game time");
+        gameAdditionalStore.setGameDuration(gameStore.currentGame.timeControl?.initialTime || 30);
+        gameAdditionalStore.initializeGameTime();
     }
 });
 
-watch(() => gameStore.gameResult, (newResult) => {
-    if (newResult && newResult.reason) {
-        handleEndGame(newResult.reason);
+watch(() => gameStore.currentGame, (newGame) => {
+    if (newGame) {
+        console.log("Current game changed, initializing game time");
+        gameAdditionalStore.setGameDuration(newGame.timeControl?.initialTime || 30);
+        gameAdditionalStore.initializeGameTime();
     }
 });
 

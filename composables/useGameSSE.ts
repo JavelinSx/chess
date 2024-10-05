@@ -17,11 +17,11 @@ export function useGameSSE(gameId: string) {
 
       switch (data.type) {
         case 'game_update':
+          console.log(data.game.currentTurn);
           gameStore.updateGameState(data.game);
           break;
         case 'game_end':
           gameStore.handleGameEnd(data.result);
-          closeSSE();
           break;
         default:
           console.log('Unhandled game event type:', data.type);
@@ -32,10 +32,23 @@ export function useGameSSE(gameId: string) {
       console.error('SSE error:', error);
       closeSSE();
     };
+    eventSource.value.close = () => {
+      console.log('SSE connection closed');
+    };
   };
+
+  watch(
+    () => gameStore.currentGame,
+    (newGame) => {
+      if (!newGame || newGame.status === 'completed') {
+        closeSSE();
+      }
+    }
+  );
 
   const closeSSE = () => {
     if (eventSource.value) {
+      console.log('sse game close');
       eventSource.value.close();
       eventSource.value = null;
     }

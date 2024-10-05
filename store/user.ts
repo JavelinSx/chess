@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { ClientUser, ChatSetting, UserStats } from '~/server/types/user';
+import type { GameResult } from '~/server/types/game';
 import { userApi } from '~/shared/api/user';
 import { useAuthStore } from './auth';
 
@@ -33,8 +34,49 @@ export const useUserStore = defineStore('user', {
       this.usersList = [];
     },
 
-    setUsersList(users: ClientUser[]) {
+    updateUserStatus(userId: string, isOnline: boolean, isGame: boolean) {
+      const userInList = this.usersList.find((u) => u._id === userId);
+      if (userInList) {
+        userInList.isOnline = isOnline;
+        userInList.isGame = isGame;
+      }
+      if (this.user && this.user._id === userId) {
+        this.user.isOnline = isOnline;
+        this.user.isGame = isGame;
+      }
+    },
+
+    updateUser(updatedUser: Partial<ClientUser>) {
+      const index = this.usersList.findIndex((u) => u._id === updatedUser._id);
+      if (index !== -1) {
+        this.usersList[index] = { ...this.usersList[index], ...updatedUser };
+      }
+      if (this.user && this.user._id === updatedUser._id) {
+        this.user = { ...this.user, ...updatedUser };
+      }
+    },
+
+    updateAllUsers(users: ClientUser[]) {
       this.usersList = users;
+      if (this.user) {
+        const updatedCurrentUser = users.find((u) => u._id === this.user?._id);
+        if (updatedCurrentUser) {
+          this.user = updatedCurrentUser;
+        }
+      }
+    },
+
+    addUser(user: ClientUser) {
+      if (!this.usersList.some((u) => u._id === user._id)) {
+        this.usersList.push(user);
+      }
+    },
+
+    removeUser(userId: string) {
+      this.usersList = this.usersList.filter((u) => u._id !== userId);
+      if (this.user && this.user._id === userId) {
+        this.user = null;
+      }
     },
 
     async changePassword(currentPassword: string, newPassword: string) {
@@ -49,39 +91,6 @@ export const useUserStore = defineStore('user', {
       } catch (error) {
         console.error('Error changing password:', error);
         throw error;
-      }
-    },
-
-    async getUser(id: string) {
-      try {
-        const response = await userApi.profileGet(id);
-        if (response.data) {
-          this.user = response.data;
-          return response.data;
-        } else if (response.error) {
-          console.error('Error fetching user:', response.error);
-        }
-        return null;
-      } catch (error) {
-        console.error('Error in getUser:', error);
-        return null;
-      }
-    },
-
-    async updateUser(updatedUser: ClientUser) {
-      console.log(updatedUser, 'updatedUser');
-      try {
-        const response = await userApi.updateUser(updatedUser);
-        if (response.data) {
-          this.updateUserInList(updatedUser);
-          if (this.user && this.user._id === updatedUser._id) {
-            this.user = updatedUser;
-          }
-        } else if (response.error) {
-          console.error('Failed to update user:', response.error);
-        }
-      } catch (error) {
-        console.error('Error updating user:', error);
       }
     },
 
@@ -100,20 +109,15 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    async deleteAccount() {
-      try {
-        const authStore = useAuthStore();
-        const response = await userApi.deleteAccount();
-        if (response.data && response.data.success) {
-          this.clearUser();
-          authStore.logout();
-          navigateTo('/login');
-        } else if (response.error) {
-          throw new Error(response.error);
-        }
-      } catch (error) {
-        console.error('Error deleting account:', error);
-        throw error;
+    updateUserStats(updatedStats: UserStats) {
+      if (this.user) {
+        this.user.stats = updatedStats;
+        this.updateUser({ ...this.user, stats: updatedStats });
+      }
+      // Обновляем пользователя в списке
+      const userInList = this.usersList.find((u) => u._id === this.user?._id);
+      if (userInList) {
+        userInList.stats = updatedStats;
       }
     },
 
@@ -124,97 +128,14 @@ export const useUserStore = defineStore('user', {
       }
 
       // Обновляем список пользователей
-      this.usersList = this.usersList.map((user) =>
-        user._id === deletedUserId ? { ...user, username: 'Deleted User', isDeleted: true } : user
-      );
+      this.usersList = this.usersList.filter((user) => user._id !== deletedUserId);
 
-      // Обновляем список друзей
+      // Обновляем список друзей текущего пользователя
       if (this.user) {
         this.user.friends = this.user.friends.filter((friend) => friend._id !== deletedUserId);
       }
     },
 
-    async fetchUsersList() {
-      try {
-        if (this.usersList.length === 0) {
-          const response = await userApi.getUsersList();
-          if (response.data && Array.isArray(response.data)) {
-            this.usersList = response.data;
-          } else if (response.error) {
-            console.error('Failed to fetch users list:', response.error);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching users list:', error);
-      }
-    },
-
-    updateUserInList(updatedUser: ClientUser) {
-      const index = this.usersList.findIndex((user) => user._id === updatedUser._id);
-      if (index !== -1) {
-        this.usersList[index] = updatedUser;
-      }
-    },
-
-    updateUserStatus(userId: string, isOnline: boolean, isGame: boolean) {
-      const user = this.usersList.find((u) => u._id === userId);
-      if (user) {
-        user.isOnline = isOnline;
-        user.isGame = isGame;
-      }
-    },
-
-    async updateCurrentUserStatus(isOnline: boolean, isGame: boolean) {
-      if (this.user) {
-        await userApi.updateUserStatus(this.user._id, isOnline, isGame);
-        this.user.isOnline = isOnline;
-        this.user.isGame = isGame;
-      }
-    },
-
-    async updateUserStats(stats: Partial<UserStats>) {
-      if (!this.user) return;
-      try {
-        const response = await userApi.updateUserStats(this.user._id, stats);
-        if (response.data) {
-          this.user = { ...this.user, stats: { ...this.user.stats, ...stats } };
-          this.updateUserInList(this.user);
-        } else if (response.error) {
-          console.error('Failed to update user stats:', response.error);
-        }
-      } catch (error) {
-        console.error('Error updating user stats:', error);
-      }
-    },
-
-    async resetUserStats() {
-      if (!this.user) return;
-      try {
-        const response = await userApi.resetUserStats(this.user._id);
-        if (response.data) {
-          this.user = { ...this.user, stats: response.data };
-          this.updateUserInList(this.user);
-        } else if (response.error) {
-          console.error('Failed to reset user stats:', response.error);
-        }
-      } catch (error) {
-        console.error('Error resetting user stats:', error);
-      }
-    },
-
-    updateAllUsers(users: ClientUser[]) {
-      if (Array.isArray(users)) {
-        this.usersList = users;
-        if (this.user) {
-          const updatedCurrentUser = users.find((u) => u._id === this.user?._id);
-          if (updatedCurrentUser) {
-            this.user = updatedCurrentUser;
-          }
-        }
-      } else {
-        console.error('Invalid users data:', users);
-      }
-    },
     getUserInUserList(id: string) {
       return this.usersList.find((user) => user._id === id);
     },

@@ -56,7 +56,7 @@ const handleLogin = async () => {
     try {
         await authStore.login(formState.email, formState.password);
         if (authStore.isAuthenticated) {
-            alert.setAlert('success', 'loginSuccessful');
+            alert.setAlert('success', 'auth.loginSuccessful');
             setTimeout(() => {
                 navigateTo('/');
             }, 1000);
@@ -64,12 +64,12 @@ const handleLogin = async () => {
     } catch (e) {
         if (e instanceof Error) {
             if (e.message.includes("Password must be at least 8 characters long")) {
-                alert.setAlert('error', 'passwordTooShort');
+                alert.setAlert('error', 'auth.passwordTooShort');
             } else {
-                alert.setAlert('error', 'invalidCredentials');
+                alert.setAlert('error', 'auth.invalidCredentials');
             }
         } else {
-            alert.setAlert('error', 'unknownError');
+            alert.setAlert('error', 'errors.unknownError');
         }
     } finally {
         isLoading.value = false;

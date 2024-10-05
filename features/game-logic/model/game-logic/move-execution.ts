@@ -50,7 +50,7 @@ export function performMove(game: ChessGame, from: Position, to: Position): Ches
 
   if (newGame.isCheckmate || newGame.isStalemate) {
     newGame.status = 'completed';
-    newGame.winner = newGame.isCheckmate ? game.currentTurn : null;
+    newGame.result.winner = newGame.isCheckmate ? game.currentTurn : null;
   }
 
   return newGame;

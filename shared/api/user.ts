@@ -24,25 +24,6 @@ export const userApi = {
     return apiRequest<ClientUser[]>('/users/list', 'GET');
   },
 
-  async updateUser(user: ClientUser): Promise<ApiResponse<ClientUser>> {
-    const userRecord: Record<string, unknown> = {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      rating: user.rating,
-      title: user.title,
-      stats: user.stats,
-      lastLogin: user.lastLogin,
-      isOnline: user.isOnline,
-      isGame: user.isGame,
-      winRate: user.winRate,
-      friends: user.friends,
-      currentGameId: user.currentGameId,
-      chatSetting: user.chatSetting,
-    };
-    return apiRequest<ClientUser>('/user/update', 'POST', userRecord);
-  },
-
   async updateUserStatus(
     userId: string,
     isOnline: boolean,
@@ -59,13 +40,5 @@ export const userApi = {
       currentPassword,
       newPassword,
     });
-  },
-
-  async updateUserStats(userId: string, stats: Partial<UserStats>): Promise<ApiResponse<UserStats>> {
-    return apiRequest<UserStats>('/user/update-stats', 'POST', { userId, stats });
-  },
-
-  async resetUserStats(userId: string): Promise<ApiResponse<UserStats>> {
-    return apiRequest<UserStats>('/user/reset-stats', 'POST', { userId });
   },
 };

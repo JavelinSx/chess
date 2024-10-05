@@ -62,7 +62,7 @@ export interface CastlingRights {
 }
 
 export interface ChessGame {
-  id: string;
+  _id: string;
   board: ChessBoard;
   currentTurn: PieceColor;
   players: {
@@ -101,9 +101,9 @@ export interface TimeControl {
   initialTime?: 15 | 30 | 45 | 90;
 }
 
-export function initializeGame(id: string, inviterId: string, inviteeId: string): ChessGame {
+export function initializeGame(inviterId: string, inviteeId: string): ChessGame {
   return {
-    id,
+    _id: '',
     board: initializeBoard(),
     currentTurn: 'white',
     players: {

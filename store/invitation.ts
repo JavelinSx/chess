@@ -7,6 +7,7 @@ interface Invitation {
   fromInviteId: string;
   fromInviteName: string;
   gameDuration: GameDuration;
+  expiresAt: number;
 }
 
 export const useInvitationStore = defineStore('invitation', {
@@ -15,6 +16,7 @@ export const useInvitationStore = defineStore('invitation', {
     showDurationSelector: false,
     showInvitationModal: false,
     inviteeId: '',
+    invitationTimer: null as NodeJS.Timeout | null,
     locales: useI18n(),
   }),
 
@@ -50,8 +52,32 @@ export const useInvitationStore = defineStore('invitation', {
     },
 
     handleGameInvitation(fromInviteId: string, fromInviteName: string, gameDuration: GameDuration) {
-      this.currentInvitation = { fromInviteId, fromInviteName, gameDuration };
+      this.currentInvitation = {
+        fromInviteId,
+        fromInviteName,
+        gameDuration,
+        expiresAt: Date.now() + 15000, // 15 seconds from now
+      };
       this.showInvitationModal = true;
+      this.startInvitationTimer();
+    },
+
+    startInvitationTimer() {
+      if (this.invitationTimer) {
+        clearTimeout(this.invitationTimer);
+      }
+      this.invitationTimer = setTimeout(() => {
+        this.expireInvitation();
+      }, 15000);
+    },
+
+    expireInvitation() {
+      this.currentInvitation = null;
+      this.showInvitationModal = false;
+      if (this.invitationTimer) {
+        clearTimeout(this.invitationTimer);
+        this.invitationTimer = null;
+      }
     },
 
     async acceptGameInvitation() {
@@ -65,7 +91,7 @@ export const useInvitationStore = defineStore('invitation', {
           initialTime: this.currentInvitation.gameDuration,
         });
         if (response.data && response.data.gameId) {
-          this.currentInvitation = null;
+          this.expireInvitation();
           navigateTo(`/game/${response.data.gameId}`);
         } else if (response.error) {
           console.error(this.locales.t('failedToAcceptInvitation'), response.error);
@@ -76,7 +102,7 @@ export const useInvitationStore = defineStore('invitation', {
     },
 
     rejectGameInvitation() {
-      this.currentInvitation = null;
+      this.expireInvitation();
     },
   },
 });

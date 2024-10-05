@@ -22,7 +22,8 @@ export function useChatSSE(): ChatSSEReturn {
   const isAuthenticated = computed(() => !!authToken.value);
 
   const setupSSE = () => {
-    if (!isAuthenticated.value || !userStore.user?.isOnline) {
+    if (!isAuthenticated.value) {
+      console.log('close chat sse on isAuthenticated', isAuthenticated.value);
       closeSSE();
       return;
     }
@@ -62,6 +63,7 @@ export function useChatSSE(): ChatSSEReturn {
   };
 
   const closeSSE = () => {
+    console.log('close chat sse');
     if (eventSource.value) {
       eventSource.value.close();
       eventSource.value = null;
@@ -73,6 +75,20 @@ export function useChatSSE(): ChatSSEReturn {
       await chatStore.fetchRooms();
     }
   };
+
+  watch(
+    () => isAuthenticated.value,
+    (newValue) => {
+      if (newValue && !isInitialized.value) {
+        setupSSE();
+        refreshRooms();
+        isInitialized.value = true;
+      } else if (!newValue) {
+        closeSSE();
+        isInitialized.value = false;
+      }
+    }
+  );
 
   onUnmounted(() => {
     closeSSE();

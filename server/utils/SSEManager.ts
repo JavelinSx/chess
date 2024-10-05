@@ -5,12 +5,11 @@ import { InvitationSSEManager } from './InvitationSSEManager';
 import { GameSSEManager } from './GameSSEManager';
 import { ChatSSEManager } from './ChatSSEManager';
 import type { GameDuration, GameResult } from '../types/game';
-import type { ClientUser } from '~/server/types/user';
+import type { ClientUser, UserStats } from '~/server/types/user';
 import type { ChessGame } from '../types/game';
 import type { UserStatus } from './UserSSEManager';
 import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
 import type { ChatMessage, IChatRoom } from '../types/chat';
-import { user } from '@yandex-cloud/nodejs-sdk/dist/generated/yandex/cloud/datasphere';
 
 export class SSEManager {
   private userManager: UserSSEManager;
@@ -27,12 +26,18 @@ export class SSEManager {
   }
 
   // User-related methods
-  addUserConnection(userId: string, event: H3Event) {
+  async addUserConnection(userId: string, event: H3Event) {
     if (!this.activeConnections.has(userId)) {
       this.userManager.addUserConnection(userId, event);
       this.invitationManager.addInvitationConnection(userId, event);
       this.activeConnections.add(userId);
-      UserService.updateUserStatus(userId, true, false);
+      await UserService.updateUserStatus(userId, true, false);
+
+      // Отправляем начальный список пользователей
+      const usersListResponse = await UserService.getUsersList();
+      if (usersListResponse.data) {
+        await this.sendUserListUpdate(userId, usersListResponse.data);
+      }
     }
   }
 
@@ -51,12 +56,24 @@ export class SSEManager {
     return this.activeConnections;
   }
 
+  async sendUserStatsUpdate(userId: string, updatedStats: UserStats) {
+    await this.userManager.sendUserStatsUpdate(userId, updatedStats);
+  }
+
   async broadcastUserDeleted(userId: string) {
     await this.userManager.broadcastUserDeleted(userId);
   }
 
   async broadcastUserStatusUpdate(userId: string, status: UserStatus) {
     await this.userManager.broadcastUserStatusUpdate(userId, status);
+  }
+
+  async broadcastUserAdded(user: ClientUser) {
+    await this.userManager.broadcastUserAdded(user);
+  }
+
+  async broadcastUserRemoved(userId: string) {
+    await this.userManager.broadcastUserRemoved(userId);
   }
 
   async broadcastUserListUpdate(users: ClientUser[]) {
@@ -81,6 +98,10 @@ export class SSEManager {
 
   async sendFriendListUpdateNotification(userId: string, friendList: Friend[]) {
     await this.userManager.sendFriendListUpdateNotification(userId, friendList);
+  }
+
+  async sendUserListUpdate(userId: string, users: ClientUser[]) {
+    await this.userManager.sendUserListUpdate(userId, users);
   }
 
   // Chat-related methods

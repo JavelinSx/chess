@@ -15,7 +15,6 @@ export function useSSEManagement() {
   const initializeSSE = async () => {
     if (isInitialized.value || !authStore.isAuthenticated || !userStore.user) return;
 
-    await userStore.updateCurrentUserStatus(true, false);
     setupUserSSE();
     setupChatSSE();
     await refreshRooms();
@@ -23,9 +22,6 @@ export function useSSEManagement() {
   };
 
   const cleanupSSE = async () => {
-    if (authStore.isAuthenticated && userStore.user) {
-      await userStore.updateCurrentUserStatus(false, false);
-    }
     closeUserSSE();
     closeChatSSE();
     isInitialized.value = false;
