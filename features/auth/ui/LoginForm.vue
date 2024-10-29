@@ -16,7 +16,7 @@
                 {{ t('auth.login') }}
             </UButton>
         </UForm>
-
+        <Github></Github>
         <UAlert v-if="alert.alert.value.type" :type="alert.alert.value.type" :title="t(alert.alert.value.message)"
             :color="authStore.isAuthenticated ? 'green' : 'red'" variant="soft"
             :icon="getAlertIcon(alert.alert.value.type)" class="mt-4"
@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
+import Github from './Github.vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAlert } from '~/composables/useAlert';
 

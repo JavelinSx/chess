@@ -17,7 +17,6 @@ export function useGameSSE(gameId: string) {
 
       switch (data.type) {
         case 'game_update':
-          console.log(data.game.currentTurn);
           gameStore.updateGameState(data.game);
           break;
         case 'game_end':
@@ -41,7 +40,9 @@ export function useGameSSE(gameId: string) {
     () => gameStore.currentGame,
     (newGame) => {
       if (!newGame || newGame.status === 'completed') {
-        closeSSE();
+        setTimeout(() => {
+          closeSSE();
+        }, 2000);
       }
     }
   );

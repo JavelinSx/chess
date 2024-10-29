@@ -4,6 +4,7 @@ import type { IUser } from '~/server/types/user';
 import type { ApiResponse } from '~/server/types/api';
 import mongoose from 'mongoose';
 import { sseManager } from '../utils/SSEManager';
+import UserListCache from '../utils/UserListCache';
 
 export const friendsService = {
   async sendFriendRequest(fromUserId: string, toUserId: string): Promise<ApiResponse<FriendRequest>> {
@@ -92,6 +93,10 @@ export const friendsService = {
         friendToAdd.username = requester.username;
 
         await Promise.all([user.save(), requester.save()]);
+
+        // Обновляем UserListCache
+        UserListCache.updateUser(userId, { friends: user.friends });
+        UserListCache.updateUser(request.from.toString(), { friends: requester.friends });
 
         const [userFriendsResponse, requesterFriendsResponse] = await Promise.all([
           this.getFriends(userId),

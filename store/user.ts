@@ -34,6 +34,11 @@ export const useUserStore = defineStore('user', {
       this.usersList = [];
     },
 
+    getUserById(userId: string) {
+      const userInList = this.usersList.find((u) => u._id === userId);
+      return userInList;
+    },
+
     updateUserStatus(userId: string, isOnline: boolean, isGame: boolean) {
       const userInList = this.usersList.find((u) => u._id === userId);
       if (userInList) {
@@ -76,6 +81,23 @@ export const useUserStore = defineStore('user', {
       this.usersList = this.usersList.filter((u) => u._id !== userId);
       if (this.user && this.user._id === userId) {
         this.user = null;
+      }
+    },
+
+    async deleteAccount() {
+      try {
+        const authStore = useAuthStore();
+        const response = await userApi.deleteAccount();
+        if (response.data && response.data.success) {
+          this.clearUser();
+          authStore.logout();
+          navigateTo('/login');
+        } else if (response.error) {
+          throw new Error(response.error);
+        }
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        throw error;
       }
     },
 

@@ -2,12 +2,27 @@ import mongoose from 'mongoose';
 import { comparePassword, hashPassword } from '~/server/utils/auth';
 import type { IUser, IUserMethods } from '~/server/types/user';
 
+const githubDataSchema = new mongoose.Schema(
+  {
+    login: String,
+    avatar_url: String,
+    html_url: String,
+    name: String,
+    bio: String,
+    location: String,
+  },
+  { _id: false }
+);
+
 const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMethods>>({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
-  password: { type: String, required: true, select: false },
+  password: { type: String, required: false, select: false },
+  githubId: { type: String, unique: true, sparse: true },
+  githubAccessToken: { type: String },
+  githubData: githubDataSchema,
   rating: { type: Number, default: 0 },
-  title: { type: String, default: 'Begginer' },
+  title: { type: String, default: 'Beginner' },
   stats: {
     gamesPlayed: { type: Number, default: 0 },
     gamesWon: { type: Number, default: 0 },
@@ -28,6 +43,12 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
     winStreakBest: { type: Number, default: 0 },
     currentWinStreak: { type: Number, default: 0 },
     resignations: { type: Number, default: 0 },
+    gamesByDuration: {
+      15: { type: Number, default: 0 },
+      30: { type: Number, default: 0 },
+      45: { type: Number, default: 0 },
+      90: { type: Number, default: 0 },
+    },
   },
   lastLogin: { type: Date, default: Date.now },
   isOnline: { type: Boolean, default: false },
@@ -69,7 +90,7 @@ userSchema.set('toObject', {
   },
 });
 userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
+  if (this.isModified('password') && this.password) {
     this.password = await hashPassword(this.password);
   }
   next();

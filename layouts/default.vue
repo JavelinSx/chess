@@ -84,7 +84,7 @@ const gameStore = useGameStore();
 const chatStore = useChatStore();
 const route = useRoute();
 
-const { isAuthenticated } = storeToRefs(authStore);
+const { isAuthenticated } = useAuth();
 const isMenuOpen = ref(false);
 
 const isGamePage = computed(() => {
@@ -93,7 +93,7 @@ const isGamePage = computed(() => {
 
 const activeGameId = computed(() => {
     const currentGame = gameStore.currentGame;
-    return currentGame && currentGame.status === 'active' ? currentGame.id : null;
+    return currentGame && currentGame.status === 'active' ? currentGame._id : null;
 });
 
 const navLinks = computed(() => [
@@ -115,6 +115,5 @@ const logout = async () => {
 const toggleChat = () => {
     chatStore.toggleChat();
 };
-
 
 </script>

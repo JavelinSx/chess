@@ -16,10 +16,10 @@
             <FriendRequest></FriendRequest>
         </UCard>
 
-        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
             <li v-if="paginationStore.paginatedUsers.length > 0" v-for="user in paginationStore.paginatedUsers"
                 :key="user._id">
-                <UserCard :user="user" :current-user-id="currentUserId" />
+                <UserCard :user="user" :current-user-id="currentUserId" :is-in-friend-list="false" />
             </li>
             <li v-else class="col-span-full text-center mt-10 mb-10">
                 {{ t('userList.noOnlinePlayers') }}

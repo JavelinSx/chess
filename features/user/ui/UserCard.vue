@@ -1,40 +1,58 @@
 <template>
-    <div class="rounded-lg p-4 flex flex-col h-full">
-        <div class="flex items-start justify-between mb-2">
-            <div class="flex items-center">
-                <UAvatar :src="getUserAvatar(user)" :alt="user.username" class="mr-3" size="sm" />
-                <div>
-                    <p class="font-semibold">{{ user.username }}</p>
-                    <p class="text-xs">{{ t('profile.rating') }}: {{ user.rating }}</p>
-                </div>
+    <UCard :ui="{
+        base: 'h-full w-full',
+        header: 'px-0 py-0 sm:px-0',
+        ring: user.isOnline
+            ? 'ring-1 ring-green-500 dark:ring-green-400'
+            : 'ring-1 ring-gray-200 dark:ring-gray-700',
+    }">
+        <template #header>
+            <div class="flex items-center justify-between cursor-pointer px-4 py-5 sm:px-6"
+                @click="navigateToUserProfile">
+                <UCard :ui="{ base: 'w-full' }">
+                    <div class="flex justify-between">
+                        <div class="flex flex-col items-center gap-2">
+                            <UAvatar :src="getUserAvatar(user)" :alt="user.username" size="lg" />
+                            <p class="font-semibold">{{ user.username }}</p>
+                        </div>
+                        <div class="flex flex-col items-center gap-2">
+                            <TitleIcon :rating="user.rating" />
+                            <p>{{ t('profile.rating') }}: {{ user.rating }}</p>
+                        </div>
+                    </div>
+                </UCard>
             </div>
-            <UBadge :color="user.isOnline ? 'green' : 'gray'" class="text-xs px-2 py-1">
-                {{ user.isOnline ? t('common.online') : t('common.offline') }}
-            </UBadge>
+        </template>
+
+        <div class="flex flex-col h-full w-full justify-between font-normal text-sm">
+            <div class="flex flex-col gap-2 mt-4">
+                <InviteButton :user-id="user._id" :disabled="user.isOnline" />
+                <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft"
+                    icon="i-heroicons-user-plus" class="flex-grow">
+                    {{ t('friends.addFriend') }}
+                </UButton>
+                <ChatButton :username="user.username" :user-id="user._id" :chat-setting="user.chatSetting"
+                    class="flex-grow" />
+            </div>
         </div>
-        <div class="text-xs mb-2">
-            <p>{{ t('profile.gamesPlayed') }}: {{ user.stats.gamesPlayed }}</p>
-            <p>{{ t('profile.winRate') }}: {{ calculateWinRate(user) }}%</p>
-        </div>
-        <div class="flex flex-wrap gap-2 mt-auto">
-            <InviteButton :user-id="user._id" />
-            <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft" icon="i-heroicons-user-plus"
-                class="flex-grow">
-                {{ t('friends.addFriend') }}
+
+        <template #footer v-if="isInFriendList">
+            <UButton color="red" variant="soft" icon="i-heroicons-user-minus" class="w-full"
+                @click="removeFriend(user._id)">
+                {{ t('friends.removeFriend') }}
             </UButton>
-            <ChatButton :username="user.username" :user-id="user._id" :chat-setting="user.chatSetting"
-                class="flex-grow" />
-        </div>
-    </div>
+        </template>
+    </UCard>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useInvitationStore } from '~/store/invitation';
 import { useFriendsStore } from '~/store/friends';
 import ChatButton from '~/features/chat/ui/ChatButton.vue';
 import InviteButton from '~/features/invite/InviteButton.vue';
+import TitleIcon from '~/features/profile/ui/TitleIcon.vue';
 import type { ClientUser } from '~/server/types/user';
+
 
 const { t } = useI18n();
 const friendsStore = useFriendsStore();
@@ -42,7 +60,50 @@ const friendsStore = useFriendsStore();
 const props = defineProps<{
     user: ClientUser;
     currentUserId: string | undefined;
+    isInFriendList?: boolean;
 }>();
+console.log(props.user)
+const accordionItems = computed(() => [
+    {
+        label: t('profile.userStatistics'),
+        content: '',
+        defaultOpen: false,
+    },
+])
+
+const tableColumns = [
+    {
+        key: 'label',
+        label: t('profile.statistic'),
+    },
+    {
+        key: 'value',
+        label: t('profile.value'),
+    },
+]
+
+const tableRows = computed(() => [
+    {
+        key: 'rank',
+        label: t('profile.rank'),
+        value: props.user.rating,
+    },
+    {
+        key: 'rating',
+        label: t('profile.rating'),
+        value: props.user.rating,
+    },
+    {
+        key: 'gamesPlayed',
+        label: t('profile.gamesPlayed'),
+        value: props.user.stats.gamesPlayed,
+    },
+    {
+        key: 'winRate',
+        label: t('profile.winRate'),
+        value: `${calculateWinRate(props.user)}%`,
+    },
+])
 
 const canAddFriend = computed(() => {
     if (!props.currentUserId || !Array.isArray(friendsStore.friends)) {
@@ -50,15 +111,25 @@ const canAddFriend = computed(() => {
     }
     const isCurrentUser = props.user._id === props.currentUserId;
     const isAlreadyFriend = friendsStore.friends.some(friend => friend._id === props.user._id);
-    return !isCurrentUser && !isAlreadyFriend;
+    return !isCurrentUser && !isAlreadyFriend && !props.isInFriendList;
 });
 
 function addFriend() {
     friendsStore.sendFriendRequest(props.user._id);
 }
 
+function removeFriend(friendId: string) {
+    friendsStore.removeFriend(friendId);
+}
+
+function navigateToUserProfile() {
+    navigateTo(`/user/${props.user._id}`);
+}
+
 function getUserAvatar(user: ClientUser) {
-    return ''; // Реализуйте логику получения аватара, если необходимо
+    console.log(user.avatar)
+    console.log(user.githubData?.avatar_url)
+    return user.avatar || user.githubData?.avatar_url;
 }
 
 function calculateWinRate(user: ClientUser) {

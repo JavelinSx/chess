@@ -3,13 +3,21 @@ import 'dotenv/config';
 
 export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui', '@nuxtjs/i18n'],
-
+  plugins: ['~/plugins/auth'],
   css: ['~/app/styles/global.css'],
 
   nitro: {
     plugins: ['~/server/db/index.ts'],
     experimental: {
       websocket: true,
+    },
+    routeRules: {
+      '/api/auth/github/**': {
+        cors: true,
+        headers: {
+          'Access-Control-Allow-Credentials': 'true',
+        },
+      },
     },
   },
 
@@ -39,9 +47,12 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: '/api' || process.env.API_BASE,
+      githubClientId: process.env.GITHUB_CLIENT_ID,
+      githubRedirectUri: process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/github/callback',
     },
-    mongodbUri: 'mongodb://localhost:27017/chess_game' || process.env.MONGODB_URI,
-    jwtSecret: 'your_secret_key_here' || process.env.JWT_SECRET,
+    mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/chess_game',
+    jwtSecret: process.env.JWT_SECRET || 'your_secret_key_here',
+    githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
   },
 
   ssr: false,

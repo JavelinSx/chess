@@ -38,7 +38,7 @@
 
         <template #footer>
             <UButton v-if="gameStore.currentGame?.status === 'active'" color="red" icon="i-heroicons-flag"
-                @click="handleEndGame('forfeit')">
+                @click="handleGameEnd('forfeit')">
                 {{ t('game.forfeitGame') }}
             </UButton>
         </template>
@@ -90,9 +90,13 @@ const isCurrentPlayerTurn = computed(() => currentPlayerId.value === userStore.u
 
 function getCellClasses(row: number, col: number) {
     const [adjustedRow, adjustedCol] = getAdjustedPosition(row, col);
+    const isLightSquare = isUserPlayingWhite.value
+        ? (row + col) % 2 === 0
+        : (row + col) % 2 !== 0;
+
     return {
-        'bg-beige': (row + col) % 2 === 0,
-        'bg-brown': (row + col) % 2 !== 0,
+        'bg-beige': isLightSquare,
+        'bg-brown': !isLightSquare,
         'highlight-selected': isSelected(adjustedRow, adjustedCol),
         'highlight-valid-move': isValidMove(adjustedRow, adjustedCol),
         'highlight-check': isCheck.value && isKing(adjustedRow, adjustedCol),
@@ -134,18 +138,26 @@ function handlePromotion(promoteTo: PieceType) {
     }
 }
 
-async function handleEndGame(reason: NonNullable<GameResultReason>) {
+async function handleGameEnd(reasonOrResult: NonNullable<GameResultReason> | GameResult) {
     if (!gameStore.currentGame) return;
 
-    let result: GameResult = {
-        winner: null,
-        loser: null,
-        reason: reason
-    };
+    let result: GameResult;
 
-    if (reason === 'checkmate' || reason === 'forfeit') {
-        result.winner = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.black : gameStore.currentGame.players.white;
-        result.loser = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.white : gameStore.currentGame.players.black;
+    if (typeof reasonOrResult === 'string') {
+        // Если передана причина окончания игры
+        result = {
+            winner: null,
+            loser: null,
+            reason: reasonOrResult
+        };
+
+        if (reasonOrResult === 'checkmate' || reasonOrResult === 'forfeit') {
+            result.winner = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.black : gameStore.currentGame.players.white;
+            result.loser = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.white : gameStore.currentGame.players.black;
+        }
+    } else {
+        // Если передан готовый объект GameResult
+        result = reasonOrResult;
     }
 
     try {
@@ -171,7 +183,6 @@ function handleCellClick(position: Position) {
         if (isValidMove(row, col) && (from[0] !== to[0] || from[1] !== to[1])) {
             const piece = currentGame.value.board[from[0]][from[1]];
             if (piece?.type === 'pawn' && (to[0] === 0 || to[0] === 7)) {
-                // Пешка достигла последнего ряда, показываем диалог выбора фигуры
                 gameStore.pendingPromotion = { from, to };
                 gameStore.promote = true;
             } else {
@@ -192,11 +203,7 @@ const isGameResult = (result: any): result is GameResult => {
     );
 };
 
-const handleGameEnd = async (result: GameResult) => {
-    if (gameStore.currentGame) {
-        await gameStore.handleGameEnd(result);
-    }
-};
+
 
 watch(
     () => [gameStore.gameResult, gameStore.currentGame?.status],
@@ -212,7 +219,6 @@ watch(
 
 onMounted(() => {
     if (gameStore.currentGame) {
-        console.log("ChessBoard mounted, initializing game time");
         gameAdditionalStore.setGameDuration(gameStore.currentGame.timeControl?.initialTime || 30);
         gameAdditionalStore.initializeGameTime();
     }
@@ -220,7 +226,6 @@ onMounted(() => {
 
 watch(() => gameStore.currentGame, (newGame) => {
     if (newGame) {
-        console.log("Current game changed, initializing game time");
         gameAdditionalStore.setGameDuration(newGame.timeControl?.initialTime || 30);
         gameAdditionalStore.initializeGameTime();
     }

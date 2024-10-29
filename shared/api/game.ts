@@ -23,7 +23,7 @@ export const gameApi = {
     return apiRequest<ChessGame>('/game/move', 'POST', { gameId, from, to, promoteTo });
   },
 
-  async endGame(gameId: string, result: GameResult): Promise<ApiResponse<void>> {
-    return apiRequest<void>('/game/end', 'POST', { gameId, result });
+  async endGame(gameId: string, result: GameResult): Promise<ApiResponse<GameResult>> {
+    return apiRequest<GameResult>('/game/end', 'POST', { gameId, result });
   },
 };

@@ -4,6 +4,15 @@ import type { GameDuration } from './game';
 
 export type ChatSetting = 'all' | 'friends_only' | 'nobody';
 
+export interface GitHubData {
+  login: string;
+  avatar_url: string;
+  html_url: string;
+  name: string | null;
+  bio: string | null;
+  location: string | null;
+}
+
 export interface UserStats {
   gamesPlayed: number;
   gamesWon: number;
@@ -26,14 +35,23 @@ export interface UserStats {
   averageRatingChange: number;
   biggestRatingGain: number;
   biggestRatingLoss: number;
-  gamesByDuration: { [K in GameDuration]: number };
+  gamesByDuration: {
+    15?: number;
+    30?: number;
+    45?: number;
+    90?: number;
+  };
 }
 
 export interface IUser extends Document {
   _id: string;
   username: string;
+  avatar: string;
   email: string;
-  password: string;
+  password?: string;
+  githubId?: string;
+  githubAccessToken?: string;
+  githubData?: GitHubData;
   rating: number;
   title: string;
   stats: UserStats;
@@ -55,6 +73,7 @@ export interface IUserMethods {
 export interface UserProfileResponse {
   _id: string;
   username: string;
+  avatar: string;
   email: string;
   rating: number;
   title: string;
@@ -70,8 +89,12 @@ export interface UserProfileResponse {
 
 export interface ClientUser {
   _id: string;
+  avatar: string;
   username: string;
   email: string;
+  githubId?: string;
+  githubAccessToken?: string;
+  githubData?: GitHubData;
   rating: number;
   title: string;
   stats: UserStats;

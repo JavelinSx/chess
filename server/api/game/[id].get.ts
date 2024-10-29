@@ -28,7 +28,6 @@ export default defineEventHandler(async (event) => {
 
     return { data: game, error: null };
   } catch (error) {
-    console.error('Error fetching game:', error);
     throw createError({
       statusCode: 500,
       statusMessage: error instanceof Error ? error.message : 'An unknown error occurred',

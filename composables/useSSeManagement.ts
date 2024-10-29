@@ -9,30 +9,50 @@ export function useSSEManagement() {
   const userStore = useUserStore();
 
   const isInitialized = ref(false);
+  const isConnected = ref(false);
   const { setupSSE: setupChatSSE, refreshRooms, closeSSE: closeChatSSE } = useChatSSE();
   const { setupSSE: setupUserSSE, closeSSE: closeUserSSE } = useUserSSE();
 
+  let reconnectTimeout: NodeJS.Timeout;
+
   const initializeSSE = async () => {
     if (isInitialized.value || !authStore.isAuthenticated || !userStore.user) return;
-
     setupUserSSE();
     setupChatSSE();
     await refreshRooms();
     isInitialized.value = true;
+    isConnected.value = true;
   };
 
   const cleanupSSE = async () => {
     closeUserSSE();
     closeChatSSE();
     isInitialized.value = false;
+    isConnected.value = false;
+  };
+
+  const reconnect = () => {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = setTimeout(async () => {
+      console.log('Attempting to reconnect SSE');
+      await cleanupSSE();
+      await initializeSSE();
+    }, 5000); // Попытка переподключения через 5 секунд
+  };
+
+  const handleVisibilityChange = () => {
+    if (!document.hidden && !isConnected.value && authStore.isAuthenticated) {
+      console.log('Page became visible, reconnecting SSE');
+      reconnect();
+    }
   };
 
   watch(
     () => authStore.isAuthenticated,
     (newValue) => {
-      if (newValue && isInitialized) {
+      if (newValue && !isInitialized.value) {
         initializeSSE();
-      } else {
+      } else if (!newValue) {
         cleanupSSE();
       }
     }
@@ -47,12 +67,20 @@ export function useSSEManagement() {
     }
   );
 
-  onMounted(initializeSSE);
-  onBeforeUnmount(cleanupSSE);
+  onMounted(() => {
+    initializeSSE();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  });
+
+  onBeforeUnmount(() => {
+    cleanupSSE();
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    clearTimeout(reconnectTimeout);
+  });
 
   if (import.meta.client) {
     window.addEventListener('beforeunload', cleanupSSE);
   }
 
-  return { isInitialized };
+  return { isInitialized, isConnected };
 }

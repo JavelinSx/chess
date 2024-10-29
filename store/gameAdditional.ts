@@ -56,16 +56,16 @@ export const useGameAdditionalStore = defineStore('gameAdditional', {
 
     handleTimeUp() {
       const gameStore = useGameStore();
-      if (!gameStore.currentGame) return;
+      const game = gameStore.currentGame;
+      if (!game) return;
 
       const result: GameResult = {
         winner: null,
         loser: null,
         reason: 'timeout',
       };
-
-      gameStore.handleGameEnd(result);
       this.gameStatus = 'completed';
+      gameStore.handleGameEnd(result);
     },
 
     determineWinner(playerOutOfTime: 'white' | 'black'): 'white' | 'black' | 'draw' {

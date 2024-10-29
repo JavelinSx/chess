@@ -5,8 +5,8 @@
             {{ t('common.hello') }} {{ user?.username }}!
         </p>
         <p v-else>
-            <NuxtLink to="/login">{{ t('login') }}</NuxtLink> {{ t('or') }}
-            <NuxtLink to="/register">{{ t('register') }}</NuxtLink> {{ t('startPlaying') }}.
+            <NuxtLink to="/login">{{ t('auth.login') }}</NuxtLink> {{ t('common.or') }}
+            <NuxtLink to="/register">{{ t('auth.register') }}</NuxtLink> {{ t('misc.startPlaying') }}.
         </p>
 
         <UserList v-if="isAuthenticated" />
@@ -26,26 +26,20 @@ import GameInvitationModal from '~/features/invite/GameInvitationModal.vue';
 const invitationStore = useInvitationStore()
 const userStore = useUserStore();
 const authStore = useAuthStore();
-const isAuthenticated = computed(() => authStore.isAuthenticated);
-const user = computed(() => userStore.user);
-const intervalId = ref<number | null>(null);
+const { isAuthenticated, user } = useAuth()
+const authChecked = ref(false);
 
-
-onMounted(async () => {
-    if (authStore.isAuthenticated) {
-        await userStore.updateUserStatus(user.value?._id!, true, false);
-    }
-});
-
-
-if (import.meta.client) {
-    window.addEventListener('beforeunload', async () => {
-        if (authStore.isAuthenticated) {
-            await userStore.updateUserStatus(user.value?._id!, false, false);
-        }
-    });
-}
-
+// onMounted(async () => {
+//     authChecked.value = true;
+//     if (isAuthenticated.value) {
+//         await userStore.updateUserStatus(user.value?._id!, true, false);
+//     }
+// });
+// watch(isAuthenticated, async (newValue) => {
+//     if (newValue) {
+//         await userStore.updateUserStatus(user.value?._id!, true, false);
+//     }
+// });
 definePageMeta({
     requiresAuth: true
 });

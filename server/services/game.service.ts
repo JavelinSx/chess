@@ -1,7 +1,8 @@
 import { Types } from 'mongoose';
 import Game from '~/server/db/models/game.model';
 import User from '~/server/db/models/user.model';
-import gameCache from '../utils/gameCache';
+import GameCache from '../utils/GameCache';
+import UserListCache from '../utils/UserListCache';
 import { UserService } from './user.service';
 import { sseManager } from '~/server/utils/SSEManager';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
@@ -11,6 +12,7 @@ import { isCastling, isEnPassant, isPawnPromotion } from '~/features/game-logic/
 import { updatePositionsHistory } from '~/features/game-logic/model/game-logic/utils';
 import { initializeBoard, updatePlayerStats } from '~/server/utils/services/gameServiceUtils';
 import type { GameResult, ChessGame, PieceColor, Position, MoveHistoryEntry } from '../types/game';
+import type { ClientUser } from '../types/user';
 import type { ApiResponse } from '../types/api';
 
 export class GameService {
@@ -49,7 +51,10 @@ export class GameService {
 
       const savedGame = await newGame.save();
       const ttl = this.getGameCacheTTL(savedGame);
-      gameCache.set(savedGame._id.toString(), savedGame.toObject(), ttl);
+
+      GameCache.set(savedGame._id.toString(), savedGame.toObject(), ttl);
+      UserListCache.setUserInGame(inviterId);
+      UserListCache.setUserInGame(inviteeId);
 
       return { data: savedGame.toObject(), error: null };
     } catch (error) {
@@ -60,16 +65,14 @@ export class GameService {
 
   static async getGame(gameId: string): Promise<ApiResponse<ChessGame>> {
     try {
-      let game = gameCache.get(gameId) as ChessGame;
+      let game = GameCache.get(gameId) as ChessGame;
       if (!game) {
-        console.log('hello11111111111111111111111111');
         const dbGame = await Game.findById(gameId);
         if (!dbGame) return { data: null, error: 'Game not found' };
         game = dbGame.toObject();
         const ttl = this.getGameCacheTTL(game);
-        gameCache.set(gameId, game, ttl);
+        GameCache.set(gameId, game, ttl);
       }
-      console.log('Retrieved game currentTurn:', game.currentTurn);
       return { data: game, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
@@ -83,8 +86,7 @@ export class GameService {
         return { data: null, error: 'Game not found' };
       }
       const ttl = this.getGameCacheTTL(updatedGame);
-      gameCache.set(updatedGame._id.toString(), updatedGame.toObject(), ttl);
-      console.log('Saved game currentTurn:', updatedGame.currentTurn);
+      GameCache.set(updatedGame._id.toString(), updatedGame.toObject(), ttl);
       return { data: undefined, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
@@ -104,7 +106,7 @@ export class GameService {
       game.status = status;
 
       const ttl = this.getGameCacheTTL(game);
-      gameCache.set(gameId, game, ttl);
+      GameCache.set(gameId, game, ttl);
 
       return { data: undefined, error: null };
     } catch (error) {
@@ -123,7 +125,7 @@ export class GameService {
       game.players[color] = userId;
 
       const ttl = this.getGameCacheTTL(game);
-      gameCache.set(gameId, game, ttl);
+      GameCache.set(gameId, game, ttl);
 
       return { data: undefined, error: null };
     } catch (error) {
@@ -192,38 +194,71 @@ export class GameService {
     };
   }
 
-  static async endGame(gameId: string, result: GameResult): Promise<ApiResponse<GameResult>> {
+  static async endGame(
+    gameId: string,
+    result: GameResult
+  ): Promise<ApiResponse<GameResult & { ratingChanges: { [key: string]: number } }>> {
     try {
       const game = await Game.findById(gameId);
       if (!game) {
         throw new Error('Game not found');
       }
 
-      // Сначала отправляем уведомление о завершении игры
-      await sseManager.sendGameEndNotification(gameId, result);
-
-      // Затем обновляем статус игры и статистику игроков
       game.status = 'completed';
       game.result = result;
+
+      const ratingChanges: { [key: string]: number } = {};
+
+      if (game.players.white && game.players.black) {
+        const whitePlayerId = game.players.white.toString();
+        const blackPlayerId = game.players.black.toString();
+
+        const [whitePlayer, blackPlayer] = await Promise.all([
+          User.findById(whitePlayerId),
+          User.findById(blackPlayerId),
+        ]);
+
+        if (whitePlayer && blackPlayer) {
+          const isWhiteWinner = result.winner === whitePlayerId;
+          ratingChanges[whitePlayerId] = updatePlayerStats(whitePlayer, blackPlayer, game, isWhiteWinner, 'white');
+          ratingChanges[blackPlayerId] = updatePlayerStats(blackPlayer, whitePlayer, game, !isWhiteWinner, 'black');
+
+          await Promise.all([whitePlayer.save(), blackPlayer.save()]);
+
+          // Update users in cache
+          const whitePlayerData = { ...whitePlayer.toObject(), _id: whitePlayerId } as ClientUser;
+          const blackPlayerData = { ...blackPlayer.toObject(), _id: blackPlayerId } as ClientUser;
+
+          UserListCache.updateUser(whitePlayerId, whitePlayerData);
+          UserListCache.updateUser(blackPlayerId, blackPlayerData);
+
+          // Update user status
+          UserListCache.setUserOnline(whitePlayerId);
+          UserListCache.setUserOnline(blackPlayerId);
+        }
+      }
+
       await game.save();
 
-      await Promise.all([
-        this.updatePlayerStats(game.players.white!, game, result),
-        this.updatePlayerStats(game.players.black!, game, result),
-        UserService.updateUserStatus(game.players.white!, true, false),
-        UserService.updateUserStatus(game.players.black!, true, false),
-      ]);
+      // Send game update notification
+      await sseManager.broadcastGameUpdate(gameId, game);
 
-      // Только после этого удаляем соединения
-      sseManager.removeGameConnection(gameId, game.players.white!);
-      sseManager.removeGameConnection(gameId, game.players.black!);
+      // Send game end notification
+      await sseManager.sendGameEndNotification(gameId, { ...result, ratingChanges });
 
-      // Очищаем кэш игры
-      gameCache.del(gameId);
+      // Clear game cache
+      GameCache.del(gameId);
 
-      return { data: result, error: null };
+      // Get updated user list from cache and broadcast to all clients
+      const updatedUserList = UserListCache.getAllUsers().map((user) => ({
+        ...user,
+        _id: user._id.toString(),
+      }));
+
+      await sseManager.broadcastUserListUpdate(updatedUserList);
+
+      return { data: { ...result, ratingChanges }, error: null };
     } catch (error) {
-      console.error('Error in GameService.endGame:', error);
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
   }
@@ -244,14 +279,19 @@ export class GameService {
 
   private static async updatePlayerStats(playerId: string, game: ChessGame, result: GameResult): Promise<void> {
     const player = await User.findById(playerId);
-    if (!player) {
-      throw new Error('Player not found');
+    const opponentId = playerId === game.players.white ? game.players.black : game.players.white;
+    const opponent = await User.findById(opponentId);
+
+    if (!player || !opponent) {
+      throw new Error('Player or opponent not found');
     }
 
     const isWinner = playerId === result.winner;
     const playerColor = game.players.white === playerId ? 'white' : 'black';
 
-    updatePlayerStats(player.stats, game, isWinner, playerColor);
-    await player.save();
+    updatePlayerStats(player, opponent, game, isWinner, playerColor);
+    updatePlayerStats(opponent, player, game, !isWinner, playerColor === 'white' ? 'black' : 'white');
+
+    await Promise.all([player.save(), opponent.save()]);
   }
 }

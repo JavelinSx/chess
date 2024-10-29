@@ -31,8 +31,6 @@ export default defineEventHandler(async (event) => {
     }
 
     if (promoteTo) {
-      console.log('hello11111111111111111111111111');
-      console.log(promoteTo);
       game = promotePawn(game, from, to, promoteTo);
     } else {
       game = performMove(game, from, to);
@@ -44,7 +42,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const gameTest = await GameService.getGame(gameId);
-    console.log(gameTest.data?.currentTurn, 'after save');
+
     // Отправляем обновление игры через SSE
     await sseManager.broadcastGameUpdate(gameId, gameTest.data!);
 

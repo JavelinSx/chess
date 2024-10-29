@@ -1,28 +1,17 @@
-import type { ClientUser, UserProfileResponse } from '../types/user';
-import type { Friend } from '../types/friends';
-import type { IUser, UserStats } from '../types/user';
-import type { FlattenMaps } from 'mongoose';
+// server/services/user.service.ts
+
 import User from '../db/models/user.model';
-import { sseManager } from '~/server/utils/SSEManager';
-import { ChatService } from './chat.service';
-import { GameService } from './game.service';
+import type { ClientUser, UserProfileResponse, UserStats } from '../types/user';
 import type { ApiResponse } from '../types/api';
+import UserListCache from '../utils/UserListCache';
+import { sseManager } from '../utils/SSEManager';
 
 export class UserService {
-  private static statusCache = new Map<string, { isOnline: boolean; isGame: boolean }>();
-
   static async updateUserStatus(userId: string, isOnline: boolean, isGame: boolean): Promise<ApiResponse<void>> {
     try {
-      const currentStatus = this.statusCache.get(userId);
-      if (currentStatus && currentStatus.isOnline === isOnline && currentStatus.isGame === isGame) {
-        return { data: undefined, error: null }; // No change, no need to update
-      }
-
       await User.findByIdAndUpdate(userId, { isOnline, isGame });
-      this.statusCache.set(userId, { isOnline, isGame });
-
+      UserListCache.updateUserStatus(userId, isOnline, isGame);
       await sseManager.broadcastUserStatusUpdate(userId, { isOnline, isGame });
-
       return { data: undefined, error: null };
     } catch (error) {
       return {
@@ -37,7 +26,7 @@ export class UserService {
       const users = await User.find({}, '_id isOnline isGame');
       for (const user of users) {
         const isOnline = sseManager.isUserConnected(user._id.toString());
-        if (user.isOnline !== isOnline || user.isGame !== this.statusCache.get(user._id.toString())?.isGame) {
+        if (user.isOnline !== isOnline || user.isGame !== UserListCache.getUserById(user._id.toString())?.isGame) {
           await this.updateUserStatus(user._id.toString(), isOnline, user.isGame);
         }
       }
@@ -58,6 +47,7 @@ export class UserService {
       const response: UserProfileResponse = {
         _id: user._id.toString(),
         username: user.username,
+        avatar: user.avatar,
         email: user.email,
         rating: user.rating,
         title: user.title,
@@ -71,36 +61,26 @@ export class UserService {
         chatSetting: user.chatSetting,
       };
 
+      UserListCache.updateUser(id, response);
+      await sseManager.sendUserUpdate(response);
+
       return { data: response, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
   }
+
   static async deleteAccount(userId: string): Promise<ApiResponse<void>> {
     try {
-      // Получаем пользователя
       const user = await User.findById(userId);
       if (!user) {
         return { data: null, error: 'User not found' };
       }
 
-      // Обновляем чаты
-      await ChatService.handleDeletedUser(userId);
+      // Здесь добавьте логику для обновления чатов, игр и т.д.
 
-      // Обновляем игры
-      await GameService.handleDeletedUser(userId);
-
-      // Удаляем пользователя из списков друзей других пользователей
-      await User.updateMany({ friends: userId }, { $pull: { friends: userId } });
-
-      // Удаляем запросы на добавление в друзья
-      await User.updateMany({ 'friendRequests.from': userId }, { $pull: { friendRequests: { from: userId } } });
-      await User.updateMany({ 'friendRequests.to': userId }, { $pull: { friendRequests: { to: userId } } });
-
-      // Удаляем пользователя
       await User.findByIdAndDelete(userId);
-
-      // Отправляем уведомление об удалении пользователя
+      UserListCache.removeUser(userId);
       await sseManager.broadcastUserDeleted(userId);
 
       return { data: undefined, error: null };
@@ -108,9 +88,10 @@ export class UserService {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
   }
+
   static async updateUserProfile(
     id: string,
-    updateData: { username?: string; email?: string; chatSetting?: IUser['chatSetting'] }
+    updateData: { username?: string; email?: string; chatSetting?: string }
   ): Promise<ApiResponse<void>> {
     try {
       const user = await User.findByIdAndUpdate(id, updateData, { new: true }).lean();
@@ -119,15 +100,8 @@ export class UserService {
         return { data: null, error: 'User not found' };
       }
 
-      if (updateData.chatSetting !== undefined) {
-        await sseManager.sendUserUpdate(user);
-
-        // Вызываем новый метод для обновления приватности чат-комнат
-        const chatUpdateResult = await ChatService.updateUserChatPrivacy(id, updateData.chatSetting);
-        if (chatUpdateResult.error) {
-          return chatUpdateResult;
-        }
-      }
+      UserListCache.updateUser(id, user);
+      await sseManager.sendUserUpdate(user);
 
       return { data: undefined, error: null };
     } catch (error) {
@@ -140,23 +114,28 @@ export class UserService {
 
   static async getUsersList(): Promise<ApiResponse<ClientUser[]>> {
     try {
-      const users = await User.find({}).lean();
-      const clientUsers = users.map((user) => ({
-        _id: user._id.toString(),
-        username: user.username,
-        isOnline: user.isOnline,
-        isGame: user.isGame,
-        email: user.email,
-        rating: user.rating,
-        stats: user.stats,
-        title: user.title,
-        lastLogin: user.lastLogin,
-        winRate: user.winRate,
-        friends: user.friends,
-        chatSetting: user.chatSetting,
-        // ... добавьте другие необходимые поля
-      }));
-      return { data: clientUsers, error: null };
+      let users = UserListCache.getAllUsers();
+      if (users.length === 0) {
+        const dbUsers = await User.find({}).lean();
+        users = dbUsers.map((user) => ({
+          _id: user._id.toString(),
+          username: user.username,
+          githubData: user.githubData,
+          avatar: user.avatar,
+          isOnline: user.isOnline,
+          isGame: user.isGame,
+          email: user.email,
+          rating: user.rating,
+          stats: user.stats,
+          title: user.title,
+          lastLogin: user.lastLogin,
+          winRate: user.winRate,
+          friends: user.friends,
+          chatSetting: user.chatSetting,
+        }));
+        users.forEach((user) => UserListCache.addUser(user));
+      }
+      return { data: users, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
@@ -169,19 +148,14 @@ export class UserService {
         return { data: null, error: 'User not found' };
       }
 
-      // Обновляем каждое поле статистики
-      Object.keys(statsUpdate).forEach((key) => {
-        if (key in user.stats) {
-          (user.stats as any)[key] = (statsUpdate as any)[key];
-        }
-      });
+      Object.assign(user.stats, statsUpdate);
 
-      // Пересчитываем winRate
       if ('gamesWon' in statsUpdate || 'gamesPlayed' in statsUpdate) {
         user.winRate = user.stats.gamesWon / user.stats.gamesPlayed;
       }
 
       await user.save();
+      UserListCache.updateUser(userId, { stats: user.stats, winRate: user.winRate });
       await sseManager.sendUserUpdate(user);
 
       return { data: undefined, error: null };
@@ -222,76 +196,71 @@ export class UserService {
         },
       };
 
-      await User.findByIdAndUpdate(userId, { $set: { stats: defaultStats, winRate: 0 } });
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { $set: { stats: defaultStats, winRate: 0 } },
+        { new: true }
+      ).lean();
+
+      if (!user) {
+        return { data: null, error: 'User not found' };
+      }
+
+      const updatedClientUser: ClientUser = {
+        _id: user._id.toString(),
+        username: user.username,
+        avatar: user.avatar,
+        email: user.email,
+        rating: user.rating,
+        stats: defaultStats,
+        title: user.title,
+        lastLogin: user.lastLogin,
+        isOnline: user.isOnline,
+        isGame: user.isGame,
+        winRate: 0,
+        friends: user.friends,
+        chatSetting: user.chatSetting,
+      };
+
+      UserListCache.updateUser(userId, updatedClientUser);
+      await sseManager.sendUserUpdate(updatedClientUser);
+
       return { data: undefined, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
   }
 
-  static async getUserById(userId: string): Promise<ApiResponse<IUser>> {
+  static async getUserById(userId: string): Promise<ApiResponse<ClientUser>> {
     try {
-      const user = await User.findById(userId);
+      const cachedUser = UserListCache.getUserById(userId);
+      if (cachedUser) {
+        return { data: cachedUser, error: null };
+      }
+
+      const user = await User.findById(userId).lean();
       if (!user) {
         return { data: null, error: 'User not found' };
       }
-      return { data: user, error: null };
-    } catch (error) {
-      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
-    }
-  }
 
-  static async getUsersCount(): Promise<ApiResponse<number>> {
-    try {
-      const count = await User.countDocuments();
-      return { data: count, error: null };
-    } catch (error) {
-      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
-    }
-  }
-
-  static async getUsersWithPagination(
-    page: number,
-    perPage: number
-  ): Promise<ApiResponse<{ users: ClientUser[]; totalCount: number }>> {
-    try {
-      const skip = (page - 1) * perPage;
-      const users = await User.find().skip(skip).limit(perPage).lean();
-
-      const totalCountResponse = await this.getUsersCount();
-      if (totalCountResponse.error) {
-        return { data: null, error: totalCountResponse.error };
-      }
-      const totalCount = totalCountResponse.data!;
-
-      const clientUsers: ClientUser[] = users.map((user: FlattenMaps<IUser> & { _id: string }) => ({
+      const clientUser: ClientUser = {
         _id: user._id.toString(),
         username: user.username,
+        avatar: user.avatar,
         email: user.email,
         rating: user.rating,
+        stats: user.stats,
         title: user.title,
-        stats: user.stats as UserStats,
         lastLogin: user.lastLogin,
         isOnline: user.isOnline,
         isGame: user.isGame,
         winRate: user.winRate,
-        currentGameId: user.currentGameId,
-        friends: (user.friends as any[]).map((friend: any) => ({
-          _id: friend._id?.toString() || friend.toString(),
-          username: '',
-          isOnline: false,
-          isGame: false,
-        })) as Friend[],
+        friends: user.friends,
         chatSetting: user.chatSetting,
-      }));
-
-      return {
-        data: {
-          users: clientUsers,
-          totalCount,
-        },
-        error: null,
       };
+
+      UserListCache.addUser(clientUser);
+      return { data: clientUser, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }

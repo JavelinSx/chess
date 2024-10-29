@@ -43,8 +43,6 @@ export class GameSSEManager {
         result,
       });
       await this.broadcastToClients(clients, message);
-    } else {
-      console.warn('No clients found for game:', gameId);
     }
   }
 

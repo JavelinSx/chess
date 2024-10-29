@@ -48,7 +48,7 @@ const { usersList } = storeToRefs(userStore);
 const accordionItem = computed(() => [{
     label: `${t('friends.friendRequests')} (${receivedRequests.value.length})`,
     content: '',
-    defaultOpen: true,
+    defaultOpen: false,
 }]);
 
 

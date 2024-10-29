@@ -36,7 +36,12 @@
     "invalidCredentials": "Неверный email или пароль",
     "registrationFailed": "Ошибка при регистрации",
     "passwordTooShort": "Пароль должен быть не менее 8 символов",
-    "userNotAuthenticated": "Пользователь не аутентифицирован"
+    "userNotAuthenticated": "Пользователь не аутентифицирован",
+    "loginWithGithub": "Войти через GitHub",
+    "authenticating": "Выполняется вход...",
+    "invalidResponse": "Неверный ответ от GitHub",
+    "invalidState": "Неверный параметр state",
+    "unknownError": "Произошла неизвестная ошибка"
   },
   "game": {
     "promotionPawn": "Продвижение пешки",
@@ -68,7 +73,9 @@
     "loser": "Проигравший",
     "draw": "Ничья",
     "closingIn": "Закрытие через {seconds} секунд...",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "minutes": "минут",
+    "ratingChanges": "Изменения рейтинга"
   },
   "gameResult": {
     "checkmate": "Мат!",
@@ -92,7 +99,6 @@
     "gamesWon": "Выиграно игр",
     "gamesLost": "Проиграно игр",
     "gamesDraw": "Ничьих",
-    "gamesDrawn": "Ничьи",
     "winRate": "Процент побед",
     "rating": "Рейтинг",
     "lastLogin": "Последний вход",
@@ -100,12 +106,31 @@
     "deleteAccountWarning": "Внимание: Это действие необратимо. Все ваши данные будут удалены безвозвратно.",
     "deleteAccountButton": "Удалить мой аккаунт",
     "confirmDeleteAccount": "Подтвердите удаление аккаунта",
-    "deleteAccountConfirmation": "Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить."
+    "deleteAccountConfirmation": "Вы уверены, что хотите удалить свой аккаунт? Это действие нельзя отменить.",
+    "title": "Титул",
+    "statistic": "Статистика",
+    "value": "Значение",
+    "capturedPawns": "Захвачено пешек",
+    "checksGiven": "Поставлено шахов",
+    "castlingsMade": "Выполнено рокировок",
+    "promotions": "Превращений пешек",
+    "enPassantCaptures": "Взятий на проходе",
+    "queenSacrifices": "Жертв ферзя",
+    "averageMovesPerGame": "Среднее количество ходов за игру",
+    "longestGame": "Самая длинная игра",
+    "shortestWin": "Самая быстрая победа",
+    "comebacks": "Камбэков",
+    "stalemateCaused": "Вызвано патов",
+    "averageRatingChange": "Среднее изменение рейтинга",
+    "winStreakBest": "Лучшая серия побед",
+    "currentWinStreak": "Текущая серия побед",
+    "resignations": "Сдач",
+    "rank": "Ранг"
   },
   "friends": {
     "friends": "Друзья",
     "addFriend": "Добавить в друзья",
-    "removeFriend": "Удалить из друзей",
+    "removeFriend": "Удалить",
     "friendRequests": "Запросы в друзья",
     "noFriends": "У вас пока нет друзей",
     "noFriendRequests": "У вас нет запросов в друзья",
@@ -188,5 +213,13 @@
     "startPlaying": "для начала игры",
     "home": "Главная",
     "copyright": "© {year} ChessNexus."
+  },
+  "title": {
+    "beginner": "Beginner",
+    "amateur": "Amateur",
+    "advanced": "Advanced",
+    "expert": "Expert",
+    "master": "Master",
+    "grandMaster": "Grand Master"
   }
 }

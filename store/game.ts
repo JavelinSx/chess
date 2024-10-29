@@ -35,6 +35,9 @@ export const useGameStore = defineStore('game', {
 
     updateGameState(game: ChessGame) {
       this.currentGame = { ...game };
+      if (game.status === 'completed' && game.result) {
+        this.handleGameEnd(game.result);
+      }
     },
 
     async makeMove(from: Position, to: Position) {
@@ -57,10 +60,6 @@ export const useGameStore = defineStore('game', {
     handleSSEUpdate(updatedGame: ChessGame) {
       if (this.currentGame && this.currentGame._id === updatedGame._id) {
         this.currentGame = updatedGame;
-
-        if (updatedGame.status === 'completed') {
-          this.handleGameEnd(updatedGame.result);
-        }
       }
     },
 
@@ -108,7 +107,6 @@ export const useGameStore = defineStore('game', {
     },
 
     async handleGameEnd(result: GameResult) {
-      console.log('Handling game end:', result);
       this.gameResult = result;
       this.showResultModal = true;
 
@@ -118,7 +116,10 @@ export const useGameStore = defineStore('game', {
           if (response.error) {
             console.error('Failed to end game on server:', response.error);
           } else {
-            console.log('Game ended successfully on server');
+            if (response.data && 'ratingChanges' in response.data) {
+              this.gameResult = { ...this.gameResult, ratingChanges: response.data.ratingChanges };
+              this.clearGameState();
+            }
           }
         } catch (error) {
           console.error('Error ending game:', error);
@@ -132,7 +133,7 @@ export const useGameStore = defineStore('game', {
       this.promote = false;
       this.pendingPromotion = null;
       this.isLoading = false;
-      this.$persist();
+      localStorage.removeItem('game');
     },
 
     closeGameResult() {

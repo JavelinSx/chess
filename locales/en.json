@@ -36,7 +36,12 @@
     "invalidCredentials": "Invalid email or password",
     "registrationFailed": "Registration failed",
     "passwordTooShort": "Password must be at least 8 characters long",
-    "userNotAuthenticated": "User not authenticated"
+    "userNotAuthenticated": "User not authenticated",
+    "loginWithGithub": "Login with GitHub",
+    "authenticating": "Authenticating...",
+    "invalidResponse": "Invalid response from GitHub",
+    "invalidState": "Invalid state parameter",
+    "unknownError": "An unknown error occurred"
   },
   "game": {
     "promotionPawn": "Promotion pawn",
@@ -91,8 +96,7 @@
     "gamesPlayed": "Games Played",
     "gamesWon": "Games Won",
     "gamesLost": "Games Lost",
-    "gamesDraw": "Games Draw",
-    "gamesDrawn": "Games Drawn",
+    "gamesDraw": "Games Drawn",
     "winRate": "Win Rate",
     "rating": "Rating",
     "lastLogin": "Last Login",
@@ -100,12 +104,31 @@
     "deleteAccountWarning": "Warning: This action is irreversible. All your data will be permanently deleted.",
     "deleteAccountButton": "Delete My Account",
     "confirmDeleteAccount": "Confirm Account Deletion",
-    "deleteAccountConfirmation": "Are you sure you want to delete your account? This action cannot be undone."
+    "deleteAccountConfirmation": "Are you sure you want to delete your account? This action cannot be undone.",
+    "title": "Title",
+    "statistic": "Statistic",
+    "value": "Value",
+    "capturedPawns": "Captured Pawns",
+    "checksGiven": "Checks Given",
+    "castlingsMade": "Castlings Made",
+    "promotions": "Promotions",
+    "enPassantCaptures": "En Passant Captures",
+    "queenSacrifices": "Queen Sacrifices",
+    "averageMovesPerGame": "Average Moves Per Game",
+    "longestGame": "Longest Game",
+    "shortestWin": "Shortest Win",
+    "comebacks": "Comebacks",
+    "stalemateCaused": "Stalemates Caused",
+    "averageRatingChange": "Average Rating Change",
+    "winStreakBest": "Best Win Streak",
+    "currentWinStreak": "Current Win Streak",
+    "resignations": "Resignations",
+    "rank": "Rank"
   },
   "friends": {
     "friends": "Friends",
     "addFriend": "Add Friend",
-    "removeFriend": "Remove Friend",
+    "removeFriend": "Remove",
     "friendRequests": "Friend Requests",
     "noFriends": "You don't have any friends yet",
     "noFriendRequests": "You don't have any friend requests",
@@ -188,5 +211,13 @@
     "startPlaying": "to start playing",
     "home": "Home",
     "copyright": "© {year} ChessNexus."
+  },
+  "title": {
+    "beginner": "Beginner",
+    "amateur": "Amateur",
+    "advanced": "Advanced",
+    "expert": "Expert",
+    "master": "Master",
+    "grandMaster": "Grand Master"
   }
 }

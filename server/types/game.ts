@@ -52,6 +52,9 @@ export interface GameResult {
   winner: string | null;
   loser: string | null;
   reason: GameResultReason | null;
+  ratingChanges?: {
+    [key: string]: number;
+  } | null;
 }
 
 export interface CastlingRights {
@@ -115,6 +118,7 @@ export function initializeGame(inviterId: string, inviteeId: string): ChessGame 
       winner: null,
       loser: null,
       reason: null,
+      ratingChanges: null,
     },
     inviterId,
     inviteeId,

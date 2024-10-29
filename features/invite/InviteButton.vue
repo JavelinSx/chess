@@ -1,6 +1,7 @@
 <template>
 
-    <UButton @click="showDurationSelector" class="flex-grow" color="purple" icon="i-heroicons-envelope">
+    <UButton @click="showDurationSelector" class="flex-grow" color="purple" icon="i-heroicons-envelope"
+        :disabled="!props.disabled">
         {{ t('game.invite') }}
     </UButton>
     <GameDurationSelector v-if="invitationStore.showDurationSelector" />
@@ -16,6 +17,7 @@ const invitationStore = useInvitationStore();
 
 const props = defineProps<{
     userId: string
+    disabled: boolean;
 }>();
 
 function showDurationSelector() {

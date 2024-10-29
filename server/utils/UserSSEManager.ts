@@ -1,5 +1,6 @@
 // server/utils/UserSSEManager.ts
 import { H3Event } from 'h3';
+import UserListCache from './UserListCache';
 import type { ClientUser, IUser, UserStats } from '~/server/types/user';
 import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
 
@@ -23,13 +24,18 @@ export class UserSSEManager {
     return this.userConnections.has(userId);
   }
 
-  async broadcastUserListUpdate(users: ClientUser[]) {
-    const message = JSON.stringify({
-      type: 'user_list_update',
-      users: users,
+  async broadcastUserListUpdate(users: ClientUser[]): Promise<void> {
+    const updatedUsers = users.map((user) => {
+      const cachedUser = UserListCache.getUserById(user._id.toString());
+      return cachedUser ? { ...user, ...cachedUser, _id: cachedUser._id.toString() } : user;
     });
 
-    for (const connection of this.userConnections.values()) {
+    const message = JSON.stringify({
+      type: 'user_list_update',
+      users: updatedUsers,
+    });
+
+    for (const [userId, connection] of this.userConnections) {
       await this.sendEvent(connection, message);
     }
   }
@@ -57,6 +63,7 @@ export class UserSSEManager {
   }
 
   async sendUserUpdate(userData: ClientUser) {
+    UserListCache.updateUser(userData._id, userData);
     const event = this.userConnections.get(userData._id);
     if (event) {
       await this.sendEvent(
@@ -95,14 +102,17 @@ export class UserSSEManager {
   }
 
   async broadcastUserStatusUpdate(userId: string, status: UserStatus) {
-    const message = JSON.stringify({
-      type: 'user_status_update',
-      userId,
-      status,
-    });
-
-    for (const connection of this.userConnections.values()) {
-      await this.sendEvent(connection, message);
+    UserListCache.updateUserStatus(userId, status.isOnline, status.isGame);
+    const user = UserListCache.getUserById(userId);
+    if (user) {
+      const message = JSON.stringify({
+        type: 'user_status_update',
+        userId,
+        status,
+      });
+      for (const connection of this.userConnections.values()) {
+        await this.sendEvent(connection, message);
+      }
     }
   }
 

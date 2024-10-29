@@ -15,9 +15,6 @@ export function useUserSSE() {
 
   const setupSSE = () => {
     if (eventSource.value) return;
-    if (!authStore.isAuthenticated || !userStore.user?.isOnline || eventSource.value) {
-      return;
-    }
 
     eventSource.value = new EventSource('/api/sse/user-status');
 

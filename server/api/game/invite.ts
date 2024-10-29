@@ -13,8 +13,6 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  console.log(`Processing invitation request from ${fromInviteId} to ${toInviteId}`);
-
   try {
     const inviter = await UserService.getUserById(fromInviteId);
     if (!inviter || !inviter.data) {
@@ -22,11 +20,9 @@ export default defineEventHandler(async (event) => {
     }
 
     await sseManager.sendGameInvitation(fromInviteId, toInviteId, inviter.data.username, gameDuration);
-    console.log(`Game invitation sent successfully from ${fromInviteId} to ${toInviteId}`);
 
     return { data: { success: true }, error: null };
   } catch (error) {
-    console.error('Error sending game invitation:', error);
     throw createError({
       statusCode: 500,
       statusMessage: 'Failed to send game invitation',

@@ -1,9 +1,7 @@
-// composables/useChatSSE.ts
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useChatStore } from '~/store/chat';
 import { useAuthStore } from '~/store/auth';
 import { useUserStore } from '~/store/user';
-import { useCookie } from '#app';
 
 interface ChatSSEReturn {
   setupSSE: () => void;
@@ -16,26 +14,18 @@ export function useChatSSE(): ChatSSEReturn {
   const authStore = useAuthStore();
   const userStore = useUserStore();
   const eventSource = ref<EventSource | null>(null);
-  const authToken = useCookie('auth_token');
   const isInitialized = ref(false);
 
-  const isAuthenticated = computed(() => !!authToken.value);
-
   const setupSSE = () => {
-    if (!isAuthenticated.value) {
-      console.log('close chat sse on isAuthenticated', isAuthenticated.value);
-      closeSSE();
+    if (!authStore.isAuthenticated || eventSource.value) {
       return;
-    }
-
-    if (eventSource.value) {
-      return; // SSE уже установлен
     }
 
     eventSource.value = new EventSource('/api/sse/chat');
 
-    eventSource.value.onopen = (event) => {
+    eventSource.value.onopen = () => {
       console.log('Chat SSE connection opened');
+      isInitialized.value = true;
     };
 
     eventSource.value.onmessage = (event) => {
@@ -63,36 +53,41 @@ export function useChatSSE(): ChatSSEReturn {
   };
 
   const closeSSE = () => {
-    console.log('close chat sse');
     if (eventSource.value) {
+      console.log('Closing chat SSE');
       eventSource.value.close();
       eventSource.value = null;
+      isInitialized.value = false;
     }
   };
 
   const refreshRooms = async () => {
-    if (isAuthenticated.value && userStore.user && chatStore.rooms.length === 0) {
+    if (authStore.isAuthenticated && userStore.user && chatStore.rooms.length === 0) {
       await chatStore.fetchRooms();
     }
   };
 
   watch(
-    () => isAuthenticated.value,
+    () => authStore.isAuthenticated,
     (newValue) => {
-      if (newValue && !isInitialized.value) {
+      if (newValue) {
         setupSSE();
         refreshRooms();
-        isInitialized.value = true;
-      } else if (!newValue) {
+      } else {
         closeSSE();
-        isInitialized.value = false;
       }
     }
   );
 
+  onMounted(() => {
+    if (authStore.isAuthenticated) {
+      setupSSE();
+      refreshRooms();
+    }
+  });
+
   onUnmounted(() => {
     closeSSE();
-    isInitialized.value = false;
   });
 
   return {

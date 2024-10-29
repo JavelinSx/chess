@@ -21,6 +21,7 @@ export const usePaginationStore = defineStore('pagination', {
         console.error('usersList is not an array:', userStore.usersList);
         return [];
       }
+
       let filteredList = userStore.usersList.filter((user) => user._id !== userStore.user?._id);
 
       const isFree = (user: ClientUser) => user.isOnline && !user.isGame;
