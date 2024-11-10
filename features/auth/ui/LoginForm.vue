@@ -16,6 +16,7 @@
                 {{ t('auth.login') }}
             </UButton>
         </UForm>
+        <vk />
         <Github></Github>
         <UAlert v-if="alert.alert.value.type" :type="alert.alert.value.type" :title="t(alert.alert.value.message)"
             :color="authStore.isAuthenticated ? 'green' : 'red'" variant="soft"
@@ -30,6 +31,7 @@ import { ref, reactive } from 'vue';
 import Github from './Github.vue';
 import { useAuth } from '~/composables/useAuth';
 import { useAlert } from '~/composables/useAlert';
+import vk from '~/widget/vk.vue';
 
 const { t } = useI18n();
 const authStore = useAuth();

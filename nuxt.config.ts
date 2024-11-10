@@ -5,7 +5,10 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui', '@nuxtjs/i18n'],
   plugins: ['~/plugins/auth'],
   css: ['~/app/styles/global.css'],
-
+  devServer: {
+    port: 80, // Изменяем порт на 80
+    host: 'localhost',
+  },
   nitro: {
     plugins: ['~/server/db/index.ts'],
     experimental: {
@@ -64,6 +67,7 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { hid: 'description', name: 'description', content: 'ChessNexus - Your Online Chess Platform' },
+        { name: 'vk-id-app', content: '52638335' }, // Ваш ID приложения
       ],
     },
   },

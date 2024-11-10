@@ -1,6 +1,6 @@
-import type { IUser } from './user';
+import type { ClientUser, IUser } from './user';
 
 export interface AuthData {
-  user: IUser;
+  user: IUser | ClientUser;
   isAuthenticated: boolean;
 }

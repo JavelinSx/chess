@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMet
   githubId: { type: String, unique: true, sparse: true },
   githubAccessToken: { type: String },
   githubData: githubDataSchema,
+  vkId: { type: String, unique: true, sparse: true },
+  vkAccessToken: { type: String },
   rating: { type: Number, default: 0 },
   title: { type: String, default: 'Beginner' },
   stats: {

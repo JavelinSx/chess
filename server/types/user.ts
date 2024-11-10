@@ -52,6 +52,8 @@ export interface IUser extends Document {
   githubId?: string;
   githubAccessToken?: string;
   githubData?: GitHubData;
+  vkId?: string;
+  vkAccessToken?: string;
   rating: number;
   title: string;
   stats: UserStats;
@@ -95,10 +97,12 @@ export interface ClientUser {
   githubId?: string;
   githubAccessToken?: string;
   githubData?: GitHubData;
+  vkId?: string;
+  vkAccessToken?: string;
   rating: number;
   title: string;
   stats: UserStats;
-  lastLogin: Date;
+  lastLogin: Date | string;
   isOnline: boolean;
   isGame: boolean;
   winRate: number;
