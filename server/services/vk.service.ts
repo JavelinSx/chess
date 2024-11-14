@@ -94,7 +94,7 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
         access_token: accessToken,
       },
     });
-
+    console.log(userInfo);
     const user = await User.findOneAndUpdate(
       { vkId: userInfo.user.user_id.toString() },
       {
