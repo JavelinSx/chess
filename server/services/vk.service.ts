@@ -94,7 +94,7 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
     const userInfo = await $fetch<VKUserInfo>('https://id.vk.com/oauth2/user_info', {
       method: 'POST',
       body: {
-        client_id: parseInt(config.public.vkClientId),
+        client_id: config.public.vkClientId,
         access_token: accessToken,
       },
     });
