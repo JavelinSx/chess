@@ -13,12 +13,14 @@ interface ResponseTokenVK {
 }
 
 interface VKUserInfo {
-  user_id: string;
-  first_name: string;
-  last_name: string;
-  username: string;
-  email: string;
-  avatar: string;
+  user: {
+    user_id: string;
+    first_name: string;
+    last_name: string;
+    username: string;
+    email: string;
+    avatar: string;
+  };
 }
 
 export const exchangeCode = async (
@@ -42,7 +44,11 @@ export const exchangeCode = async (
         device_id,
       },
     });
-    console.log(tokenResponse);
+
+    if (!tokenResponse.access_token) {
+      return { data: null, error: `Failed to get access token VK: ${tokenResponse}` };
+    }
+
     // Сохраняем токены
     await Promise.all([
       setCookie(event, 'vk_access_token', tokenResponse.access_token, {
@@ -92,16 +98,16 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
         access_token: accessToken,
       },
     });
-    console.log(userInfo);
+
     const user = await User.findOneAndUpdate(
-      { vkId: userInfo.user_id.toString() },
+      { vkId: userInfo.user.user_id.toString() },
       {
         $set: {
-          vkId: userInfo.user_id.toString(),
+          vkId: userInfo.user.user_id.toString(),
           vkAccessToken: accessToken,
-          username: `${userInfo.first_name} ${userInfo.last_name}`,
-          email: userInfo.email,
-          avatar: userInfo.avatar,
+          username: `${userInfo.user.first_name} ${userInfo.user.last_name}`,
+          email: userInfo.user.email,
+          avatar: userInfo.user.avatar,
           isOnline: true,
           lastLogin: new Date(),
         },
