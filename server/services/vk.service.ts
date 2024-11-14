@@ -45,10 +45,6 @@ export const exchangeCode = async (
       },
     });
 
-    if (!tokenResponse.access_token) {
-      return { data: null, error: 'Failed to get access token' };
-    }
-
     // Сохраняем токены
     await Promise.all([
       setCookie(event, 'vk_access_token', tokenResponse.access_token, {

@@ -33,7 +33,7 @@ export default defineEventHandler(async (event: H3Event): Promise<ApiResponse<Au
     });
 
     if (tokenResponse.error) {
-      throw new Error(tokenResponse.error_description || 'Failed to get access token');
+      throw new Error(tokenResponse.error_description || 'Failed to get access token Github');
     }
 
     // Получаем данные пользователя

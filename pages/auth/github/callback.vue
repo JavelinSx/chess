@@ -1,4 +1,4 @@
-// pages/auth/google/callback.vue
+// pages/auth/github/callback.vue
 <template>
     <div class="min-h-screen flex items-center justify-center">
         <UCard v-if="error" class="text-center">
@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 const route = useRoute();
-const { handleCallback } = useGoogleAuth();
+const { handleCallback } = useGithubAuth();
 const error = ref('');
 const { t } = useI18n()
 
@@ -29,7 +29,7 @@ onMounted(async () => {
     }
 
     try {
-        await handleCallback(code.toString());
+        await handleCallback(code.toString(), state.toString());
     } catch (e) {
         error.value = e instanceof Error ? e.message : 'Authentication failed';
     }

@@ -81,7 +81,7 @@ export async function githubAuth(event: H3Event, code: string): Promise<ApiRespo
     });
 
     if (tokenResponse.error) {
-      throw new Error(tokenResponse.error_description || 'Failed to get access token');
+      throw new Error(tokenResponse.error_description || 'Failed to get access token Github2');
     }
 
     // Получаем данные пользователя

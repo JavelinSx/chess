@@ -5,15 +5,8 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui', '@nuxtjs/i18n'],
   plugins: ['~/plugins/auth'],
   css: ['~/app/styles/global.css'],
-  devServer: {
-    port: 80, // Изменяем порт на 80
-    host: 'localhost',
-  },
   nitro: {
     plugins: ['~/server/db/index.ts'],
-    experimental: {
-      websocket: true,
-    },
     routeRules: {
       '/api/auth/github/**': {
         cors: true,
@@ -89,10 +82,6 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-  },
-
-  build: {
-    transpile: ['jsonwebtoken'],
   },
 
   compatibilityDate: '2024-09-13',

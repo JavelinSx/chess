@@ -23,7 +23,7 @@ export async function googleAuth(event: H3Event, code: string): Promise<ApiRespo
     });
 
     if (!tokenResponse.access_token) {
-      throw new Error('Failed to get access token');
+      throw new Error('Failed to get access token Google');
     }
 
     // Получаем данные пользователя

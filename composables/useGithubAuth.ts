@@ -55,7 +55,6 @@ export function useGithubAuth() {
           ...response.data.user,
           lastLogin: new Date(response.data.user.lastLogin),
         };
-        console.log(user);
         authStore.setIsAuthenticated(true);
         userStore.setUser(user);
         await router.push('/');
