@@ -36,7 +36,7 @@ export const exchangeCode = async (
       method: 'POST',
       body: {
         grant_type: 'authorization_code',
-        client_id: parseInt(config.public.vkClientId),
+        client_id: config.public.vkClientId,
         client_secret: config.vkClientSecret,
         redirect_uri: config.public.vkRedirectUri,
         code,
@@ -46,7 +46,7 @@ export const exchangeCode = async (
     });
 
     if (!tokenResponse.access_token) {
-      return { data: null, error: `Failed to get access token VK: ${tokenResponse}` };
+      return { data: null, error: `Failed to get access token VK` };
     }
 
     // Сохраняем токены
