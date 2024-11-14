@@ -34,7 +34,6 @@ export function useSSEManagement() {
   const reconnect = () => {
     clearTimeout(reconnectTimeout);
     reconnectTimeout = setTimeout(async () => {
-      console.log('Attempting to reconnect SSE');
       await cleanupSSE();
       await initializeSSE();
     }, 5000); // Попытка переподключения через 5 секунд
@@ -42,7 +41,6 @@ export function useSSEManagement() {
 
   const handleVisibilityChange = () => {
     if (!document.hidden && !isConnected.value && authStore.isAuthenticated) {
-      console.log('Page became visible, reconnecting SSE');
       reconnect();
     }
   };

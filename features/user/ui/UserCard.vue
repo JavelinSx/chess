@@ -62,7 +62,7 @@ const props = defineProps<{
     currentUserId: string | undefined;
     isInFriendList?: boolean;
 }>();
-console.log(props.user)
+
 const accordionItems = computed(() => [
     {
         label: t('profile.userStatistics'),
@@ -127,9 +127,7 @@ function navigateToUserProfile() {
 }
 
 function getUserAvatar(user: ClientUser) {
-    console.log(user.avatar)
-    console.log(user.githubData?.avatar_url)
-    return user.avatar || user.githubData?.avatar_url;
+    return user.avatar;
 }
 
 function calculateWinRate(user: ClientUser) {

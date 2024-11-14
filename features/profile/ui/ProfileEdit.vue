@@ -6,9 +6,9 @@
 
         <UForm :state="profile" @submit="updateProfile" class="flex flex-col">
 
-            <UFormGroup :label="t('auth.avatar')" name="avatar">
+            <UFormGroup class="mb-4" ame="avatar">
                 <div class="flex items-center space-x-4">
-                    <UAvatar :src="avatarPreview || user.githubData?.avatar_url" :alt="user.username" size="xl" />
+                    <UAvatar :src="user.avatar" :alt="user.username" size="xl" />
                     <UButton color="gray" variant="soft" @click="triggerFileInput">
                         {{ t('profile.changeAvatar') }}
                     </UButton>
@@ -91,7 +91,7 @@ const chatSettingOptions = computed(() => [
 
 const profile = reactive({
     username: props.user.username,
-    email: props.user.email,
+    email: props.user.email || '',
     chatSetting: props.user.chatSetting,
     avatarFile: null as File | null
 })
@@ -133,7 +133,6 @@ const updateProfile = async () => {
         setAlert('success', 'Profile updated successfully!')
     } catch (err) {
         setAlert('error', 'Failed to update profile')
-        console.error(err)
     }
 }
 

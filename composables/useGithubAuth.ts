@@ -1,8 +1,6 @@
 import { useAuthStore } from '~/store/auth';
 import { useUserStore } from '~/store/user';
-import type { ApiResponse } from '~/server/types/api';
 import type { ClientUser } from '~/server/types/user';
-import type { AuthData } from '~/server/types/auth';
 
 export function useGithubAuth() {
   const config = useRuntimeConfig();

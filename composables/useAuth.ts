@@ -54,7 +54,6 @@ export const useAuth = () => {
         throw new Error('Login failed');
       }
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     }
   };

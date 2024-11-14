@@ -27,7 +27,6 @@ export const useAuthStore = defineStore('auth', {
           this.error = response.error;
         }
       } catch (error) {
-        console.error('Login error:', error);
         this.error = 'Failed to login';
       }
     },
@@ -41,7 +40,6 @@ export const useAuthStore = defineStore('auth', {
           this.error = response.error;
         }
       } catch (error) {
-        console.error('Registration error:', error);
         this.error = 'Failed to register';
       }
     },
@@ -56,7 +54,6 @@ export const useAuthStore = defineStore('auth', {
         }
         return response.data?.isAuthenticated;
       } catch (error) {
-        console.error('Failed to check auth status:', error);
         this.setIsAuthenticated(false);
         return false;
       }

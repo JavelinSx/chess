@@ -36,7 +36,6 @@ const stopTimer = () => {
 };
 
 onMounted(() => {
-    console.log("ChessTimer mounted, game status:", gameStatus.value);
     if (gameStatus.value === 'active') {
         startTimer();
     }
@@ -47,7 +46,6 @@ onUnmounted(() => {
 });
 
 watch(gameStatus, (newStatus) => {
-    console.log("Game status changed to:", newStatus);
     if (newStatus === 'active') {
         startTimer();
     } else {

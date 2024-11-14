@@ -21,6 +21,9 @@ export default defineNuxtConfig({
           'Access-Control-Allow-Credentials': 'true',
         },
       },
+      '/vk/**': {
+        proxy: 'https://id.vk.com/**',
+      },
     },
   },
 
@@ -49,13 +52,19 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: '/api' || process.env.API_BASE,
+      apiBase: process.env.API_BASE || '/api',
       githubClientId: process.env.GITHUB_CLIENT_ID,
       githubRedirectUri: process.env.GITHUB_REDIRECT_URI || 'http://localhost:3000/auth/github/callback',
+      googleClientId: process.env.GOOGLE_CLIENT_ID,
+      googleRedirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback',
+      vkClientId: process.env.VK_CLIENT_ID,
+      vkRedirectUri: process.env.VK_REDIRECT_URI || 'http://localhost:3000/auth/vk/callback',
     },
     mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/chess_game',
     jwtSecret: process.env.JWT_SECRET || 'your_secret_key_here',
     githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    vkClientSecret: process.env.VK_CLIENT_SECRET,
   },
 
   ssr: false,
@@ -67,7 +76,6 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { hid: 'description', name: 'description', content: 'ChessNexus - Your Online Chess Platform' },
-        { name: 'vk-id-app', content: '52638335' }, // Ваш ID приложения
       ],
     },
   },

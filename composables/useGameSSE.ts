@@ -28,7 +28,6 @@ export function useGameSSE(gameId: string) {
     };
 
     eventSource.value.onerror = (error) => {
-      console.error('SSE error:', error);
       closeSSE();
     };
     eventSource.value.close = () => {
@@ -49,7 +48,6 @@ export function useGameSSE(gameId: string) {
 
   const closeSSE = () => {
     if (eventSource.value) {
-      console.log('sse game close');
       eventSource.value.close();
       eventSource.value = null;
     }

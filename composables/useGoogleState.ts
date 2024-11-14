@@ -1,5 +1,5 @@
-export function useGithubState() {
-  const STATE_KEY = 'github_auth_state';
+export function useGoogleState() {
+  const STATE_KEY = 'google_auth_state';
 
   function generateState() {
     const state = Math.random().toString(36).substring(7);

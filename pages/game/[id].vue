@@ -43,17 +43,14 @@ onMounted(async () => {
         await gameStore.fetchGame(gameId);
 
     } catch (error) {
-        console.error('Error fetching game:', error);
         errorMessage.value = 'Failed to load the game. Please try again.';
     }
 });
 
 async function makeMove(from: [number, number], to: [number, number]) {
     try {
-
         await gameStore.makeMove(from, to);
     } catch (error) {
-        console.error('Error making move:', error);
         errorMessage.value = 'Failed to make move. Please try again.';
     }
 }

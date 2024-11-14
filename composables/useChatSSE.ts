@@ -24,7 +24,6 @@ export function useChatSSE(): ChatSSEReturn {
     eventSource.value = new EventSource('/api/sse/chat');
 
     eventSource.value.onopen = () => {
-      console.log('Chat SSE connection opened');
       isInitialized.value = true;
     };
 
@@ -46,7 +45,6 @@ export function useChatSSE(): ChatSSEReturn {
     };
 
     eventSource.value.onerror = (error) => {
-      console.error('Chat SSE error:', error);
       closeSSE();
       setTimeout(setupSSE, 5000);
     };
@@ -54,7 +52,6 @@ export function useChatSSE(): ChatSSEReturn {
 
   const closeSSE = () => {
     if (eventSource.value) {
-      console.log('Closing chat SSE');
       eventSource.value.close();
       eventSource.value = null;
       isInitialized.value = false;

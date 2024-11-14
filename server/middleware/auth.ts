@@ -12,14 +12,20 @@ export default defineEventHandler(async (event) => {
     '/register',
     '/api/auth/login',
     '/api/auth/register',
-    '/api/auth/github',
+    '/api/auth/vk',
     '/api/auth/check',
+    '/api/auth/github',
     '/auth/github/callback',
+    '/auth/vk/callback',
+    '/api/auth/google/callback',
+    '/api/auth/google/init',
+    '/api/auth/google',
+    '/auth/google/callback',
   ];
 
   const isPublicRoute = publicRoutes.some((route) => event.path.startsWith(route));
   const isApiRoute = event.path.startsWith('/api/');
-  console.log(isPublicRoute, event.path, 'hello');
+
   if (!token && !isPublicRoute) {
     if (isApiRoute) {
       throw createError({

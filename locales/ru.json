@@ -16,6 +16,9 @@
     "offline": "Оффлайн"
   },
   "auth": {
+    "continueWithGithub": "Войти через Github",
+    "continueWithGoogle": "Войти через Google",
+    "loginWithVK": "Войти через VK",
     "login": "Войти",
     "register": "Регистрация",
     "logout": "Выйти",
@@ -84,6 +87,7 @@
     "timeout": "Время истекло!"
   },
   "profile": {
+    "changeAvatar": "Изменить аватар",
     "profile": "Профиль",
     "editProfile": "Редактировать профиль",
     "changePassword": "Изменить пароль",

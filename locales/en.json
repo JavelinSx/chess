@@ -16,6 +16,9 @@
     "offline": "Offline"
   },
   "auth": {
+    "continueWithGithub": "Login with Github",
+    "continueWithGoogle": "Login with Google",
+    "loginWithVK": "Login with VK",
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
@@ -82,6 +85,7 @@
     "timeout": "Time's Up!"
   },
   "profile": {
+    "changeAvatar": "Change avatar",
     "profile": "Profile",
     "editProfile": "Edit Profile",
     "changePassword": "Change Password",

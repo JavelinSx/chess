@@ -168,7 +168,6 @@ export const useChatStore = defineStore('chat', {
         }
         if (this.rooms.length === 0) {
           const response = await chatApi.getRooms(currentUser._id, currentUser.chatSetting);
-
           if (response.data) {
             this.rooms = response.data;
             // Обновляем blockedRooms на основе полученных данных
@@ -178,7 +177,6 @@ export const useChatStore = defineStore('chat', {
               }
             });
           } else if (response.error) {
-            console.error('Error fetching rooms:', response.error);
             this.error = response.error;
           }
         }

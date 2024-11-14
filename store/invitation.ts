@@ -33,7 +33,6 @@ export const useInvitationStore = defineStore('invitation', {
 
     async sendGameInvitation(gameDuration: GameDuration) {
       if (!this.inviteeId) {
-        console.error('No invitee selected');
         return;
       }
 
@@ -82,7 +81,6 @@ export const useInvitationStore = defineStore('invitation', {
 
     async acceptGameInvitation() {
       if (!this.currentInvitation) {
-        console.error(this.locales.t('noCurrentInvitation'));
         return;
       }
       try {
