@@ -225,3 +225,8 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
     };
   }
 };
+
+export const vkAuthService = {
+  exchangeCode,
+  completeAuthentication,
+};
