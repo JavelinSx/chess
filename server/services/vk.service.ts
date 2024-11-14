@@ -13,14 +13,12 @@ interface ResponseTokenVK {
 }
 
 interface VKUserInfo {
-  user: {
-    user_id: string;
-    first_name: string;
-    last_name: string;
-    username: string;
-    email: string;
-    avatar: string;
-  };
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  username: string;
+  email: string;
+  avatar: string;
 }
 
 export const exchangeCode = async (
@@ -96,14 +94,14 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
     });
     console.log(userInfo);
     const user = await User.findOneAndUpdate(
-      { vkId: userInfo.user.user_id.toString() },
+      { vkId: userInfo.user_id.toString() },
       {
         $set: {
-          vkId: userInfo.user.user_id.toString(),
+          vkId: userInfo.user_id.toString(),
           vkAccessToken: accessToken,
-          username: `${userInfo.user.first_name} ${userInfo.user.last_name}`,
-          email: userInfo.user.email,
-          avatar: userInfo.user.avatar,
+          username: `${userInfo.first_name} ${userInfo.last_name}`,
+          email: userInfo.email,
+          avatar: userInfo.avatar,
           isOnline: true,
           lastLogin: new Date(),
         },
