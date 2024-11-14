@@ -32,21 +32,52 @@ export const exchangeCode = async (
   const config = useRuntimeConfig();
 
   try {
+    console.log('Exchange code params:', {
+      code_length: code?.length,
+      verifier_length: codeVerifier?.length,
+      device_id,
+      redirect_uri: config.public.vkRedirectUri,
+    });
+
+    const requestBody = {
+      grant_type: 'authorization_code',
+      client_id: config.public.vkClientId,
+      client_secret: config.vkClientSecret,
+      redirect_uri: config.public.vkRedirectUri,
+      code,
+      code_verifier: codeVerifier,
+      device_id,
+    };
+
+    console.log('Request body:', requestBody);
+
     const tokenResponse = await $fetch<ResponseTokenVK>('https://id.vk.com/oauth2/auth', {
       method: 'POST',
-      body: {
-        grant_type: 'authorization_code',
-        client_id: config.public.vkClientId,
-        client_secret: config.vkClientSecret,
-        redirect_uri: config.public.vkRedirectUri,
-        code,
-        code_verifier: codeVerifier,
-        device_id,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body: new URLSearchParams(requestBody).toString(),
+    });
+
+    // Безопасное логирование ответа (без sensitive данных)
+    console.log('Token response structure:', {
+      hasAccessToken: !!tokenResponse.access_token,
+      hasRefreshToken: !!tokenResponse.refresh_token,
+      hasIdToken: !!tokenResponse.id_token,
+      rawResponse: JSON.stringify(tokenResponse),
     });
 
     if (!tokenResponse.access_token) {
-      return { data: null, error: `Failed to get access token VK` };
+      const errorDetails = {
+        tokenResponse: JSON.stringify(tokenResponse),
+        responseType: typeof tokenResponse,
+        responseKeys: Object.keys(tokenResponse),
+      };
+      console.error('Token response error details:', errorDetails);
+      return {
+        data: null,
+        error: `Failed to get access token VK. Response: ${JSON.stringify(errorDetails)}`,
+      };
     }
 
     // Сохраняем токены
@@ -73,10 +104,27 @@ export const exchangeCode = async (
 
     return { data: { success: true }, error: null };
   } catch (error) {
-    console.error('Exchange code error:', error);
+    const errorDetails =
+      error instanceof Error
+        ? {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+            // Добавляем дополнительные свойства, если они есть
+            ...((error as any).response && {
+              response: {
+                status: (error as any).response.status,
+                data: (error as any).response.data,
+              },
+            }),
+          }
+        : error;
+
+    console.error('Exchange code detailed error:', errorDetails);
+
     return {
       data: null,
-      error: error instanceof Error ? error.message : 'Failed to exchange code',
+      error: `Failed to exchange code: ${JSON.stringify(errorDetails)}`,
     };
   }
 };
@@ -86,28 +134,49 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
 
   try {
     const accessToken = getCookie(event, 'vk_access_token');
+    console.log('Access token exists:', !!accessToken);
 
     if (!accessToken) {
       return { data: null, error: 'No access token found' };
     }
 
-    const userInfo = await $fetch<VKUserInfo>('https://id.vk.com/oauth2/user_info', {
+    const userInfoResponse = await $fetch<VKUserInfo>('https://id.vk.com/oauth2/user_info', {
       method: 'POST',
-      body: {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
         client_id: config.public.vkClientId,
         access_token: accessToken,
-      },
+      }).toString(),
     });
 
+    console.log('User info response:', JSON.stringify(userInfoResponse, null, 2));
+
+    if (!userInfoResponse || (!userInfoResponse.user && !userInfoResponse.user_id)) {
+      throw new Error(`Invalid user info response: ${JSON.stringify(userInfoResponse)}`);
+    }
+
+    // Извлекаем данные пользователя в зависимости от формата ответа
+    const userData = userInfoResponse.user || userInfoResponse;
+    const userId = userData.user_id?.toString() || userData.toString();
+
+    if (!userId) {
+      throw new Error(`Could not extract user ID from response: ${JSON.stringify(userData)}`);
+    }
+
     const user = await User.findOneAndUpdate(
-      { vkId: userInfo.user.user_id.toString() },
+      { vkId: userId },
       {
         $set: {
-          vkId: userInfo.user.user_id.toString(),
+          vkId: userId,
           vkAccessToken: accessToken,
-          username: `${userInfo.user.first_name} ${userInfo.user.last_name}`,
-          email: userInfo.user.email,
-          avatar: userInfo.user.avatar,
+          username:
+            userData.first_name && userData.last_name
+              ? `${userData.first_name} ${userData.last_name}`
+              : `VK User ${userId}`,
+          email: userData.email,
+          avatar: userData.avatar,
           isOnline: true,
           lastLogin: new Date(),
         },
@@ -132,15 +201,27 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
       error: null,
     };
   } catch (error) {
-    console.error('Complete authentication error:', error);
+    const errorDetails =
+      error instanceof Error
+        ? {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+            // Добавляем дополнительные свойства ошибки запроса, если они есть
+            ...((error as any).response && {
+              response: {
+                status: (error as any).response.status,
+                data: (error as any).response.data,
+              },
+            }),
+          }
+        : error;
+
+    console.error('Complete authentication detailed error:', errorDetails);
+
     return {
       data: null,
-      error: error instanceof Error ? error.message : 'Failed to complete authentication',
+      error: `Authentication failed: ${JSON.stringify(errorDetails)}`,
     };
   }
-};
-
-export const vkAuthService = {
-  exchangeCode,
-  completeAuthentication,
 };
