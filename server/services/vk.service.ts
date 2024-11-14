@@ -42,7 +42,7 @@ export const exchangeCode = async (
         device_id,
       },
     });
-
+    console.log(tokenResponse);
     // Сохраняем токены
     await Promise.all([
       setCookie(event, 'vk_access_token', tokenResponse.access_token, {
