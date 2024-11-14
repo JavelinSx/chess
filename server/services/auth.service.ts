@@ -118,6 +118,8 @@ export async function githubAuth(event: H3Event, code: string): Promise<ApiRespo
         Object.assign(user, {
           githubId: githubUser.id.toString(),
           githubAccessToken: tokenResponse.access_token,
+          username: githubUser.login,
+          avatar: githubUser.avatar_url,
           githubData: {
             login: githubUser.login,
             avatar_url: githubUser.avatar_url,
@@ -131,6 +133,7 @@ export async function githubAuth(event: H3Event, code: string): Promise<ApiRespo
         // Создаем нового пользователя
         user = new User({
           username: githubUser.login,
+          avatar: githubUser.avatar_url,
           email,
           githubId: githubUser.id.toString(),
           githubAccessToken: tokenResponse.access_token,
