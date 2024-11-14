@@ -1,5 +1,5 @@
 import NodeCache from 'node-cache';
-
+//strange upperCase GameCache
 class GameCache {
   private cache: NodeCache;
 
