@@ -1,7 +1,7 @@
 import { Types } from 'mongoose';
 import Game from '~/server/db/models/game.model';
 import User from '~/server/db/models/user.model';
-import GameCache from '../utils/GameCache1';
+import GameCache from '../utils/GameCache';
 import UserListCache from '../utils/UserListCache';
 import { UserService } from './user.service';
 import { sseManager } from '~/server/utils/SSEManager';
