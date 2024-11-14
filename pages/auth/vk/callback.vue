@@ -1,43 +1,31 @@
-<template>
-    <div class="flex items-center justify-center min-h-screen">
-        <UCard v-if="error">
-            <p class="text-red-500">{{ error }}</p>
-            <UButton to="/login" class="mt-4">
-                {{ t('common.backToLogin') }}
-            </UButton>
-        </UCard>
-        <UCard v-else>
-            <UIcon name="i-heroicons-arrow-path" class="animate-spin h-8 w-8" />
-            <p>{{ t('auth.authenticating') }}</p>
-        </UCard>
-    </div>
-</template>
-
 <script setup lang="ts">
-import { useAuthStore } from '~/store/auth';
-import { useUserStore } from '~/store/user';
 const route = useRoute();
 const router = useRouter();
 const error = ref('');
 const { t } = useI18n();
-const authStore = useAuthStore();
-const userStore = useUserStore();
 
 onMounted(async () => {
-    const { code, state, device_id } = route.query;
-    if (!code || !state) {
+    const { code, state } = route.query;
+    const savedState = localStorage.getItem('vk_state');
+    const codeVerifier = localStorage.getItem('vk_code_verifier');
+
+    if (!code || !state || !codeVerifier) {
         error.value = 'Missing required parameters';
         return;
     }
-    const codeVerifier = localStorage.getItem('codeVerifier')
+
+    if (state !== savedState) {
+        error.value = 'Invalid state parameter';
+        return;
+    }
 
     try {
         const exchangeResponse = await $fetch('/api/auth/vk/callback', {
             method: 'POST',
             body: {
-                code: code,
-                codeVerifier: codeVerifier,
-                device_id: device_id
+                code,
+                codeVerifier,
+                device_id: crypto.randomUUID()
             }
         });
 
@@ -50,14 +38,16 @@ onMounted(async () => {
         });
 
         if (completeResponse.data) {
-            // Напрямую используем данные из ответа для установки состояния авторизации
-            authStore.setIsAuthenticated(true);
-            userStore.setUser(completeResponse.data.user);
-            router.push('/');
-        } else if (completeResponse.error) {
-            error.value = completeResponse.error;
+            // Очищаем сохраненные параметры
+            localStorage.removeItem('vk_code_verifier');
+            localStorage.removeItem('vk_state');
+
+            await router.push('/');
+        } else {
+            throw new Error(completeResponse.error || 'Failed to complete authentication');
         }
     } catch (e) {
+        console.error('VK auth error:', e);
         error.value = e instanceof Error ? e.message : 'Authentication failed';
     }
 });

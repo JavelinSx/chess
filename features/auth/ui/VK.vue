@@ -19,61 +19,49 @@ interface responsePKCE {
     }
 }
 
-// Перехватываем и игнорируем ошибки SDK
-const handleError = (error: any) => {
-    // Игнорируем ошибки статистики
-    if (error?.message?.includes('stat_events_vkid_sdk')) {
-        return;
-    }
-}
 onMounted(async () => {
     try {
+        const response = await $fetch<responsePKCE>('/api/auth/vk/init', {
+            method: 'POST'
+        });
+
+        if (!response.data) {
+            throw new Error('Failed to initialize VK auth');
+        }
+
+        const { state, codeChallenge, codeVerifier } = response.data;
+
+        // Сохраняем параметры 
+        localStorage.setItem('vk_code_verifier', codeVerifier);
+        localStorage.setItem('vk_state', state);
+
         VKID.Config.init({
             app: appId,
             redirectUrl: redirectUrl,
+            state: state,
+            codeChallenge: codeChallenge,
+            scope: 'profile email',
         });
 
         const oneTap = new VKID.OneTap();
         const container = document.getElementById('VkIdSdkOneTap');
 
         if (container) {
-
             oneTap.render({
                 container: container,
                 scheme: VKID.Scheme.LIGHT,
                 lang: VKID.Languages.RUS,
-
-            }).on(VKID.WidgetEvents.ERROR, handleError);
+            });
         }
     } catch (error) {
         console.error('VK SDK initialization error:', error);
     }
 });
 
-
 async function handleClick() {
     try {
         if (isLoading.value) return;
         isLoading.value = true;
-
-        // Инициируем процесс авторизации через бэкенд
-        const response = await $fetch<responsePKCE>('/api/auth/vk/init', {
-            method: 'POST'
-        });
-
-        const { state, codeChallenge, codeVerifier } = response.data;
-
-        localStorage.setItem('codeChallenge', codeChallenge);
-        localStorage.setItem('codeVerifier', codeVerifier);
-
-        // Переинициализируем конфиг с новыми параметрами
-        await VKID.Config.init({
-            app: appId,
-            redirectUrl: redirectUrl,
-            state: state,
-            codeChallenge: codeChallenge,
-            scope: 'email phone nickname',
-        });
 
         await VKID.Auth.login();
     } catch (error) {
