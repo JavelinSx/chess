@@ -15,7 +15,7 @@ const githubDataSchema = new mongoose.Schema(
 );
 
 const userSchema = new mongoose.Schema<IUser, mongoose.Model<IUser, {}, IUserMethods>>({
-  username: { type: String, required: true, unique: true },
+  username: { type: String, required: true },
   email: { type: String, required: false, unique: true },
   avatar: { type: String, required: false },
   password: { type: String, required: false, select: false },

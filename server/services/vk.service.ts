@@ -36,7 +36,7 @@ export const exchangeCode = async (
       method: 'POST',
       body: {
         grant_type: 'authorization_code',
-        client_id: config.public.vkClientId,
+        client_id: parseInt(config.public.vkClientId),
         client_secret: config.vkClientSecret,
         redirect_uri: config.public.vkRedirectUri,
         code,
@@ -94,7 +94,7 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
     const userInfo = await $fetch<VKUserInfo>('https://id.vk.com/oauth2/user_info', {
       method: 'POST',
       body: {
-        client_id: config.public.vkClientId,
+        client_id: parseInt(config.public.vkClientId),
         access_token: accessToken,
       },
     });

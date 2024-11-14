@@ -1,13 +1,9 @@
 import { githubAuth } from '~/server/services/auth.service';
 
 export default defineEventHandler(async (event) => {
-  console.log('GitHub callback received');
   const query = getQuery(event);
   const { code, state } = query;
   const savedState = getCookie(event, 'github_auth_state');
-
-  console.log('Received state:', state);
-  console.log('Saved state:', savedState);
 
   if (!code || !state) {
     throw createError({
@@ -17,7 +13,6 @@ export default defineEventHandler(async (event) => {
   }
 
   if (state !== savedState) {
-    console.error('State mismatch:', { received: state, saved: savedState });
     throw createError({
       statusCode: 400,
       message: 'Invalid state parameter',
@@ -29,7 +24,6 @@ export default defineEventHandler(async (event) => {
     deleteCookie(event, 'github_auth_state');
 
     const response = await githubAuth(event, code.toString());
-    console.log('GitHub auth response:', response);
 
     return response;
   } catch (error) {

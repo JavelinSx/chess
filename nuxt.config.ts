@@ -60,7 +60,7 @@ export default defineNuxtConfig({
       vkClientId: process.env.VK_CLIENT_ID,
       vkRedirectUri: process.env.VK_REDIRECT_URI || 'http://localhost:3000/auth/vk/callback',
     },
-    mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/chess_game',
+    mongodbUri: process.env.MONGODB_URI,
     jwtSecret: process.env.JWT_SECRET || 'your_secret_key_here',
     githubClientSecret: process.env.GITHUB_CLIENT_SECRET,
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
