@@ -1,3 +1,17 @@
+<template>
+    <div class="min-h-screen flex items-center justify-center">
+        <UCard v-if="error" class="text-center">
+            <p class="text-red-500">{{ error }}</p>
+            <UButton class="mt-4" to="/login">
+                {{ t('common.backToLogin') }}
+            </UButton>
+        </UCard>
+        <UCard v-else>
+            <UIcon name="i-heroicons-arrow-path" class="animate-spin h-8 w-8" />
+            <p>{{ t('auth.authenticating') }}</p>
+        </UCard>
+    </div>
+</template>
 <script setup lang="ts">
 const route = useRoute();
 const router = useRouter();
@@ -5,7 +19,7 @@ const error = ref('');
 const { t } = useI18n();
 
 onMounted(async () => {
-    const { code, state } = route.query;
+    const { code, state, device_id } = route.query;
     const savedState = localStorage.getItem('vk_state');
     const codeVerifier = localStorage.getItem('vk_code_verifier');
 
@@ -25,7 +39,7 @@ onMounted(async () => {
             body: {
                 code,
                 codeVerifier,
-                device_id: crypto.randomUUID()
+                device_id
             }
         });
 

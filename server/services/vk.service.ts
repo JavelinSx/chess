@@ -104,27 +104,9 @@ export const exchangeCode = async (
 
     return { data: { success: true }, error: null };
   } catch (error) {
-    const errorDetails =
-      error instanceof Error
-        ? {
-            message: error.message,
-            stack: error.stack,
-            name: error.name,
-            // Добавляем дополнительные свойства, если они есть
-            ...((error as any).response && {
-              response: {
-                status: (error as any).response.status,
-                data: (error as any).response.data,
-              },
-            }),
-          }
-        : error;
-
-    console.error('Exchange code detailed error:', errorDetails);
-
     return {
       data: null,
-      error: `Failed to exchange code: ${JSON.stringify(errorDetails)}`,
+      error: `Failed to exchange code VK`,
     };
   }
 };
