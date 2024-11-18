@@ -207,6 +207,19 @@ export class GameService {
       game.status = 'completed';
       game.result = result;
 
+      if (game.players.white && game.players.black) {
+        const [whitePlayer, blackPlayer] = await Promise.all([
+          User.findById(game.players.white),
+          User.findById(game.players.black),
+        ]);
+
+        await Promise.all([
+          // Сохраняем isOnline статус игрока, меняем только isGame
+          UserService.updateUserStatus(game.players.white, whitePlayer?.isOnline || true, false),
+          UserService.updateUserStatus(game.players.black, blackPlayer?.isOnline || true, false),
+        ]);
+      }
+
       const ratingChanges: { [key: string]: number } = {};
 
       if (game.players.white && game.players.black) {

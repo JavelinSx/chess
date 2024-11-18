@@ -104,6 +104,7 @@ export class UserSSEManager {
   async broadcastUserStatusUpdate(userId: string, status: UserStatus) {
     UserListCache.updateUserStatus(userId, status.isOnline, status.isGame);
     const user = UserListCache.getUserById(userId);
+
     if (user) {
       const message = JSON.stringify({
         type: 'user_status_update',

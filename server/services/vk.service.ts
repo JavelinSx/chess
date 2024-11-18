@@ -32,13 +32,6 @@ export const exchangeCode = async (
   const config = useRuntimeConfig();
 
   try {
-    console.log('Exchange code params:', {
-      code_length: code?.length,
-      verifier_length: codeVerifier?.length,
-      device_id,
-      redirect_uri: config.public.vkRedirectUri,
-    });
-
     const requestBody = {
       grant_type: 'authorization_code',
       client_id: config.public.vkClientId,
@@ -49,22 +42,12 @@ export const exchangeCode = async (
       device_id,
     };
 
-    console.log('Request body:', requestBody);
-
     const tokenResponse = await $fetch<ResponseTokenVK>('https://id.vk.com/oauth2/auth', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams(requestBody).toString(),
-    });
-
-    // Безопасное логирование ответа (без sensitive данных)
-    console.log('Token response structure:', {
-      hasAccessToken: !!tokenResponse.access_token,
-      hasRefreshToken: !!tokenResponse.refresh_token,
-      hasIdToken: !!tokenResponse.id_token,
-      rawResponse: JSON.stringify(tokenResponse),
     });
 
     if (!tokenResponse.access_token) {
@@ -116,7 +99,6 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
 
   try {
     const accessToken = getCookie(event, 'vk_access_token');
-    console.log('Access token exists:', !!accessToken);
 
     if (!accessToken) {
       return { data: null, error: 'No access token found' };
@@ -132,12 +114,6 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
         access_token: accessToken,
       }).toString(),
     });
-
-    console.log('User info response:', JSON.stringify(userInfoResponse, null, 2));
-
-    if (!userInfoResponse || (!userInfoResponse.user && !userInfoResponse.user_id)) {
-      throw new Error(`Invalid user info response: ${JSON.stringify(userInfoResponse)}`);
-    }
 
     // Извлекаем данные пользователя в зависимости от формата ответа
     const userData = userInfoResponse.user || userInfoResponse;
@@ -183,27 +159,9 @@ export const completeAuthentication = async (event: H3Event): Promise<ApiRespons
       error: null,
     };
   } catch (error) {
-    const errorDetails =
-      error instanceof Error
-        ? {
-            message: error.message,
-            stack: error.stack,
-            name: error.name,
-            // Добавляем дополнительные свойства ошибки запроса, если они есть
-            ...((error as any).response && {
-              response: {
-                status: (error as any).response.status,
-                data: (error as any).response.data,
-              },
-            }),
-          }
-        : error;
-
-    console.error('Complete authentication detailed error:', errorDetails);
-
     return {
       data: null,
-      error: `Authentication failed: ${JSON.stringify(errorDetails)}`,
+      error: `Authentication failed`,
     };
   }
 };

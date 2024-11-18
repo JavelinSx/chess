@@ -12,7 +12,6 @@ export const registerUser = async (
   password: string
 ): Promise<ApiResponse<{ register: boolean }>> => {
   try {
-    const config = useRuntimeConfig();
     const user = new User({ username, email, password });
     await sseManager.broadcastUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();

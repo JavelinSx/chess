@@ -1,15 +1,17 @@
 // store/gameAdditional.ts
 import { defineStore } from 'pinia';
 import { useGameStore } from './game';
-import type { ChessBoard, GameResult } from '~/server/types/game';
+import type { ChessBoard, GameResult, PieceColor } from '~/server/types/game';
 
 export const useGameAdditionalStore = defineStore('gameAdditional', {
   state: () => ({
-    gameDuration: 30 * 60,
-    timeRemaining: 30 * 60,
-    gameStartTime: 0,
+    whiteTimeRemaining: 0,
+    blackTimeRemaining: 0,
+    activeTimer: null as PieceColor | null,
     lastUpdateTime: 0,
     gameStatus: 'not_started' as 'not_started' | 'active' | 'completed',
+    isInitialized: false,
+    gameId: null as string | null,
   }),
 
   getters: {
@@ -17,55 +19,99 @@ export const useGameAdditionalStore = defineStore('gameAdditional', {
       const gameStore = useGameStore();
       return gameStore.currentGame?.currentTurn || null;
     },
+    getTimeRemaining: (state) => (color: PieceColor) => {
+      return color === 'white' ? state.whiteTimeRemaining : state.blackTimeRemaining;
+    },
   },
 
   actions: {
-    setGameDuration(duration: number) {
-      this.gameDuration = duration * 60;
-      this.timeRemaining = this.gameDuration;
-    },
-
     initializeGameTime() {
       const gameStore = useGameStore();
-      if (gameStore.currentGame && gameStore.currentGame.timeControl?.type === 'timed') {
-        const startTime = gameStore.currentGame.startedAt
-          ? new Date(gameStore.currentGame.startedAt).getTime()
-          : Date.now();
-        const currentTime = Date.now();
-        const elapsedTime = (currentTime - startTime) / 1000; // в секундах
+      const currentGame = gameStore.currentGame;
 
-        this.gameDuration = gameStore.currentGame.timeControl.initialTime! * 60; // Преобразуем минуты в секунды
-        this.timeRemaining = Math.max(0, this.gameDuration - elapsedTime);
-        this.gameStartTime = startTime;
-        this.lastUpdateTime = currentTime;
-        this.gameStatus = 'active';
+      // Проверяем наличие игры и тип контроля времени
+      if (!currentGame || currentGame.timeControl?.type !== 'timed') return;
+
+      // Проверяем, не та же ли это игра
+      if (this.gameId && currentGame._id && this.gameId === currentGame._id && this.isInitialized) {
+        this.recalculateTimeAfterReload();
+        return;
       }
+
+      // Новая игра - инициализируем заново
+      const totalMinutes = currentGame.timeControl?.initialTime || 30;
+      const timePerPlayer = (totalMinutes * 60) / 2;
+
+      this.whiteTimeRemaining = timePerPlayer;
+      this.blackTimeRemaining = timePerPlayer;
+      this.lastUpdateTime = Date.now();
+      this.gameStatus = 'active';
+
+      // Проверяем наличие currentTurn перед присвоением
+      if (currentGame.currentTurn) {
+        this.activeTimer = currentGame.currentTurn;
+      } else {
+        this.activeTimer = 'white'; // Значение по умолчанию
+      }
+
+      this.isInitialized = true;
+      this.gameId = currentGame._id;
     },
 
     updateGameTime() {
-      if (this.gameStatus === 'active') {
+      if (this.gameStatus === 'active' && this.activeTimer) {
         const currentTime = Date.now();
-        const elapsedSinceLastUpdate = (currentTime - this.lastUpdateTime) / 1000; // в секундах
-        this.timeRemaining = Math.max(0, this.timeRemaining - elapsedSinceLastUpdate);
-        this.lastUpdateTime = currentTime;
-        if (this.timeRemaining <= 0) {
-          this.handleTimeUp();
+        const elapsedTime = (currentTime - this.lastUpdateTime) / 1000;
+        if (this.activeTimer === 'white') {
+          this.whiteTimeRemaining = Math.max(0, this.whiteTimeRemaining - elapsedTime);
+          if (this.whiteTimeRemaining === 0) {
+            this.handleTimeUp('white');
+          }
+        } else {
+          this.blackTimeRemaining = Math.max(0, this.blackTimeRemaining - elapsedTime);
+          if (this.blackTimeRemaining === 0) {
+            this.handleTimeUp('black');
+          }
         }
+        this.lastUpdateTime = currentTime;
       }
     },
 
-    handleTimeUp() {
-      const gameStore = useGameStore();
-      const game = gameStore.currentGame;
-      if (!game) return;
+    switchTimer() {
+      if (this.gameStatus === 'active') {
+        this.updateGameTime(); // Обновляем время перед переключением
+        this.activeTimer = this.activeTimer === 'white' ? 'black' : 'white';
+        this.lastUpdateTime = Date.now(); // Сбрасываем время последнего обновления
+      }
+    },
 
-      const result: GameResult = {
-        winner: null,
-        loser: null,
-        reason: 'timeout',
-      };
+    handleTimeUp(playerColor: PieceColor) {
       this.gameStatus = 'completed';
-      gameStore.handleGameEnd(result);
+      const gameStore = useGameStore();
+      const whitePlayer = gameStore.currentGame?.players.white;
+      const blackPlayer = gameStore.currentGame?.players.black;
+      if (whitePlayer && blackPlayer) {
+        const result: GameResult = {
+          winner: playerColor === 'white' ? blackPlayer : whitePlayer,
+          loser: playerColor === 'white' ? whitePlayer : blackPlayer,
+          reason: 'timeout',
+        };
+        gameStore.handleGameEnd(result);
+      }
+    },
+
+    pauseTimer() {
+      if (this.gameStatus === 'active') {
+        this.updateGameTime(); // Последнее обновление перед паузой
+        this.gameStatus = 'not_started';
+      }
+    },
+
+    resumeTimer() {
+      if (this.gameStatus === 'not_started') {
+        this.lastUpdateTime = Date.now();
+        this.gameStatus = 'active';
+      }
     },
 
     determineWinner(playerOutOfTime: 'white' | 'black'): 'white' | 'black' | 'draw' {
@@ -114,5 +160,47 @@ export const useGameAdditionalStore = defineStore('gameAdditional', {
 
       return whiteMaterial - blackMaterial;
     },
+    recalculateTimeAfterReload() {
+      if (!this.lastUpdateTime || !this.activeTimer) return;
+
+      const currentTime = Date.now();
+      const elapsedTime = (currentTime - this.lastUpdateTime) / 1000;
+
+      // Обновляем только активный таймер
+      if (this.activeTimer === 'white') {
+        this.whiteTimeRemaining = Math.max(0, this.whiteTimeRemaining - elapsedTime);
+        if (this.whiteTimeRemaining <= 0) {
+          this.handleTimeUp('white');
+        }
+      } else {
+        this.blackTimeRemaining = Math.max(0, this.blackTimeRemaining - elapsedTime);
+        if (this.blackTimeRemaining <= 0) {
+          this.handleTimeUp('black');
+        }
+      }
+
+      this.lastUpdateTime = currentTime;
+    },
+    resetGame() {
+      this.whiteTimeRemaining = 0;
+      this.blackTimeRemaining = 0;
+      this.activeTimer = null;
+      this.lastUpdateTime = 0;
+      this.gameStatus = 'not_started';
+      this.isInitialized = false;
+      this.gameId = null;
+    },
+  },
+  persist: {
+    storage: persistedState.localStorage,
+    paths: [
+      'whiteTimeRemaining',
+      'blackTimeRemaining',
+      'activeTimer',
+      'lastUpdateTime',
+      'gameStatus',
+      'isInitialized',
+      'gameId',
+    ],
   },
 });

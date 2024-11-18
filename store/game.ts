@@ -52,6 +52,7 @@ export const useGameStore = defineStore('game', {
 
       try {
         await gameApi.makeMove(this.currentGame._id, from, to);
+        return { succes: true };
       } catch (error) {
         this.error = this.locales.t('failedToMakeMove');
       }

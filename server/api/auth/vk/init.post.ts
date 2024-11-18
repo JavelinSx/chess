@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '')
-      .substring(0, 43); // Обеспечиваем правильную длину
+      .substring(0, 43);
 
     // Создаем code_challenge из code_verifier
     const challenge = crypto
@@ -24,12 +24,6 @@ export default defineEventHandler(async (event) => {
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=/g, '');
-
-    console.log('Generated PKCE params:', {
-      verifierLength: verifier.length,
-      challengeLength: challenge.length,
-      stateLength: state.length,
-    });
 
     return {
       data: {

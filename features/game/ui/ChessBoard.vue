@@ -167,7 +167,7 @@ async function handleGameEnd(reasonOrResult: NonNullable<GameResultReason> | Gam
     }
 }
 
-function handleCellClick(position: Position) {
+async function handleCellClick(position: Position) {
     if (!isCurrentPlayerTurn.value || !currentGame.value) return;
 
     const [row, col] = position;
@@ -186,7 +186,7 @@ function handleCellClick(position: Position) {
                 gameStore.pendingPromotion = { from, to };
                 gameStore.promote = true;
             } else {
-                gameStore.makeMove(from, to);
+                await gameStore.makeMove(from, to);
             }
         }
         selectedCell.value = null;
@@ -203,8 +203,7 @@ const isGameResult = (result: any): result is GameResult => {
     );
 };
 
-
-
+// Отслеживание конца игры
 watch(
     () => [gameStore.gameResult, gameStore.currentGame?.status],
     async ([newResult, newStatus], [oldResult, oldStatus]) => {
@@ -217,16 +216,23 @@ watch(
     { deep: true }
 );
 
-onMounted(() => {
-    if (gameStore.currentGame) {
-        gameAdditionalStore.setGameDuration(gameStore.currentGame.timeControl?.initialTime || 30);
+// Инициализация игры
+watch(() => gameStore.currentGame, (newGame) => {
+    if (newGame) {
         gameAdditionalStore.initializeGameTime();
     }
 });
+// Статус игры
+watch(() => gameStore.currentGame?.status, (newStatus) => {
+    if (newStatus === 'completed') {
+        gameAdditionalStore.pauseTimer();
+    } else if (newStatus === 'active') {
+        gameAdditionalStore.resumeTimer();
+    }
+});
 
-watch(() => gameStore.currentGame, (newGame) => {
-    if (newGame) {
-        gameAdditionalStore.setGameDuration(newGame.timeControl?.initialTime || 30);
+onMounted(() => {
+    if (gameStore.currentGame) {
         gameAdditionalStore.initializeGameTime();
     }
 });

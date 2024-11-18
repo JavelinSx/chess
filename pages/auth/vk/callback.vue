@@ -13,8 +13,11 @@
     </div>
 </template>
 <script setup lang="ts">
+import { useAuthStore } from '~/store/auth';
+import { useUserStore } from '~/store/user';
+const authStore = useAuthStore()
+const userStore = useUserStore()
 const route = useRoute();
-const router = useRouter();
 const error = ref('');
 const { t } = useI18n();
 
@@ -52,11 +55,26 @@ onMounted(async () => {
         });
 
         if (completeResponse.data) {
-            // Очищаем сохраненные параметры
+            // Очищаем параметры
             localStorage.removeItem('vk_code_verifier');
             localStorage.removeItem('vk_state');
 
-            await router.push('/');
+            // Устанавливаем состояние авторизации
+            authStore.setIsAuthenticated(true);
+            if (completeResponse.data.user) {
+                userStore.setUser(completeResponse.data.user);
+            }
+
+            // Добавляем небольшую задержку перед редиректом
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Проверяем авторизацию перед редиректом
+            const authCheck = await $fetch<{ isAuthenticated: boolean }>('/api/auth/check');
+            if (authCheck.isAuthenticated) {
+                navigateTo('/', { replace: true });
+            } else {
+                throw new Error('Authentication check failed');
+            }
         } else {
             throw new Error(completeResponse.error || 'Failed to complete authentication');
         }

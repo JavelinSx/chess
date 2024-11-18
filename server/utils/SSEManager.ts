@@ -65,6 +65,10 @@ export class SSEManager {
   }
 
   async broadcastUserStatusUpdate(userId: string, status: UserStatus) {
+    if (this.activeConnections.has(userId)) {
+      // Если соединение активно, сохраняем статус online
+      status.isOnline = true;
+    }
     await this.userManager.broadcastUserStatusUpdate(userId, status);
   }
 

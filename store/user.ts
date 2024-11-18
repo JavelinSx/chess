@@ -130,7 +130,16 @@ export const useUserStore = defineStore('user', {
         throw error;
       }
     },
-
+    async getUsersList() {
+      try {
+        const response = await userApi.getUsersList();
+        if (response.data) {
+          this.usersList = response.data;
+        }
+      } catch (error) {
+        console.error('Failed to fetch users list:', error);
+      }
+    },
     updateUserStats(updatedStats: UserStats) {
       if (this.user) {
         this.user.stats = updatedStats;

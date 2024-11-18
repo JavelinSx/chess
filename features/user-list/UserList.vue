@@ -45,6 +45,11 @@ const paginationStore = usePaginationStore();
 
 const currentUserId = computed(() => userStore.user?._id);
 
+onMounted(async () => {
+    if (userStore.usersList.length === 0) {
+        await userStore.getUsersList();
+    }
+});
 </script>
 
 <style scoped>
