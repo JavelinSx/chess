@@ -41,7 +41,7 @@
             </UButton>
         </UForm>
 
-        <template #footer>
+        <template v-if="changePasswordNeed" #footer>
             <ChangePassword />
         </template>
     </UCard>
@@ -82,7 +82,9 @@ const userStore = useUserStore();
 const { alert, setAlert, clearAlert } = useAlert()
 const fileInput = ref<HTMLInputElement | null>(null);
 const avatarPreview = ref<string | null>(null);
-
+const changePasswordNeed = computed(() => !props.user.githubId && !props.user.vkId && !props.user.googleId)
+console.log(props.user)
+console.log(changePasswordNeed.value)
 const chatSettingOptions = computed(() => [
     { value: 'all', label: t('chat.all') },
     { value: 'friends_only', label: t('chat.onlyFriends') },

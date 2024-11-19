@@ -62,8 +62,6 @@ async function handleClick() {
     try {
         if (isLoading.value) return;
         isLoading.value = true;
-
-        await VKID.Auth.login();
     } catch (error) {
         console.error('VK auth error:', error);
     } finally {

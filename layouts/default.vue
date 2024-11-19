@@ -51,6 +51,7 @@
                 <slot />
             </UContainer>
             <FloatingChat />
+            <FloatingFriends />
         </main>
 
         <footer class="py-4 mt-auto">
@@ -59,7 +60,7 @@
             </UContainer>
         </footer>
         <UButton v-if="isAuthenticated && !chatStore.isOpen" @click="toggleChat" color="primary" variant="soft"
-            size="xl" icon="i-heroicons-chat-bubble-left-ellipsis" class="fixed right-4 bottom-4">
+            size="xl" icon="i-heroicons-chat-bubble-left-ellipsis" class="fixed w-28 right-4 bottom-4">
             {{ t('chat.chat') }}
             <UBadge v-if="chatStore.unreadMessagesCount > 0" :label="chatStore.unreadMessagesCount" color="red"
                 class="absolute -top-2 -right-2" size="sm" />
@@ -76,6 +77,7 @@ import { computed, ref } from 'vue';
 import FloatingChat from '~/features/chat/ui/FloatingChat.vue';
 import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'
 import LocalesSwitcher from '~/features/locales/ui/LocalesSwitcher.vue';
+import FloatingFriends from '~/features/friends/ui/FloatingFriends.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();

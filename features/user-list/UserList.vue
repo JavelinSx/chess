@@ -11,10 +11,7 @@
             <h2 class="text-xl font-bold mb-4">{{ t('userList.onlinePlayers') }}</h2>
             <SortingPlayers />
         </template>
-        <UCard class="mb-4">
-            <FriendsList></FriendsList>
-            <FriendRequest></FriendRequest>
-        </UCard>
+
 
         <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
             <li v-if="paginationStore.paginatedUsers.length > 0" v-for="user in paginationStore.paginatedUsers"

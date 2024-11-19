@@ -1,4 +1,3 @@
-<!-- features/game/ui/ChessTimer.vue -->
 <template>
     <UCard :ui="{ base: timerClasses }">
         <div class="flex justify-between items-center">
@@ -27,8 +26,13 @@ const gameAdditionalStore = useGameAdditionalStore();
 const { whiteTimeRemaining, blackTimeRemaining, gameStatus, activeTimer } = storeToRefs(gameAdditionalStore);
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
-// Определяем активный таймер
-const isWhiteActive = computed(() => activeTimer.value === 'white');
+// Определяем активный таймер на основе текущего хода
+const isWhiteActive = computed(() =>
+// Если игра только началась или сейчас ход белых
+(gameStore.currentGame?.status === 'active' &&
+    (!activeTimer.value || activeTimer.value === 'white'))
+);
+
 const isBlackActive = computed(() => activeTimer.value === 'black');
 
 // Классы для стилизации активного таймера
@@ -61,7 +65,7 @@ const stopTimer = () => {
     }
 };
 
-// Смена таймера
+// Смена таймера только при изменении хода
 watch(() => gameStore.currentGame?.currentTurn, (newTurn, oldTurn) => {
     if (newTurn && newTurn !== oldTurn && gameStore.currentGame?.status === 'active') {
         console.log(`Switching timer from ${oldTurn} to ${newTurn}`);
@@ -70,6 +74,7 @@ watch(() => gameStore.currentGame?.currentTurn, (newTurn, oldTurn) => {
 }, { deep: true });
 
 onMounted(() => {
+    // При монтировании устанавливаем начальное состояние - ход белых
     gameAdditionalStore.initializeGameTime();
     if (gameStatus.value === 'active') {
         startTimer();
@@ -88,6 +93,7 @@ watch(gameStatus, (newStatus) => {
         stopTimer();
     }
 });
+
 // Следим за изменением состояния игры
 watch(() => gameStore.currentGame?.status, (newStatus) => {
     if (newStatus === 'completed') {

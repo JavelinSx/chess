@@ -259,7 +259,7 @@ export class UserService {
         chatSetting: user.chatSetting,
       };
 
-      UserListCache.addUser(clientUser);
+      // UserListCache.addUser(clientUser);
       return { data: clientUser, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };

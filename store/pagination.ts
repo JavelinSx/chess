@@ -37,15 +37,25 @@ export const usePaginationStore = defineStore('pagination', {
         filteredList = filteredList.filter((user) => user.username.toLowerCase().includes(query));
       }
 
-      const sortProperty = this.filterOptions.sortCriteria === 'isGame' ? 'rating' : this.filterOptions.sortCriteria;
       filteredList.sort((a, b) => {
         if (this.filterOptions.sortCriteria === 'isGame') {
           if (isFree(a) !== isFree(b)) {
             return isFree(a) ? -1 : 1;
           }
+          return b.rating - a.rating; // Если оба свободны или оба заняты, сортируем по рейтингу
         }
-        const aValue = a[sortProperty] as number;
-        const bValue = b[sortProperty] as number;
+
+        // Получаем значения для сортировки
+        let aValue: number, bValue: number;
+
+        if (this.filterOptions.sortCriteria === 'gamesPlayed') {
+          aValue = a.stats.gamesPlayed;
+          bValue = b.stats.gamesPlayed;
+        } else {
+          aValue = a.rating;
+          bValue = b.rating;
+        }
+
         return this.filterOptions.sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       });
 
