@@ -1,6 +1,6 @@
 <!-- pages/index.vue -->
 <template>
-    <div class="flex flex-col items-center justify-center gap-4">
+    <div class="flex flex-col items-center justify-center gap-4 sm:px-4">
         <p v-if="isAuthenticated">
             {{ t('common.hello') }} {{ user?.username }}!
         </p>
@@ -10,7 +10,7 @@
         </p>
 
         <UserList v-if="isAuthenticated" />
-        <GameInvitationModal v-if="invitationStore.currentInvitation" />
+
     </div>
 </template>
 

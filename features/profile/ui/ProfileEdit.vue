@@ -1,18 +1,32 @@
 <template>
-    <UCard class="max-w-2xl mx-auto">
+    <UCard :ui="{
+        header: {
+            base: 'px-4 py-5 sm:px-4 md:px-4'
+        },
+        body: {
+            base: 'px-4 py-5 sm:px-2 md:px-4'
+        },
+        footer: {
+            base: 'px-4 py-5 sm:px-2 md:px-4'
+        }
+    }">
         <template #header>
-            <h2 class="text-2xl font-bold">{{ t('profile.editProfile') }}</h2>
+            <h2 class="text-2xl sm:text-xl font-bold">{{ t('profile.editProfile') }}</h2>
         </template>
 
         <UForm :state="profile" @submit="updateProfile" class="flex flex-col">
 
-            <UFormGroup class="mb-4" ame="avatar">
+            <UFormGroup class="mb-4" name="avatar">
                 <div class="flex items-center space-x-4">
-                    <UAvatar :src="user.avatar" :alt="user.username" size="xl" />
-                    <UButton color="gray" variant="soft" @click="triggerFileInput">
+                    <UAvatar :ui="{
+                        wrapper: 'object-contain'
+                    }" :src="user.avatar" :alt="user.username" size="xl" />
+                    <template v-if="showAvatarInput"> <!-- Используем template вместо div -->
+                        <UInput v-model="profile.avatarUrl" type="url" placeholder="Enter avatar URL" class="flex-1" />
+                    </template>
+                    <UButton v-else color="gray" variant="soft" @click="showAvatarInput = true">
                         {{ t('profile.changeAvatar') }}
                     </UButton>
-                    <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="handleFileChange" />
                 </div>
             </UFormGroup>
 
@@ -44,16 +58,28 @@
         <template v-if="changePasswordNeed" #footer>
             <ChangePassword />
         </template>
+        <UAlert v-if="alert.type === 'error'" title="Ошибка" :description="alert.message" variant="soft"
+            :color="alert.type === 'error' ? 'red' : 'green'">
+        </UAlert>
     </UCard>
 
     <UCard class="max-w-2xl mx-auto mt-8">
         <template #header>
-            <h2 class="text-2xl font-bold">{{ t('profile.userStatistics') }}</h2>
+            <h2 class="text-2xl sm:text-xl font-bold">{{ t('profile.userStatistics') }}</h2>
         </template>
 
         <RatingTitle :rating="user.rating" class="mb-6" />
 
-        <UTable :columns="columns" :rows="rows" />
+        <!-- Desktop view -->
+        <UTable :columns="columns" :rows="rows" class="hidden md:table w-full" />
+
+        <!-- Mobile view -->
+        <div class="md:hidden">
+            <div v-for="row in rows" :key="row.stat" class="border-b py-3">
+                <div class="font-medium text-sm pr-2">{{ row.stat }}</div>
+                <div class="text-right text-sm">{{ row.value }}</div>
+            </div>
+        </div>
 
         <template #footer>
 
@@ -80,11 +106,8 @@ const props = defineProps<{
 const { t } = useI18n()
 const userStore = useUserStore();
 const { alert, setAlert, clearAlert } = useAlert()
-const fileInput = ref<HTMLInputElement | null>(null);
-const avatarPreview = ref<string | null>(null);
 const changePasswordNeed = computed(() => !props.user.githubId && !props.user.vkId && !props.user.googleId)
-console.log(props.user)
-console.log(changePasswordNeed.value)
+const showAvatarInput = ref(false)
 const chatSettingOptions = computed(() => [
     { value: 'all', label: t('chat.all') },
     { value: 'friends_only', label: t('chat.onlyFriends') },
@@ -95,46 +118,29 @@ const profile = reactive({
     username: props.user.username,
     email: props.user.email || '',
     chatSetting: props.user.chatSetting,
-    avatarFile: null as File | null
+    avatarUrl: props.user.avatar || ''
 })
 
 const isProfileChanged = computed(() => {
     return profile.username !== props.user.username ||
         profile.email !== props.user.email ||
         profile.chatSetting !== props.user.chatSetting ||
-        profile.avatarFile?.name !== props.user.avatar
+        profile.avatarUrl !== props.user.avatar
 })
-
-const triggerFileInput = () => {
-    fileInput.value?.click();
-}
-
-const handleFileChange = (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-        const file = input.files[0];
-        profile.avatarFile = file;
-
-        // Create preview URL
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            avatarPreview.value = e.target?.result as string;
-        };
-        reader.readAsDataURL(file);
-    }
-}
 
 const updateProfile = async () => {
     if (!isProfileChanged.value) {
         setAlert('info', 'No changes to update')
         return
     }
-
     try {
-        await userStore.updateProfile(profile.username, profile.email, profile.chatSetting)
+        await userStore.updateProfile(profile.username, profile.email, profile.chatSetting, profile.avatarUrl)
         setAlert('success', 'Profile updated successfully!')
+        showAvatarInput.value = false
     } catch (err) {
         setAlert('error', 'Failed to update profile')
+    } finally {
+        clearAlert()
     }
 }
 
@@ -174,3 +180,19 @@ const formattedLastLogin = computed(() => {
     return new Date(props.user.lastLogin).toLocaleString()
 })
 </script>
+
+<style scoped>
+/* Дополнительные стили для мобильной версии */
+.sm\:hidden {
+    @apply divide-y divide-gray-200 dark:divide-gray-700;
+}
+
+.border-b {
+    @apply px-4 flex justify-between items-center;
+}
+
+/* Для текста значений */
+.text-right {
+    @apply font-semibold;
+}
+</style>

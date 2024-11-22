@@ -116,12 +116,12 @@ export const useUserStore = defineStore('user', {
       }
     },
 
-    async updateProfile(username: string, email: string, chatSetting: ChatSetting) {
+    async updateProfile(username: string, email: string, chatSetting: ChatSetting, avatar: string) {
       if (!this.user) throw new Error('User is not authenticated');
       try {
-        const response = await userApi.profileUpdate(this.user._id, username, email, chatSetting);
+        const response = await userApi.profileUpdate(this.user._id, username, email, avatar, chatSetting);
         if (response.data) {
-          this.setUser({ ...this.user, username, email, chatSetting });
+          this.setUser({ ...this.user, username, email, chatSetting, avatar });
         } else if (response.error) {
           throw new Error(response.error);
         }

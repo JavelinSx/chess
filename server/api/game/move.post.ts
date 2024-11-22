@@ -3,7 +3,7 @@ import { performMove } from '~/features/game-logic/model/game-logic/move-executi
 import { GameService } from '~/server/services/game.service';
 import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
 import { isValidMove } from '~/features/game-logic/model/game-logic/moves';
-import { sseManager } from '~/server/utils/SSEManager';
+import { gameSSEManager } from '../../utils/sseManager/GameSSEManager';
 
 export default defineEventHandler(async (event) => {
   try {
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event) => {
     const gameTest = await GameService.getGame(gameId);
 
     // Отправляем обновление игры через SSE
-    await sseManager.broadcastGameUpdate(gameId, gameTest.data!);
+    await gameSSEManager.broadcastGameUpdate(gameId, gameTest.data!);
 
     return { data: { success: true }, error: null };
   } catch (error: any) {

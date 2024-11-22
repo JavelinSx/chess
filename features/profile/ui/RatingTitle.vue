@@ -1,8 +1,8 @@
 <template>
     <UCard>
         <div class="flex items-center justify-between mb-4">
-            <h3 class="text-xl font-semibold">{{ t('profile.rating') }}</h3>
-            <span class="text-2xl font-bold">{{ rating }}</span>
+            <h3 class="text-xl sm:text-lg font-semibold">{{ t('profile.rating') }}</h3>
+            <span class="text-2xl sm:text-lg font-bold">{{ rating }}</span>
             <TitleIcon :rating="props.rating" class="w-8 h-8" />
         </div>
         <div class="mb-2">

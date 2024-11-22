@@ -43,7 +43,21 @@ class UserListCache {
   updateUser(userId: string, userData: Partial<ClientUser>): void {
     const existingUser = this.cache.get<ClientUser>(userId);
     if (existingUser) {
-      this.cache.set(userId, { ...existingUser, ...userData }, 3600);
+      // Convert MongoDB ObjectId to string if it exists
+      const processedUserData = {
+        ...userData,
+        _id: userData._id?.toString() || userId,
+        friends: Array.isArray(userData.friends)
+          ? userData.friends.map((friend) => (typeof friend === 'string' ? friend : String(friend)))
+          : existingUser.friends,
+      };
+
+      const updatedUser = {
+        ...existingUser,
+        ...processedUserData,
+      };
+
+      this.cache.set(userId, updatedUser, 3600);
     }
   }
 

@@ -6,6 +6,10 @@ button {
     justify-content: center;
 }
 
+span img {
+    object-fit: contain;
+}
+
 @layer base {
     :root {
         --color-fill: 251, 254, 251;

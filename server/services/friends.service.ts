@@ -1,10 +1,10 @@
+import mongoose from 'mongoose';
+import UserListCache from '../utils/UserListCache';
 import User from '../db/models/user.model';
-import type { FriendRequest, FriendRequestStatus, Friend, FriendRequestClient } from '~/server/types/friends';
+import { friendsSSEManager } from '../utils/sseManager/FriendsSSEManager';
+import type { FriendRequest, Friend, FriendRequestClient } from '~/server/types/friends';
 import type { IUser } from '~/server/types/user';
 import type { ApiResponse } from '~/server/types/api';
-import mongoose from 'mongoose';
-import { sseManager } from '../utils/SSEManager';
-import UserListCache from '../utils/UserListCache';
 
 export const friendsService = {
   async sendFriendRequest(fromUserId: string, toUserId: string): Promise<ApiResponse<FriendRequest>> {
@@ -33,7 +33,7 @@ export const friendsService = {
         return { data: null, error: 'Failed to create friend request' };
       }
 
-      await sseManager.sendFriendRequestNotification(toUserId, createdRequest);
+      await friendsSSEManager.sendFriendRequestNotification(toUserId, createdRequest);
 
       return { data: createdRequest, error: null };
     } catch (error) {
@@ -108,18 +108,24 @@ export const friendsService = {
         }
 
         await Promise.all([
-          sseManager.sendFriendListUpdateNotification(userId, userFriendsResponse.data!),
-          sseManager.sendFriendListUpdateNotification(request.from.toString(), requesterFriendsResponse.data!),
-          sseManager.sendFriendRequestUpdateNotification(userId, { ...requestDataForClient, status: 'accepted' }),
-          sseManager.sendFriendRequestUpdateNotification(request.from.toString(), {
+          friendsSSEManager.sendFriendListUpdateNotification(userId, userFriendsResponse.data!),
+          friendsSSEManager.sendFriendListUpdateNotification(request.from.toString(), requesterFriendsResponse.data!),
+          friendsSSEManager.sendFriendRequestUpdateNotification(userId, {
+            ...requestDataForClient,
+            status: 'accepted',
+          }),
+          friendsSSEManager.sendFriendRequestUpdateNotification(request.from.toString(), {
             ...requestDataForClient,
             status: 'accepted',
           }),
         ]);
       } else {
         request.status = 'rejected';
-        await sseManager.sendFriendRequestUpdateNotification(userId, { ...requestDataForClient, status: 'rejected' });
-        await sseManager.sendFriendRequestUpdateNotification(request.from.toString(), {
+        await friendsSSEManager.sendFriendRequestUpdateNotification(userId, {
+          ...requestDataForClient,
+          status: 'rejected',
+        });
+        await friendsSSEManager.sendFriendRequestUpdateNotification(request.from.toString(), {
           ...requestDataForClient,
           status: 'rejected',
         });
@@ -159,8 +165,8 @@ export const friendsService = {
       }
 
       await Promise.all([
-        sseManager.sendFriendListUpdateNotification(userId, userFriendsResponse.data!),
-        sseManager.sendFriendListUpdateNotification(friendId, friendFriendsResponse.data!),
+        friendsSSEManager.sendFriendListUpdateNotification(userId, userFriendsResponse.data!),
+        friendsSSEManager.sendFriendListUpdateNotification(friendId, friendFriendsResponse.data!),
       ]);
 
       return { data: { success: true, message: 'Friend removed successfully' }, error: null };
@@ -218,7 +224,7 @@ export const friendsService = {
       if (friendsResponse.error) {
         return { data: null, error: friendsResponse.error };
       }
-      await sseManager.sendFriendListUpdateNotification(userId, friendsResponse.data!);
+      await friendsSSEManager.sendFriendListUpdateNotification(userId, friendsResponse.data!);
       return { data: undefined, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };

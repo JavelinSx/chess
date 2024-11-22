@@ -39,6 +39,9 @@ export function useChatSSE(): ChatSSEReturn {
         case 'chat_room_update':
           chatStore.handleChatRoomUpdate(data.roomId);
           break;
+        case 'connection_established':
+          console.log('connection_established');
+          break;
         default:
           console.log('Unhandled chat event type:', data.type);
       }

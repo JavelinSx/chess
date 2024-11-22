@@ -18,7 +18,10 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useGameAdditionalStore } from '~/store/gameAdditional';
 import { useGameStore } from '~/store/game';
 import { storeToRefs } from 'pinia';
-import type { PieceColor } from '~/server/types/game';
+
+const emit = defineEmits<{
+    (e: 'time-up'): void
+}>();
 
 const gameStore = useGameStore();
 const gameAdditionalStore = useGameAdditionalStore();
@@ -72,6 +75,14 @@ watch(() => gameStore.currentGame?.currentTurn, (newTurn, oldTurn) => {
         gameAdditionalStore.switchTimer();
     }
 }, { deep: true });
+
+watch([whiteTimeRemaining, blackTimeRemaining], ([white, black]) => {
+    if (gameStore.currentGame?.status === 'completed') return;
+
+    if (white <= 0 || black <= 0) {
+        emit('time-up');
+    }
+});
 
 onMounted(() => {
     // При монтировании устанавливаем начальное состояние - ход белых

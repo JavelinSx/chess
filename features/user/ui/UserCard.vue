@@ -7,7 +7,7 @@
             : 'ring-1 ring-gray-200 dark:ring-gray-700',
     }">
         <template #header>
-            <div class="flex items-center justify-between cursor-pointer px-4 py-5 sm:px-6"
+            <div class="flex items-center justify-between cursor-pointer px-4 py-5 md:px-6"
                 @click="navigateToUserProfile">
                 <UCard :ui="{ base: 'w-full' }">
                     <div class="flex justify-between">
@@ -23,19 +23,19 @@
                 </UCard>
             </div>
         </template>
-
-        <div class="flex flex-col h-full w-full justify-between font-normal text-sm">
-            <div class="flex flex-col gap-2 mt-4">
-                <InviteButton :user-id="user._id" :disabled="user.isOnline" />
-                <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft"
-                    icon="i-heroicons-user-plus" class="flex-grow">
-                    {{ t('friends.addFriend') }}
-                </UButton>
-                <ChatButton :username="user.username" :user-id="user._id" :chat-setting="user.chatSetting"
-                    class="flex-grow" />
+        <ClientOnly>
+            <div class="flex flex-col h-full w-full justify-between font-normal text-sm">
+                <div class="flex flex-col gap-2 mt-4">
+                    <InviteButton :user-id="user._id" :disabled="user.isOnline" />
+                    <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft"
+                        icon="i-heroicons-user-plus" class="flex-grow">
+                        {{ t('friends.addFriend') }}
+                    </UButton>
+                    <ChatButton :username="user.username" :user-id="user._id" :chat-setting="user.chatSetting"
+                        class="flex-grow" />
+                </div>
             </div>
-        </div>
-
+        </ClientOnly>
         <template #footer v-if="isInFriendList">
             <UButton color="red" variant="soft" icon="i-heroicons-user-minus" class="w-full"
                 @click="removeFriend(user._id)">
@@ -62,48 +62,6 @@ const props = defineProps<{
     currentUserId: string | undefined;
     isInFriendList?: boolean;
 }>();
-
-const accordionItems = computed(() => [
-    {
-        label: t('profile.userStatistics'),
-        content: '',
-        defaultOpen: false,
-    },
-])
-
-const tableColumns = [
-    {
-        key: 'label',
-        label: t('profile.statistic'),
-    },
-    {
-        key: 'value',
-        label: t('profile.value'),
-    },
-]
-
-const tableRows = computed(() => [
-    {
-        key: 'rank',
-        label: t('profile.rank'),
-        value: props.user.rating,
-    },
-    {
-        key: 'rating',
-        label: t('profile.rating'),
-        value: props.user.rating,
-    },
-    {
-        key: 'gamesPlayed',
-        label: t('profile.gamesPlayed'),
-        value: props.user.stats.gamesPlayed,
-    },
-    {
-        key: 'winRate',
-        label: t('profile.winRate'),
-        value: `${calculateWinRate(props.user)}%`,
-    },
-])
 
 const canAddFriend = computed(() => {
     if (!props.currentUserId || !Array.isArray(friendsStore.friends)) {

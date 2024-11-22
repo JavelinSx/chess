@@ -1,7 +1,7 @@
 <template>
-    <UCard class="auth-form sm:w-96">
+    <UCard class="w-full max-w-[450px]">
         <UForm :state="formState" @submit="handleRegister" class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold mb-6 text-center">{{ t('auth.register') }}</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-green-600">{{ t('auth.register') }}</h2>
 
             <UFormGroup :label="t('auth.username')" name="username">
                 <UInput v-model="formState.username" type="text" :placeholder="t('auth.enterUsername')"
@@ -21,6 +21,10 @@
             <UButton type="submit" color="primary" block :loading="isLoading" class="mt-3 mb-6 h-11 text-base">
                 {{ t('auth.register') }}
             </UButton>
+            <div class="mt-8 mb-2 flex flex-col items-center justify-center">
+                {{ t('auth.textRedirectLogin') }}
+                <ULink class="mt-2 text-green-600 underline" to="/Login">{{ t('auth.login') }}</ULink>
+            </div>
         </UForm>
 
         <UAlert v-if="alert.alert.value.type" :type="alert.alert.value.type" color="red" variant="soft"

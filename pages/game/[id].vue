@@ -1,5 +1,5 @@
 <template>
-    <UContainer class="py-8">
+    <UContainer class="py-8 px-0 sm:px-1">
         <UCard v-if="errorMessage" color="red" class="mb-4 ">
             <p>{{ t(errorMessage) }}</p>
         </UCard>
@@ -28,7 +28,7 @@ import { useGameStore } from '~/store/game';
 import ChessBoard from '~/features/game/ui/ChessBoard.vue';
 import CapturedPieces from '~/features/game-logic/ui/CapturedPieces.vue';
 import GameResultModal from '~/features/game/ui/GameResultModal.vue';
-import { useGameSSE } from '~/composables/useGameSSE';
+import { useGameMovesSSE } from '~/composables/sse/useGameMovesSSE';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -36,7 +36,7 @@ const gameStore = useGameStore();
 const gameId = route.params.id as string;
 const errorMessage = ref<string | null>(null);
 
-useGameSSE(gameId)
+useGameMovesSSE(gameId)
 
 onMounted(async () => {
     try {

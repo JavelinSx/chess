@@ -1,23 +1,27 @@
 import { H3Event } from 'h3';
-import { GameService } from '../services/game.service';
-import { UserService } from '../services/user.service';
-import type { GameDuration } from '../types/game';
+import { GameService } from '../../services/game.service';
+import { UserService } from '../../services/user.service';
+import type { GameDuration } from '../../types/game';
 
 export class InvitationSSEManager {
   private invitationConnections: Map<string, H3Event> = new Map();
   private invitationTimers: Map<string, NodeJS.Timeout> = new Map();
 
-  addInvitationConnection(userId: string, event: H3Event) {
-    this.invitationConnections.set(userId, event);
+  async addInvitationConnection(userId: string, event: H3Event) {
+    if (this.invitationConnections.get(userId)) return;
+    else {
+      this.invitationConnections.set(userId, event);
+      this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
+    }
   }
-
-  removeInvitationConnection(userId: string) {
+  async removeInvitationConnection(userId: string) {
     this.invitationConnections.delete(userId);
     this.clearInvitationTimer(userId);
   }
 
   async sendGameInvitation(fromUserId: string, toUserId: string, fromUsername: string, gameDuration: GameDuration) {
     const event = this.invitationConnections.get(toUserId);
+
     if (event) {
       const message = JSON.stringify({
         type: 'game_invitation',
@@ -25,9 +29,15 @@ export class InvitationSSEManager {
         fromInviteName: fromUsername,
         gameDuration,
       });
-      await this.sendEvent(event, message);
 
+      try {
+        await this.sendEvent(event, message);
+      } catch (err) {
+        console.error('Error sending invitation:', err);
+      }
       this.setInvitationTimer(toUserId, fromUserId);
+    } else {
+      console.warn('No SSE connection found for user:', toUserId);
     }
   }
 
@@ -95,8 +105,9 @@ export class InvitationSSEManager {
   private async sendEvent(event: H3Event, data: string) {
     try {
       await event.node.res.write(`data: ${data}\n\n`);
-    } catch (error) {
-      console.error('Error sending invitation SSE event:', error);
+    } catch (err) {
+      console.error('Error writing SSE event:', err);
     }
   }
 }
+export const invitationSSEManager = new InvitationSSEManager();

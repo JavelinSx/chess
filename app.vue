@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { useSSEManagement } from '#imports';
+import { useSSEManagement } from './composables/sse/useSSEManagement';
 const { isAuthenticated } = useAuth();
 useSSEManagement();
 if (isAuthenticated.value) {

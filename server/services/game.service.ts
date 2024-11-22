@@ -4,7 +4,8 @@ import User from '~/server/db/models/user.model';
 import GameCache from '../utils/GameCache';
 import UserListCache from '../utils/UserListCache';
 import { UserService } from './user.service';
-import { sseManager } from '~/server/utils/SSEManager';
+import { gameSSEManager } from '../utils/sseManager/GameSSEManager';
+import { userSSEManager } from '../utils/sseManager/UserSSEManager';
 import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
 import { isKingInCheck, isCheckmate } from '~/features/game-logic/model/game-logic/check';
 import { isDraw } from '~/features/game-logic/model/game-state/draw';
@@ -158,7 +159,7 @@ export class GameService {
       const saveResponse = await this.saveGame(updatedGame);
       if (saveResponse.error) return saveResponse;
 
-      await sseManager.broadcastGameUpdate(gameId, updatedGame);
+      await gameSSEManager.broadcastGameUpdate(gameId, updatedGame);
       return { data: undefined, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
@@ -199,33 +200,32 @@ export class GameService {
     result: GameResult
   ): Promise<ApiResponse<GameResult & { ratingChanges: { [key: string]: number } }>> {
     try {
-      const game = await Game.findById(gameId);
-      if (!game) {
+      const gameStatus = await Game.findById(gameId);
+      if (!gameStatus) {
         throw new Error('Game not found');
       }
 
-      game.status = 'completed';
-      game.result = result;
-
-      if (game.players.white && game.players.black) {
-        const [whitePlayer, blackPlayer] = await Promise.all([
-          User.findById(game.players.white),
-          User.findById(game.players.black),
-        ]);
-
-        await Promise.all([
-          // Сохраняем isOnline статус игрока, меняем только isGame
-          UserService.updateUserStatus(game.players.white, whitePlayer?.isOnline || true, false),
-          UserService.updateUserStatus(game.players.black, blackPlayer?.isOnline || true, false),
-        ]);
+      // Проверяем что игра еще не завершена
+      if (gameStatus.status === 'completed') {
+        return {
+          data: gameStatus.result as GameResult & { ratingChanges: { [key: string]: number } },
+          error: null,
+        };
       }
 
+      // Инициализируем ratingChanges
       const ratingChanges: { [key: string]: number } = {};
 
-      if (game.players.white && game.players.black) {
+      gameStatus.status = 'completed';
+      gameStatus.result = result;
+
+      const game = await gameStatus.save();
+
+      if (game && game.players.white && game.players.black) {
         const whitePlayerId = game.players.white.toString();
         const blackPlayerId = game.players.black.toString();
 
+        // Получаем игроков одним запросом
         const [whitePlayer, blackPlayer] = await Promise.all([
           User.findById(whitePlayerId),
           User.findById(blackPlayerId),
@@ -233,46 +233,57 @@ export class GameService {
 
         if (whitePlayer && blackPlayer) {
           const isWhiteWinner = result.winner === whitePlayerId;
+
+          // Обновляем статистику и получаем изменения рейтинга
           ratingChanges[whitePlayerId] = updatePlayerStats(whitePlayer, blackPlayer, game, isWhiteWinner, 'white');
           ratingChanges[blackPlayerId] = updatePlayerStats(blackPlayer, whitePlayer, game, !isWhiteWinner, 'black');
 
+          // Сохраняем обновленных игроков
           await Promise.all([whitePlayer.save(), blackPlayer.save()]);
 
-          // Update users in cache
+          // Обновляем кэш
           const whitePlayerData = { ...whitePlayer.toObject(), _id: whitePlayerId } as ClientUser;
           const blackPlayerData = { ...blackPlayer.toObject(), _id: blackPlayerId } as ClientUser;
 
           UserListCache.updateUser(whitePlayerId, whitePlayerData);
           UserListCache.updateUser(blackPlayerId, blackPlayerData);
 
-          // Update user status
-          UserListCache.setUserOnline(whitePlayerId);
-          UserListCache.setUserOnline(blackPlayerId);
+          // Обновляем статусы игроков
+          await Promise.all([
+            UserService.updateUserStatus(whitePlayerId, whitePlayer.isOnline, false),
+            UserService.updateUserStatus(blackPlayerId, blackPlayer.isOnline, false),
+          ]);
         }
       }
 
-      await game.save();
+      // Обновляем результат игры с ratingChanges
+      const finalResult: GameResult & { ratingChanges: { [key: string]: number } } = {
+        ...result,
+        ratingChanges,
+      };
 
-      // Send game update notification
-      await sseManager.broadcastGameUpdate(gameId, game);
+      // Отправляем уведомления
+      await Promise.all([
+        gameSSEManager.broadcastGameUpdate(gameId, game),
+        gameSSEManager.sendGameEndNotification(gameId, finalResult),
+      ]);
 
-      // Send game end notification
-      await sseManager.sendGameEndNotification(gameId, { ...result, ratingChanges });
-
-      // Clear game cache
+      // Очищаем кэш игры
       GameCache.del(gameId);
 
-      // Get updated user list from cache and broadcast to all clients
+      // Обновляем список пользователей
       const updatedUserList = UserListCache.getAllUsers().map((user) => ({
         ...user,
         _id: user._id.toString(),
       }));
+      await userSSEManager.broadcastUserListUpdate(updatedUserList);
 
-      await sseManager.broadcastUserListUpdate(updatedUserList);
-
-      return { data: { ...result, ratingChanges }, error: null };
+      return { data: finalResult, error: null };
     } catch (error) {
-      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+      };
     }
   }
 

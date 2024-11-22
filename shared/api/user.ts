@@ -7,9 +7,16 @@ export const userApi = {
     id: string,
     username: string,
     email: string,
+    avatar: string,
     chatSetting: ChatSetting
   ): Promise<ApiResponse<UserProfileResponse>> {
-    return apiRequest<UserProfileResponse>('/user/profile-update', 'POST', { id, username, email, chatSetting });
+    return apiRequest<UserProfileResponse>('/user/profile-update', 'POST', {
+      id,
+      username,
+      email,
+      chatSetting,
+      avatar,
+    });
   },
 
   async deleteAccount(): Promise<ApiResponse<{ success: boolean }>> {

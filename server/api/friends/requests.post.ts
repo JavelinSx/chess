@@ -1,7 +1,6 @@
 import User from '~/server/db/models/user.model';
+import { friendsSSEManager } from '../../utils/sseManager/FriendsSSEManager';
 import { H3Error } from 'h3';
-import { sseManager } from '~/server/utils/SSEManager';
-
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
@@ -79,8 +78,8 @@ export default defineEventHandler(async (event) => {
 
     if (createdRequest) {
       // Отправка SSE уведомлений
-      await sseManager.sendFriendRequestNotification(toUserId, createdRequest);
-      await sseManager.sendFriendRequestNotification(fromUserId, createdRequest);
+      await friendsSSEManager.sendFriendRequestNotification(toUserId, createdRequest);
+      await friendsSSEManager.sendFriendRequestNotification(fromUserId, createdRequest);
     }
 
     return { message: 'Friend request sent successfully', request: createdRequest };

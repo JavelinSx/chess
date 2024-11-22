@@ -1,21 +1,28 @@
+<!-- features/invite/GameInvitationModal.vue -->
 <template>
-    <UModal v-model="invitationStore.showInvitationModal">
+    <UModal v-model="showModal" :ui="{ container: 'flex items-center justify-center min-h-screen sm:items-center' }">
         <UCard>
             <template #header>
                 <h3 class="text-xl font-bold">{{ t('game.gameInvitation') }}</h3>
             </template>
-            <p v-if="invitationStore.currentInvitation">
-                {{ invitationStore.currentInvitation.fromInviteName }} {{ t('game.invitesYouToPlay') }}
-                ({{ invitationStore.currentInvitation.gameDuration }} {{ t('game.minutes') }})
+
+            <p v-if="currentInvitation">
+                {{ currentInvitation?.fromInviteName }}
+                {{ t('game.invitesYouToPlay') }}
+                ({{ currentInvitation?.gameDuration }} {{ t('game.minutes') }})
             </p>
+
             <template #footer>
-                <div class="flex justify-end space-x-2">
-                    <UButton color="red" @click="invitationStore.rejectGameInvitation">
-                        {{ t('common.decline') }}
-                    </UButton>
-                    <UButton color="green" @click="invitationStore.acceptGameInvitation">
-                        {{ t('common.accept') }}
-                    </UButton>
+                <div class="flex flex-col gap-4">
+                    <div class="flex justify-end space-x-2">
+                        <UButton color="red" @click="invitationStore.rejectGameInvitation">
+                            {{ t('common.decline') }}
+                        </UButton>
+                        <UButton color="green" @click="handleAccept">
+                            {{ t('common.accept') }}
+                        </UButton>
+                    </div>
+                    <UProgress :value="progressValue" color="primary" />
                 </div>
             </template>
         </UCard>
@@ -24,35 +31,15 @@
 
 <script setup lang="ts">
 import { useInvitationStore } from '~/store/invitation';
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-
+console.log('hello')
 const { t } = useI18n();
 const invitationStore = useInvitationStore();
-const remainingSeconds = ref(15);
-
-let intervalId: NodeJS.Timeout | null = null;
-
-const startCountdown = () => {
-    remainingSeconds.value = 15;
-    if (intervalId) clearInterval(intervalId);
-    intervalId = setInterval(() => {
-        remainingSeconds.value--;
-        if (remainingSeconds.value <= 0) {
-            clearInterval(intervalId!);
-            invitationStore.expireInvitation();
-        }
-    }, 1000);
-};
-
-watch(() => invitationStore.showInvitationModal, (newValue) => {
-    if (newValue) {
-        startCountdown();
-    } else if (intervalId) {
-        clearInterval(intervalId);
-    }
-});
-
-onUnmounted(() => {
-    if (intervalId) clearInterval(intervalId);
-});
+const showModal = computed(() => invitationStore.showInvitationModal);
+const progressValue = computed(() => invitationStore.progressValue);
+const currentInvitation = computed(() => invitationStore.currentInvitation);
+const handleAccept = async () => {
+    console.log('before')
+    await invitationStore.acceptGameInvitation
+    console.log('after')
+}
 </script>

@@ -1,6 +1,6 @@
 <template>
     <div v-if="isOpen"
-        class="fixed bottom-4 right-4 z-50 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
+        class="fixed bottom-4 right-4 z-30 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
         <div class="p-4 rounded-t-lg flex justify-between items-center">
             <h2 class="text-lg font-semibold">{{ t('friends.friends') }} ({{ onlineFriendsCount }} {{ t('common.online')
                 }})</h2>
@@ -54,7 +54,7 @@
                                 {{ t('game.invite') }}
                             </UButton>
                             <ChatButton :username="friend.username" :user-id="friend._id"
-                                :chat-setting="friend.chatSetting" class="w-28" />
+                                :chat-setting="friend.chatSetting" class="w-28" @click="isOpen = false" />
 
                         </div>
                     </div>
@@ -70,8 +70,6 @@
         <UBadge v-if="receivedRequests.length > 0" :label="receivedRequests.length" color="red"
             class="absolute -top-2 -right-2" size="sm" />
     </UButton>
-
-    <GameDurationSelector v-if="invitationStore.showDurationSelector" />
 </template>
 
 <script setup lang="ts">

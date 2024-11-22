@@ -1,5 +1,5 @@
 <template>
-    <div class="flex items-center sm:ml-4">
+    <div class="flex items-center md:ml-4">
         <!-- Кнопка для выбора русского языка -->
         <UButton :color="locale === 'ru' ? 'violet' : 'gray'" :variant="locale === 'ru' ? 'solid' : 'outline'" size="md"
             @click="setLocale('ru')">

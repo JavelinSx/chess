@@ -1,17 +1,25 @@
 // server/services/user.service.ts
 
 import User from '../db/models/user.model';
+import { userSSEManager } from '../utils/sseManager/UserSSEManager';
+import UserListCache from '../utils/UserListCache';
 import type { ClientUser, UserProfileResponse, UserStats } from '../types/user';
 import type { ApiResponse } from '../types/api';
-import UserListCache from '../utils/UserListCache';
-import { sseManager } from '../utils/SSEManager';
 
 export class UserService {
+  static isValidAvatarUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      return ['https:', 'http:'].includes(parsed.protocol) && /\.(jpg|jpeg|png|webp|svg)$/i.test(parsed.pathname);
+    } catch {
+      return false;
+    }
+  }
   static async updateUserStatus(userId: string, isOnline: boolean, isGame: boolean): Promise<ApiResponse<void>> {
     try {
       await User.findByIdAndUpdate(userId, { isOnline, isGame });
       UserListCache.updateUserStatus(userId, isOnline, isGame);
-      await sseManager.broadcastUserStatusUpdate(userId, { isOnline, isGame });
+      await userSSEManager.broadcastUserStatusUpdate(userId, { isOnline, isGame });
       return { data: undefined, error: null };
     } catch (error) {
       return {
@@ -25,7 +33,7 @@ export class UserService {
     try {
       const users = await User.find({}, '_id isOnline isGame');
       for (const user of users) {
-        const isOnline = sseManager.isUserConnected(user._id.toString());
+        const isOnline = userSSEManager.isUserConnected(user._id.toString());
         if (user.isOnline !== isOnline || user.isGame !== UserListCache.getUserById(user._id.toString())?.isGame) {
           await this.updateUserStatus(user._id.toString(), isOnline, user.isGame);
         }
@@ -36,10 +44,18 @@ export class UserService {
     }
   }
 
-  static async profileUpdate(id: string, username: string, email: string): Promise<ApiResponse<UserProfileResponse>> {
+  static async profileUpdate(
+    id: string,
+    username: string,
+    email: string,
+    avatar: string
+  ): Promise<ApiResponse<UserProfileResponse>> {
     try {
-      const user = await User.findByIdAndUpdate(id, { username, email }, { new: true }).lean();
-
+      console.log(username, email, avatar);
+      const user = await User.findByIdAndUpdate(id, { username, email, avatar }, { new: true }).lean();
+      if (!this.isValidAvatarUrl(avatar)) {
+        throw new Error('Invalid avatar URL format');
+      }
       if (!user) {
         return { data: null, error: 'User not found' };
       }
@@ -62,7 +78,7 @@ export class UserService {
       };
 
       UserListCache.updateUser(id, response);
-      await sseManager.sendUserUpdate(response);
+      await userSSEManager.sendUserUpdate(response);
 
       return { data: response, error: null };
     } catch (error) {
@@ -81,7 +97,7 @@ export class UserService {
 
       await User.findByIdAndDelete(userId);
       UserListCache.removeUser(userId);
-      await sseManager.broadcastUserDeleted(userId);
+      await userSSEManager.broadcastUserDeleted(userId);
 
       return { data: undefined, error: null };
     } catch (error) {
@@ -91,19 +107,25 @@ export class UserService {
 
   static async updateUserProfile(
     id: string,
-    updateData: { username?: string; email?: string; chatSetting?: string }
-  ): Promise<ApiResponse<void>> {
+    updateData: { username?: string; email?: string; chatSetting?: string; avatar?: string }
+  ): Promise<ApiResponse<ClientUser>> {
     try {
-      const user = await User.findByIdAndUpdate(id, updateData, { new: true }).lean();
-
+      const user = await User.findByIdAndUpdate(
+        id,
+        {
+          username: updateData.username,
+          email: updateData.email,
+          chatSetting: updateData.chatSetting,
+          avatar: updateData.avatar,
+        },
+        { new: true }
+      ).lean();
       if (!user) {
         return { data: null, error: 'User not found' };
       }
-
       UserListCache.updateUser(id, user);
-      await sseManager.sendUserUpdate(user);
-
-      return { data: undefined, error: null };
+      await userSSEManager.sendUserUpdate(user);
+      return { data: user as unknown as ClientUser, error: null };
     } catch (error) {
       return {
         data: null,
@@ -114,27 +136,27 @@ export class UserService {
 
   static async getUsersList(): Promise<ApiResponse<ClientUser[]>> {
     try {
-      let users = UserListCache.getAllUsers();
-      if (users.length === 0) {
-        const dbUsers = await User.find({}).lean();
-        users = dbUsers.map((user) => ({
-          _id: user._id.toString(),
-          username: user.username,
-          githubData: user.githubData,
-          avatar: user.avatar,
-          isOnline: user.isOnline,
-          isGame: user.isGame,
-          email: user.email,
-          rating: user.rating,
-          stats: user.stats,
-          title: user.title,
-          lastLogin: user.lastLogin,
-          winRate: user.winRate,
-          friends: user.friends,
-          chatSetting: user.chatSetting,
-        }));
-        users.forEach((user) => UserListCache.addUser(user));
-      }
+      // let users = UserListCache.getAllUsers();
+      // if (users.length === 0) {
+      const dbUsers = await User.find({}).lean();
+      const users = dbUsers.map((user) => ({
+        _id: user._id.toString(),
+        username: user.username,
+        githubData: user.githubData,
+        avatar: user.avatar,
+        isOnline: user.isOnline,
+        isGame: user.isGame,
+        email: user.email,
+        rating: user.rating,
+        stats: user.stats,
+        title: user.title,
+        lastLogin: user.lastLogin,
+        winRate: user.winRate,
+        friends: user.friends,
+        chatSetting: user.chatSetting,
+      }));
+      users.forEach((user) => UserListCache.addUser(user));
+      // }
       return { data: users, error: null };
     } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
@@ -156,7 +178,7 @@ export class UserService {
 
       await user.save();
       UserListCache.updateUser(userId, { stats: user.stats, winRate: user.winRate });
-      await sseManager.sendUserUpdate(user);
+      await userSSEManager.sendUserUpdate(user);
 
       return { data: undefined, error: null };
     } catch (error) {
@@ -223,7 +245,7 @@ export class UserService {
       };
 
       UserListCache.updateUser(userId, updatedClientUser);
-      await sseManager.sendUserUpdate(updatedClientUser);
+      await userSSEManager.sendUserUpdate(updatedClientUser);
 
       return { data: undefined, error: null };
     } catch (error) {

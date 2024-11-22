@@ -16,6 +16,8 @@
     "offline": "Offline"
   },
   "auth": {
+    "textRedirectRegister": "If there is no account",
+    "textRedirectLogin": "Already have an account?",
     "continueWithGithub": "Login with Github",
     "continueWithGoogle": "Login with Google",
     "loginWithVK": "Login with VK",

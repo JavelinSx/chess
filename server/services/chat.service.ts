@@ -1,10 +1,10 @@
+import mongoose from 'mongoose';
 import ChatRoom from '../db/models/chat-room.model';
 import User from '../db/models/user.model';
+import { chatSSEManager } from '../utils/sseManager/ChatSSEManager';
 import type { IChatRoom, ChatMessage, ChatParticipant } from '../types/chat';
-import type { Friend } from '../types/friends';
 import type { ChatSetting } from '../types/user';
 import type { ApiResponse } from '~/server/types/api';
-import mongoose from 'mongoose';
 
 export class ChatService {
   static async createOrGetRoomWithPrivacyCheck(
@@ -63,14 +63,14 @@ export class ChatService {
         const userParticipant = room.participants.find((p) => p._id.toString() === userId);
         if (userParticipant) {
           userParticipant.chatSetting = newChatSetting;
-          await sseManager.sendChatRoomUpdateNotification(userParticipant?._id.toString(), room._id.toString());
+          await chatSSEManager.sendChatRoomUpdateNotification(userParticipant?._id.toString(), room._id.toString());
           await room.save();
         }
 
         // Отправляем уведомление другому участнику комнаты
         const otherParticipant = room.participants.find((p) => p._id.toString() !== userId);
         if (otherParticipant) {
-          await sseManager.sendChatRoomUpdateNotification(otherParticipant._id.toString(), room._id.toString());
+          await chatSSEManager.sendChatRoomUpdateNotification(otherParticipant._id.toString(), room._id.toString());
         }
       }
 
@@ -170,7 +170,7 @@ export class ChatService {
       if (!updatedRoom) {
         return { data: null, error: 'Failed to update chat room' };
       }
-      await sseManager.sendChatMessage(roomId, chatMessage);
+      await chatSSEManager.sendChatMessage(roomId, chatMessage);
 
       return {
         data: {

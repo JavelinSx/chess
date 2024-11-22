@@ -1,6 +1,6 @@
 // server/api/sse/game-moves.ts
-import { sseManager } from '~/server/utils/SSEManager';
 import { GameService } from '~/server/services/game.service';
+import { gameSSEManager } from '~/server/utils/sseManager/GameSSEManager';
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
@@ -42,11 +42,10 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Cache-Control', 'no-cache');
   setHeader(event, 'Connection', 'keep-alive');
 
-  sseManager.addGameConnection(gameId, userId, event);
+  gameSSEManager.addGameConnection(gameId, userId, event);
 
   const closeHandler = () => {
-    console.log(gameId, userId, 'close sse game-moves');
-    sseManager.removeGameConnection(gameId, userId);
+    gameSSEManager.removeGameConnection(gameId, userId);
   };
 
   event.node.req.on('close', closeHandler);

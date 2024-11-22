@@ -1,47 +1,59 @@
 <template>
-    <div class="min-w-[550px]">
-        <UCard>
-            <template #header>
-                <h2 class="text-2xl font-bold">{{ t('profile.profile') }}</h2>
-            </template>
 
-            <div class="flex items-center mb-4">
-                <UAvatar :src="getUserAvatar(user)" :alt="user.username" size="xl" class="mr-4" />
-                <div class="flex flex-col gap-4 ml-2">
-                    <div>
-                        <p class="font-semibold">{{ t('auth.email') }}:</p>
-                        <p>{{ user.email }}</p>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold mb-1">{{ user.username }}</h3>
+    <UCard :ui="{
+        base: 'max-w-2xl w-full',
+        header: {
+            padding: 'px-4 py-5 sm:px-4 md:px-4'
+        },
+        body: {
+            padding: 'px-4 py-5 sm:px-2 md:px-4'
+        },
+        footer: {
+            padding: 'px-4 py-5 sm:px-2 md:px-4'
+        }
+    }">
+        <template #header>
+            <h2 class="text-2xl sm:text-lg font-bold">{{ t('profile.profile') }}</h2>
+        </template>
 
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- <div class="grid grid-cols-2 gap-4 ">
-                <div class="flex flex-col justify-end">
+        <div class="flex items-center mb-4">
+            <UAvatar :src="getUserAvatar(user)" :alt="user.username" size="xl" class="mr-4" />
+            <div class="flex flex-col gap-4 ml-2 sm:text-sm">
+                <div>
                     <p class="font-semibold">{{ t('auth.email') }}:</p>
                     <p>{{ user.email }}</p>
                 </div>
-            </div> -->
-        </UCard>
+                <div>
+                    <p class="font-semibold">{{ t('auth.username') }}:</p>
+                    <h3 class="text-xl sm:text-sm font-semibold ">{{ user.username }}</h3>
+                </div>
+            </div>
+        </div>
+    </UCard>
 
-        <UCard class="max-w-2xl mx-auto">
-            <template #header>
-                <h2 class="text-2xl font-bold">{{ t('profile.userStatistics') }}</h2>
-            </template>
+    <UCard :ui="{
+        header: {
+            padding: 'px-4 py-5 sm:px-4 md:px-4'
+        },
+        body: {
+            padding: 'px-4 py-5 sm:px-2 md:px-4'
+        },
+        footer: {
+            padding: 'px-4 py-5 sm:px-2 md:px-4'
+        }
+    }" class="max-w-2xl w-full ">
+        <template #header>
+            <h2 class="text-2xl sm:text-lg font-bold">{{ t('profile.userStatistics') }}</h2>
+        </template>
 
-            <RatingTitle :rating="user.rating" class="mb-6" />
+        <RatingTitle :rating="user.rating" class="mb-6" />
 
-            <UTable :columns="columns" :rows="rows" />
-            <template #footer>
-                <p class="text-sm text-gray-500">{{ t('profile.lastLogin') }}: {{ formattedLastLogin }}</p>
-            </template>
-        </UCard>
-    </div>
+        <UTable :columns="columns" :rows="rows" />
+        <template #footer>
+            <p class="text-sm text-gray-500">{{ t('profile.lastLogin') }}: {{ formattedLastLogin }}</p>
+        </template>
+    </UCard>
+
 </template>
 
 <script setup lang="ts">

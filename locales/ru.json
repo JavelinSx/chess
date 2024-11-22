@@ -16,6 +16,8 @@
     "offline": "Оффлайн"
   },
   "auth": {
+    "textRedirectRegister": "Если нет аккаунта",
+    "textRedirectLogin": "Уже есть аккаунт?",
     "continueWithGithub": "Войти через Github",
     "continueWithGoogle": "Войти через Google",
     "loginWithVK": "Войти через VK",

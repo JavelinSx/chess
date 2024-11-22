@@ -70,6 +70,12 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { hid: 'description', name: 'description', content: 'ChessNexus - Your Online Chess Platform' },
       ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/chess.ico' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/chess-144.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/chess-48.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/chess-48.svg' },
+      ],
     },
   },
 

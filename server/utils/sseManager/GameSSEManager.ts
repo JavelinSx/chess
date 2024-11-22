@@ -1,6 +1,6 @@
 import { H3Event } from 'h3';
-import type { ChessGame } from '../types/game';
-import type { GameResult } from '../types/game';
+import type { ChessGame } from '../../types/game';
+import type { GameResult } from '../../types/game';
 
 export class GameSSEManager {
   private gameConnections: Map<string, Map<string, H3Event>> = new Map();
@@ -61,3 +61,5 @@ export class GameSSEManager {
     }
   }
 }
+
+export const gameSSEManager = new GameSSEManager();

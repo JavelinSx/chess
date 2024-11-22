@@ -1,8 +1,10 @@
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { useAuthStore } from '~/store/auth';
 import { useUserStore } from '~/store/user';
-import { useChatSSE } from '~/composables/useChatSSE';
-import { useUserSSE } from '~/composables/useUserSSE';
+import { useChatSSE } from '~/composables/sse/useChatSSE';
+import { useUserSSE } from '~/composables/sse/useUserSSE';
+import { useFriendsSSE } from './useFriendsSSE';
+import { useInvitationsSSE } from './useInvitationsSSE';
 
 export function useSSEManagement() {
   const authStore = useAuthStore();
@@ -12,23 +14,37 @@ export function useSSEManagement() {
   const isConnected = ref(false);
   const { setupSSE: setupChatSSE, refreshRooms, closeSSE: closeChatSSE } = useChatSSE();
   const { setupSSE: setupUserSSE, closeSSE: closeUserSSE } = useUserSSE();
-
+  const { setupSSE: setupInvitationsSSE, closeSSE: closeInvitationsSSE } = useInvitationsSSE();
+  const { setupSSE: setupFriendsSSE, closeSSE: closeFriendsSSE } = useFriendsSSE();
   let reconnectTimeout: NodeJS.Timeout;
 
   const initializeSSE = async () => {
     if (isInitialized.value || !authStore.isAuthenticated || !userStore.user) return;
-    setupUserSSE();
-    setupChatSSE();
-    await refreshRooms();
-    isInitialized.value = true;
-    isConnected.value = true;
+
+    try {
+      await setupUserSSE();
+      await setupChatSSE();
+      await setupInvitationsSSE();
+      await setupFriendsSSE();
+      isInitialized.value = true;
+      isConnected.value = true;
+    } catch (error) {
+      console.error('SSE initialization failed:', error);
+      await cleanupSSE();
+    }
   };
 
   const cleanupSSE = async () => {
-    closeUserSSE();
-    closeChatSSE();
-    isInitialized.value = false;
-    isConnected.value = false;
+    try {
+      closeUserSSE();
+      closeChatSSE();
+      closeInvitationsSSE();
+      closeFriendsSSE;
+      isInitialized.value = false;
+      isConnected.value = false;
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const reconnect = () => {
@@ -36,6 +52,7 @@ export function useSSEManagement() {
     reconnectTimeout = setTimeout(async () => {
       await cleanupSSE();
       await initializeSSE();
+      console.log('hello');
     }, 5000); // Попытка переподключения через 5 секунд
   };
 

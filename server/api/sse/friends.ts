@@ -1,5 +1,5 @@
-// server/api/sse/chat.ts
-import { chatSSEManager } from '~/server/utils/sseManager/ChatSSEManager';
+// server/api/sse/friends.ts
+import { friendsSSEManager } from '~/server/utils/sseManager/FriendsSSEManager';
 
 export default defineEventHandler(async (event) => {
   const userId = event.context.auth?.userId;
@@ -14,10 +14,10 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Cache-Control', 'no-cache');
   setHeader(event, 'Connection', 'keep-alive');
 
-  await chatSSEManager.addChatConnection(userId, event);
+  await friendsSSEManager.addFriendConnection(userId, event);
 
   const closeHandler = async () => {
-    await chatSSEManager.removeChatConnection(userId);
+    await friendsSSEManager.removeFriendConnection(userId);
   };
 
   event.node.req.on('close', closeHandler);

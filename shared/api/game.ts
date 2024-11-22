@@ -12,6 +12,7 @@ export const gameApi = {
   },
 
   async sendInvitation(toInviteId: string, gameDuration: GameDuration): Promise<ApiResponse<{ success: boolean }>> {
+    console.log('hellosendInvitationAPI');
     return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId, gameDuration });
   },
 

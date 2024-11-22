@@ -1,8 +1,9 @@
 <template>
-    <div class="min-h-screen flex flex-col sm:items-center relative">
+    <div class="min-h-screen flex flex-col md:items-center relative">
         <UContainer :ui="{ base: 'm-0 ' }">
             <nav class="py-4 flex items-center justify-between max-w-[570px]">
-                <NuxtLink to="/" class="text-2xl font-bold mr-4 text-center sm:text-xl">ChessNexus</NuxtLink>
+                <NuxtLink to="/" class="text-2xl font-bold mr-4 text-center sm:text-xl text-green-600">ChessNexus
+                </NuxtLink>
 
                 <!-- Desktop menu -->
                 <div class="hidden md:flex items-center space-x-4">
@@ -17,37 +18,45 @@
                 </div>
 
                 <!-- Mobile burger menu -->
-                <UButton @click="isMenuOpen = !isMenuOpen" size="lg" color="gray" variant="solid" class="md:hidden"
-                    aria-label="Menu">
-                    <UIcon v-if="!isMenuOpen" name="i-heroicons-bars-3" />
-                    <UIcon v-else name="i-heroicons-x-mark" />
+                <UButton @click="isMenuOpen = !isMenuOpen"
+                    :class="isMenuOpen ? 'fixed right-6 top-4' : 'inharit right-0'" size="lg" color="gray"
+                    variant="solid" class="md:hidden z-50" aria-label="Menu">
+                    <UIcon class="text-green-400" v-if="!isMenuOpen" name="i-heroicons-bars-3" />
+                    <UIcon class="text-green-400 " v-else name="i-heroicons-x-mark" />
                 </UButton>
             </nav>
         </UContainer>
 
         <!-- Mobile menu -->
-        <UContainer v-if="isMenuOpen" class="md:hidden">
-            <div class="flex flex-col space-y-2 py-4 items-center">
-                <UButton v-for="link in navLinks" :key="link.to" :to="link.to" color="gray" variant="ghost" block
-                    @click="isMenuOpen = false">
-                    {{ link.label }}
-                </UButton>
-                <UButton v-if="isAuthenticated" @click="logout" color="gray" variant="ghost" block>
-                    {{ t('auth.logout') }}
-                </UButton>
+        <Transition name="menu">
+            <UContainer v-show="isMenuOpen"
+                class="border-b border-b-green-600 md:hidden fixed top-0 left-0 z-30 w-full pt-14 bg-white dark:bg-gray-900">
+                <div class="flex flex-col space-y-2 py-4 items-center gap-4">
+                    <UButton :ui="{ base: 'flex flex-col gap-2' }" v-for="link in navLinks" :key="link.to" :to="link.to"
+                        color="gray" variant="ghost" block @click="isMenuOpen = false">
+                        {{ link.label }}
+                        <UDivider />
+                    </UButton>
+                    <UButton :ui="{ base: 'flex flex-col gap-2' }" v-if="isAuthenticated" @click="logout" color="gray"
+                        variant="ghost" block>
+                        {{ t('auth.logout') }}
+                        <UDivider />
+                    </UButton>
 
-                <LocalesSwitcher />
-                <ToggleTheme />
-            </div>
-        </UContainer>
+                    <LocalesSwitcher />
+                    <ToggleTheme />
+                </div>
+            </UContainer>
+        </Transition>
+
 
         <UButton v-if="isAuthenticated && activeGameId && !isGamePage" :to="`/game/${activeGameId}`" color="primary"
-            variant="soft" class="w-80 text-center self-center mt-4">
+            variant="soft" class="w-80 h-10 text-center self-center mt-4">
             {{ t('game.returnToGame') }}
         </UButton>
 
-        <main class="flex-grow w-100">
-            <UContainer class="py-4 max-w-[570px] md:max-w-[770px]">
+        <main class="flex-grow w-full max-w-[750px] xl:max-w-[1024px]">
+            <UContainer class="py-4 sm:px-2 max-w-[750px] xl:max-w-[1024px] flex flex-col justify-center items-center">
                 <slot />
             </UContainer>
             <FloatingChat />
@@ -66,6 +75,9 @@
                 class="absolute -top-2 -right-2" size="sm" />
         </UButton>
     </div>
+    <GameDurationSelector :selected-user="invitationStore.infoInvitation" @close="handleDurationSelectorClose" />
+    <GameInvitationModal />
+    <!-- <debug /> используется для логов не мобилке -->
 </template>
 
 <script setup lang="ts">
@@ -73,18 +85,29 @@ import { useAuthStore } from '../store/auth';
 import { useUserStore } from '~/store/user';
 import { useGameStore } from '~/store/game';
 import { useChatStore } from '~/store/chat';
+import { useInvitationStore } from '~/store/invitation';
 import { computed, ref } from 'vue';
 import FloatingChat from '~/features/chat/ui/FloatingChat.vue';
 import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'
 import LocalesSwitcher from '~/features/locales/ui/LocalesSwitcher.vue';
 import FloatingFriends from '~/features/friends/ui/FloatingFriends.vue';
+import GameDurationSelector from '~/features/game/ui/GameDurationSelector.vue';
+import GameInvitationModal from '~/features/invite/GameInvitationModal.vue';
+import debug from '~/features/debug.vue';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
 const userStore = useUserStore();
 const gameStore = useGameStore();
 const chatStore = useChatStore();
+const invitationStore = useInvitationStore();
+
+
 const route = useRoute();
+
+const handleDurationSelectorClose = () => {
+    invitationStore.closeDurationSelector();
+};
 
 const { isAuthenticated } = useAuth();
 const isMenuOpen = ref(false);
@@ -119,3 +142,15 @@ const toggleChat = () => {
 };
 
 </script>
+
+<style scoped>
+.menu-enter-active,
+.menu-leave-active {
+    transition: all 0.3s ease;
+}
+
+.menu-enter-from,
+.menu-leave-to {
+    transform: translateY(-100%);
+}
+</style>

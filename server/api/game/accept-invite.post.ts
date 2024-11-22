@@ -1,7 +1,7 @@
 import { defineEventHandler, readBody } from 'h3';
 import { GameService } from '~/server/services/game.service';
 import { UserService } from '~/server/services/user.service';
-import { sseManager } from '~/server/utils/SSEManager';
+import { invitationSSEManager } from '../../utils/sseManager/InvitationSSEManager';
 
 export default defineEventHandler(async (event) => {
   const { inviterId, timeControl } = await readBody(event);
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Отправляем уведомление о начале игры через пользовательский SSE канал
-    await sseManager.sendGameStartNotification(game._id.toString(), [inviterId, inviteeId]);
+    await invitationSSEManager.sendGameStartNotification(game._id.toString(), [inviterId, inviteeId]);
 
     return { data: { gameId: game._id.toString() }, error: null };
   } catch (error) {

@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 
 export function useHeartbeat() {
   const heartbeatInterval = ref<NodeJS.Timeout | null>(null);
-  const HEARTBEAT_INTERVAL = 5000;
+  const HEARTBEAT_INTERVAL = 30000;
 
   const startHeartbeat = async () => {
     // Очищаем существующий интервал если есть
@@ -48,7 +48,8 @@ export function useHeartbeat() {
 
   onMounted(() => {
     if (import.meta.client) {
-      startHeartbeat();
+      console.log(heartbeatInterval);
+      if (!heartbeatInterval) startHeartbeat();
       document.addEventListener('visibilitychange', handleVisibilityChange);
     }
   });

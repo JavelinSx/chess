@@ -1,6 +1,6 @@
 import User from '../db/models/user.model';
 import { UserService } from './user.service';
-
+import { userSSEManager } from '../utils/sseManager/UserSSEManager';
 export class UserActivityService {
   private static userActivityTimeout = new Map<string, NodeJS.Timeout>();
   private static readonly TIMEOUT_DURATION = 60000;
@@ -30,7 +30,7 @@ export class UserActivityService {
   private static async handleUserInactivity(userId: string) {
     try {
       await UserService.updateUserStatus(userId, false, false);
-      await sseManager.broadcastUserStatusUpdate(userId, {
+      await userSSEManager.broadcastUserStatusUpdate(userId, {
         isOnline: false,
         isGame: false,
       });

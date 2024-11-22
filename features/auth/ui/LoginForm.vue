@@ -1,7 +1,7 @@
 <template>
-    <UCard class="auth-form sm:w-96">
+    <UCard class="w-full max-w-[450px]">
         <UForm :state="formState" @submit="handleLogin" class="flex flex-col gap-4">
-            <h2 class="text-2xl font-bold mb-6 text-center">{{ t('auth.login') }}</h2>
+            <h2 class="text-2xl font-bold mb-6 text-center text-green-600">{{ t('auth.login') }}</h2>
             <UFormGroup :label="t('auth.email')" name="email">
                 <UInput v-model="formState.email" type="email" :placeholder="t('auth.enterEmail')" autocomplete="email"
                     size="lg" required />
@@ -19,6 +19,10 @@
         <VK />
         <Github />
         <Google />
+        <div class="mt-8 mb-2 flex flex-col items-center justify-center">
+            {{ t('auth.textRedirectRegister') }}
+            <ULink class="mt-2 text-green-600 underline" to="/register">{{ t('auth.register') }}</ULink>
+        </div>
         <UAlert v-if="alert.alert.value.type" :type="alert.alert.value.type" :title="t(alert.alert.value.message)"
             :color="authStore.isAuthenticated ? 'green' : 'red'" variant="soft"
             :icon="getAlertIcon(alert.alert.value.type)" class="mt-4"

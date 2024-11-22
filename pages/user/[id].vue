@@ -1,5 +1,5 @@
 <template>
-    <div v-if="user">
+    <div class="w-full flex flex-col gap-4 items-center justify-center" v-if="user">
         <UserProfile :user="user" />
     </div>
     <div v-else-if="error">

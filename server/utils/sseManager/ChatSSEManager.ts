@@ -4,12 +4,15 @@ import type { ChatMessage, IChatRoom } from '~/server/types/chat';
 export class ChatSSEManager {
   private chatConnections: Map<string, H3Event> = new Map();
 
-  addChatConnection(userId: string, event: H3Event) {
-    this.chatConnections.set(userId, event);
-    this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
+  async addChatConnection(userId: string, event: H3Event) {
+    if (this.chatConnections.get(userId)) return;
+    else {
+      this.chatConnections.set(userId, event);
+      this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
+    }
   }
 
-  removeChatConnection(userId: string) {
+  async removeChatConnection(userId: string) {
     this.chatConnections.delete(userId);
   }
 
@@ -21,7 +24,7 @@ export class ChatSSEManager {
         message,
       },
     });
-    for (const [userId, connection] of this.chatConnections.entries()) {
+    for (const [userId, connection] of this.chatConnections) {
       await this.sendEvent(connection, event);
     }
   }
@@ -56,3 +59,5 @@ export class ChatSSEManager {
     await event.node.res.write(`data: ${data}\n\n`);
   }
 }
+
+export const chatSSEManager = new ChatSSEManager();

@@ -2,7 +2,7 @@ import { defineEventHandler, readBody } from 'h3';
 import { UserService } from '~/server/services/user.service';
 
 export default defineEventHandler(async (event) => {
-  const { id, username, email, chatSetting } = await readBody(event);
+  const { id, username, email, chatSetting, avatar } = await readBody(event);
 
   if (!id) {
     throw createError({
@@ -12,8 +12,8 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const updatedUser = await UserService.updateUserProfile(id, { username, email, chatSetting });
-    return { data: updatedUser, error: null };
+    const updatedUser = await UserService.updateUserProfile(id, { username, email, chatSetting, avatar });
+    return updatedUser;
   } catch (error) {
     console.error('Error updating user profile:', error);
     return {

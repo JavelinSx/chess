@@ -2,21 +2,33 @@ import { defineStore } from 'pinia';
 import { gameApi } from '~/shared/api/game';
 import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
 import { useUserStore } from './user';
-
+export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
 export const useGameStore = defineStore('game', {
   state: () => ({
+    // Game State
     currentGame: null as ChessGame | null,
-    error: null as string | null,
+    gameDuration: 30,
+    isLoading: false,
+
+    // Promotion State
     promote: false,
     pendingPromotion: null as { from: Position; to: Position } | null,
+
+    // Result State
     showResultModal: false,
     gameResult: null as GameResult | null,
-    isLoading: false,
-    gameDuration: 30,
+    gameEndReason: null as Promise<GameResult> | null,
+    // Error Handling
+    error: null as string | null,
+
+    // Utils
     locales: useI18n(),
+
+    isProcessingGameEnd: false,
   }),
 
   actions: {
+    // Core Game Actions
     async fetchGame(gameId: string) {
       try {
         const response = await gameApi.getGame(gameId);
@@ -35,9 +47,6 @@ export const useGameStore = defineStore('game', {
 
     updateGameState(game: ChessGame) {
       this.currentGame = { ...game };
-      if (game.status === 'completed' && game.result) {
-        this.handleGameEnd(game.result);
-      }
     },
 
     async makeMove(from: Position, to: Position) {
@@ -58,12 +67,7 @@ export const useGameStore = defineStore('game', {
       }
     },
 
-    handleSSEUpdate(updatedGame: ChessGame) {
-      if (this.currentGame && this.currentGame._id === updatedGame._id) {
-        this.currentGame = updatedGame;
-      }
-    },
-
+    // Pawn Promotion Actions
     async promotePawn(promoteTo: PieceType) {
       if (!this.currentGame || !this.pendingPromotion) {
         throw new Error(this.locales.t('noPendingPromotion'));
@@ -81,53 +85,35 @@ export const useGameStore = defineStore('game', {
       }
     },
 
+    // Обработка окончания игры
+    async handleGameEnd(result: GameResult) {
+      // Проверяем флаг перед выполнением
+      if (this.isProcessingGameEnd || !this.currentGame) return;
+
+      try {
+        this.isProcessingGameEnd = true; // Устанавливаем флаг
+
+        const response = await gameApi.endGame(this.currentGame._id, result);
+
+        if (response.data) {
+          this.gameResult = response.data;
+          this.showResultModal = true;
+          this.currentGame.status = 'completed'; // Явно устанавливаем статус
+        }
+      } catch (error) {
+        console.error('Error ending game:', error);
+        this.error = 'Failed to end game';
+      } finally {
+        this.isProcessingGameEnd = false; // Сбрасываем флаг
+      }
+    },
+
+    // Time Control Actions
     setGameDuration(duration: number) {
       this.gameDuration = duration;
     },
 
-    async handleTimeUp(playerColor: 'white' | 'black') {
-      if (!this.currentGame) return;
-
-      const winner = playerColor === 'white' ? 'black' : 'white';
-      const result: GameResult = {
-        winner: this.currentGame.players[winner],
-        loser: this.currentGame.players[playerColor],
-        reason: 'timeout',
-      };
-
-      await this.handleGameEnd(result);
-    },
-
-    async sendGameInvitation(toInviteId: string) {
-      const response = await gameApi.sendInvitation(toInviteId, this.gameDuration as GameDuration);
-      if (response.error) {
-        console.error(this.locales.t('failedToSendInvitation'), response.error);
-      } else if (response.data && response.data.success) {
-        console.log(this.locales.t('invitationSentSuccessfully'));
-      }
-    },
-
-    async handleGameEnd(result: GameResult) {
-      this.gameResult = result;
-      this.showResultModal = true;
-
-      if (this.currentGame) {
-        try {
-          const response = await gameApi.endGame(this.currentGame._id, result);
-          if (response.error) {
-            console.error('Failed to end game on server:', response.error);
-          } else {
-            if (response.data && 'ratingChanges' in response.data) {
-              this.gameResult = { ...this.gameResult, ratingChanges: response.data.ratingChanges };
-              this.clearGameState();
-            }
-          }
-        } catch (error) {
-          console.error('Error ending game:', error);
-        }
-      }
-    },
-
+    // State Management Actions
     clearGameState() {
       this.currentGame = null;
       this.error = null;
@@ -147,10 +133,19 @@ export const useGameStore = defineStore('game', {
       this.showResultModal = true;
     },
 
+    // Real-time Update Actions
+    handleSSEUpdate(updatedGame: ChessGame) {
+      if (this.currentGame && this.currentGame._id === updatedGame._id) {
+        this.currentGame = updatedGame;
+      }
+    },
+
+    // Error Handling Actions
     resetError() {
       this.error = null;
     },
   },
+
   persist: {
     storage: persistedState.localStorage,
   },

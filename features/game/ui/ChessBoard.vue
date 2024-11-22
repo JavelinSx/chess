@@ -1,8 +1,8 @@
 <template>
-    <UCard class="chess-board-container">
+    <UCard class="chess-board-container sm:px-1">
         <template #header>
             <ChessTimer :duration="gameStore.currentGame?.timeControl?.initialTime"
-                :player-color="gameStore.currentGame?.currentTurn!" />
+                :player-color="gameStore.currentGame?.currentTurn!" @time-up="handleTimeUp" />
         </template>
 
         <UCard :ui="{ header: { padding: 'py-4' } }" class="mb-4">
@@ -38,7 +38,7 @@
 
         <template #footer>
             <UButton v-if="gameStore.currentGame?.status === 'active'" color="red" icon="i-heroicons-flag"
-                @click="handleGameEnd('forfeit')">
+                @click="forfeitGame()">
                 {{ t('game.forfeitGame') }}
             </UButton>
         </template>
@@ -49,13 +49,15 @@
 import { ref, computed, watch, onUnmounted } from 'vue';
 import ChessPiece from './ChessPiece.vue';
 import PawnPromotionDialog from '~/features/game-logic/ui/PawnPromotionDialog.vue';
-import type { PieceType, Position, GameResult, GameResultReason } from '~/server/types/game';
+import { isDraw } from '~/features/game-logic/model/game-state/draw';
 import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
 import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
 import ChessTimer from './ChessTimer.vue';
 import { useGameAdditionalStore } from '~/store/gameAdditional';
+import type { PieceType, Position, GameResult, GameResultReason } from '~/server/types/game';
+export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
 
 const { t } = useI18n();
 const gameStore = useGameStore();
@@ -85,7 +87,7 @@ const currentPlayerName = computed(() => {
     }
 });
 
-const currentPlayerAvatar = computed(() => 'https://via.placeholder.com/40');
+const currentPlayerAvatar = computed(() => userStore.user?.avatar);
 const isCurrentPlayerTurn = computed(() => currentPlayerId.value === userStore.user?._id);
 
 function getCellClasses(row: number, col: number) {
@@ -138,35 +140,6 @@ function handlePromotion(promoteTo: PieceType) {
     }
 }
 
-async function handleGameEnd(reasonOrResult: NonNullable<GameResultReason> | GameResult) {
-    if (!gameStore.currentGame) return;
-
-    let result: GameResult;
-
-    if (typeof reasonOrResult === 'string') {
-        // Если передана причина окончания игры
-        result = {
-            winner: null,
-            loser: null,
-            reason: reasonOrResult
-        };
-
-        if (reasonOrResult === 'checkmate' || reasonOrResult === 'forfeit') {
-            result.winner = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.black : gameStore.currentGame.players.white;
-            result.loser = gameStore.currentGame.currentTurn === 'white' ? gameStore.currentGame.players.white : gameStore.currentGame.players.black;
-        }
-    } else {
-        // Если передан готовый объект GameResult
-        result = reasonOrResult;
-    }
-
-    try {
-        await gameStore.handleGameEnd(result);
-    } catch (error) {
-        console.error('Error handling game end:', error);
-    }
-}
-
 async function handleCellClick(position: Position) {
     if (!isCurrentPlayerTurn.value || !currentGame.value) return;
 
@@ -194,42 +167,70 @@ async function handleCellClick(position: Position) {
     }
 }
 
-const isGameResult = (result: any): result is GameResult => {
-    return (
-        typeof result === 'object' &&
-        'winner' in result &&
-        'loser' in result &&
-        'reason' in result
-    );
+const checkGameEnd = () => {
+    if (!gameStore.currentGame || gameStore.currentGame.status === 'completed') return;
+
+    if (gameStore.currentGame.isCheckmate) {
+        handleGameEnd('checkmate');
+    } else if (gameStore.currentGame.isStalemate) {
+        handleGameEnd('stalemate');
+    } else if (isDraw(gameStore.currentGame)) {
+        handleGameEnd('draw');
+    }
 };
 
-// Отслеживание конца игры
+const handleGameEnd = async (reason: 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout') => {
+    if (!gameStore.currentGame) return;
+
+    const result: GameResult = {
+        winner: null,
+        loser: null,
+        reason
+    };
+
+    // Определяем победителя и проигравшего в зависимости от причины
+    if (reason === 'forfeit' && currentPlayerId.value) {
+        // При сдаче текущий игрок проигрывает
+        result.loser = currentPlayerId.value;
+        result.winner = gameStore.currentGame.players[
+            gameStore.currentGame.currentTurn === 'white' ? 'black' : 'white'
+        ];
+    } else if (reason === 'checkmate') {
+        // При мате текущий игрок проигрывает
+        result.loser = gameStore.currentGame.players[gameStore.currentGame.currentTurn];
+        result.winner = gameStore.currentGame.players[
+            gameStore.currentGame.currentTurn === 'white' ? 'black' : 'white'
+        ];
+    } else if (reason === 'timeout') {
+        // При окончании времени проигрывает тот, у кого оно закончилось
+        const timeoutColor = gameStore.currentGame.currentTurn;
+        result.loser = gameStore.currentGame.players[timeoutColor];
+        result.winner = gameStore.currentGame.players[timeoutColor === 'white' ? 'black' : 'white'];
+    }
+    // При пате или ничьей winner и loser остаются null
+
+    await gameStore.handleGameEnd(result);
+};
+
+// Обработчики различных событий окончания игры
+const forfeitGame = () => {
+    if (!gameStore.currentGame || gameStore.currentGame.status === 'completed') return;
+    handleGameEnd('forfeit');
+};
+
+const handleTimeUp = () => {
+    if (!gameStore.currentGame || gameStore.currentGame.status === 'completed') return;
+    handleGameEnd('timeout');
+};
+
+// Один watch вместо нескольких
 watch(
-    () => [gameStore.gameResult, gameStore.currentGame?.status],
-    async ([newResult, newStatus], [oldResult, oldStatus]) => {
-        if (newResult && newStatus === 'completed' && oldStatus !== 'completed') {
-            if (isGameResult(newResult)) {
-                await handleGameEnd(newResult);
-            }
-        }
+    () => gameStore.currentGame,
+    (game) => {
+        if (game) checkGameEnd();
     },
     { deep: true }
 );
-
-// Инициализация игры
-watch(() => gameStore.currentGame, (newGame) => {
-    if (newGame) {
-        gameAdditionalStore.initializeGameTime();
-    }
-});
-// Статус игры
-watch(() => gameStore.currentGame?.status, (newStatus) => {
-    if (newStatus === 'completed') {
-        gameAdditionalStore.pauseTimer();
-    } else if (newStatus === 'active') {
-        gameAdditionalStore.resumeTimer();
-    }
-});
 
 onMounted(() => {
     if (gameStore.currentGame) {

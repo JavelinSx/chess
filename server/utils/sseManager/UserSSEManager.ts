@@ -1,8 +1,7 @@
 // server/utils/UserSSEManager.ts
 import { H3Event } from 'h3';
-import UserListCache from './UserListCache';
+import UserListCache from '../UserListCache';
 import type { ClientUser, IUser, UserStats } from '~/server/types/user';
-import type { Friend, FriendRequest, FriendRequestClient } from '../types/friends';
 
 export interface UserStatus {
   isOnline: boolean;
@@ -12,11 +11,15 @@ export interface UserStatus {
 export class UserSSEManager {
   private userConnections: Map<string, H3Event> = new Map();
 
-  addUserConnection(userId: string, event: H3Event) {
-    this.userConnections.set(userId, event);
+  async addUserConnection(userId: string, event: H3Event) {
+    if (this.userConnections.get(userId)) return;
+    else {
+      this.userConnections.set(userId, event);
+      this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
+    }
   }
 
-  removeUserConnection(userId: string) {
+  async removeUserConnection(userId: string) {
     this.userConnections.delete(userId);
   }
 
@@ -46,7 +49,7 @@ export class UserSSEManager {
       user: user,
     });
 
-    for (const connection of this.userConnections.values()) {
+    for (const [userId, connection] of this.userConnections) {
       await this.sendEvent(connection, message);
     }
   }
@@ -57,13 +60,13 @@ export class UserSSEManager {
       userId: userId,
     });
 
-    for (const connection of this.userConnections.values()) {
+    for (const [userId, connection] of this.userConnections) {
       await this.sendEvent(connection, message);
     }
   }
 
   async sendUserUpdate(userData: ClientUser) {
-    UserListCache.updateUser(userData._id, userData);
+    UserListCache.updateUser(userData._id.toString(), userData);
     const event = this.userConnections.get(userData._id);
     if (event) {
       await this.sendEvent(
@@ -111,7 +114,7 @@ export class UserSSEManager {
         userId,
         status,
       });
-      for (const connection of this.userConnections.values()) {
+      for (const [userId, connection] of this.userConnections) {
         await this.sendEvent(connection, message);
       }
     }
@@ -128,65 +131,13 @@ export class UserSSEManager {
     }
   }
 
-  async sendFriendRequestNotification(userId: string, request: FriendRequest) {
-    const event = this.userConnections.get(userId);
-    if (event) {
-      await this.sendEvent(
-        event,
-        JSON.stringify({
-          type: 'friend_request',
-          request,
-        })
-      );
-    }
-  }
-
-  async sendFriendRequestUpdateNotification(userId: string, updatedRequest: FriendRequestClient) {
-    const event = this.userConnections.get(userId);
-    if (event) {
-      await this.sendEvent(
-        event,
-        JSON.stringify({
-          type: 'friend_request_update',
-          request: updatedRequest,
-        })
-      );
-    }
-  }
-
-  async sendFriendListUpdateNotification(userId: string, friends: Friend[]) {
-    const event = this.userConnections.get(userId);
-    if (event) {
-      const message = JSON.stringify({
-        type: 'friend_list_update',
-        friends: friends.map((friend) => ({
-          _id: friend._id.toString(),
-          username: friend.username,
-          isOnline: friend.isOnline,
-          isGame: friend.isGame,
-        })),
-      });
-      await this.sendEvent(event, message);
-    }
-  }
-
-  async sendFriendRequestsUpdateNotification(userId: string, requests: FriendRequest[]) {
-    const event = this.userConnections.get(userId);
-    if (event) {
-      const message = JSON.stringify({
-        type: 'friend_requests_update',
-        requests,
-      });
-      await this.sendEvent(event, message);
-    }
-  }
   async broadcastUserDeleted(userId: string) {
     const message = JSON.stringify({
       type: 'user_deleted',
       userId,
     });
 
-    for (const [_, connection] of this.userConnections) {
+    for (const [userId, connection] of this.userConnections) {
       await this.sendEvent(connection, message);
     }
   }
@@ -194,3 +145,5 @@ export class UserSSEManager {
     await event.node.res.write(`data: ${data}\n\n`);
   }
 }
+
+export const userSSEManager = new UserSSEManager();

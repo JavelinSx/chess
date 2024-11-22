@@ -3,6 +3,7 @@ import type { AuthData } from '../types/auth';
 import User from '~/server/db/models/user.model.js';
 import jwt from 'jsonwebtoken';
 import { H3Event } from 'h3';
+import { userSSEManager } from '../utils/sseManager/UserSSEManager';
 import type { GitHubUser, GitHubEmail, GitHubTokenResponse } from '~/server/types/github';
 
 export const registerUser = async (
@@ -13,7 +14,7 @@ export const registerUser = async (
 ): Promise<ApiResponse<{ register: boolean }>> => {
   try {
     const user = new User({ username, email, password });
-    await sseManager.broadcastUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
+    await userSSEManager.broadcastUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();
 
     return { data: { register: true }, error: null };
@@ -39,7 +40,7 @@ export const loginUser = async (event: H3Event, email: string, password: string)
 
     user.isOnline = true;
 
-    await sseManager.broadcastUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
+    await userSSEManager.broadcastUserStatusUpdate(user._id.toString(), { isOnline: true, isGame: false });
     await user.save();
     const jwtSecret = config.jwtSecret! || process.env.JWT_SECRET!;
     const token = jwt.sign({ userId: user._id.toString() }, jwtSecret, { expiresIn: '30d' });
@@ -182,7 +183,7 @@ export async function githubAuth(event: H3Event, code: string): Promise<ApiRespo
 export const logoutUser = async (event: H3Event, userId: string): Promise<ApiResponse<{ message: string }>> => {
   try {
     await User.findByIdAndUpdate(userId, { isOnline: false });
-    await sseManager.broadcastUserStatusUpdate(userId, { isOnline: false, isGame: false });
+    await userSSEManager.broadcastUserStatusUpdate(userId, { isOnline: false, isGame: false });
 
     deleteCookie(event, 'auth_token', {
       path: '/',

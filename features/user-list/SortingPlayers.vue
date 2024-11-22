@@ -1,14 +1,14 @@
 <template>
     <div class="flex flex-wrap items-center gap-4">
         <UInput v-model="searchQuery" :placeholder="t('userList.searchByUsername')" icon="i-heroicons-magnifying-glass"
-            class="w-full sm:w-auto " />
+            class="w-full md:w-auto " />
         <USelect v-model="sortCriteria" :options="localizedSortOptions" :placeholder="t('userList.sortBy')"
-            class="w-full sm:w-auto " />
+            class="w-full md:w-auto " />
         <UButton @click="toggleSortDirection" icon="i-heroicons-arrows-up-down"
             :aria-label="t('userList.toggleSortDirection')" />
         <UCheckbox v-model="onlineOnly" :label="t('userList.onlineOnly')" />
         <USelect v-model="itemsPerPage" :options="localizedItemsPerPageOptions" :label="t('userList.itemsPerPage')"
-            class="w-full sm:w-auto " />
+            class="w-full md:w-auto " />
     </div>
 </template>
 
