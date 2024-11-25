@@ -10,6 +10,9 @@ export function useInvitationsSSE() {
   const authStore = useAuthStore();
   const router = useRouter();
   const isConnected = ref(false);
+  const reconnectAttempts = ref(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const RECONNECT_DELAY = 1000;
 
   const setupSSE = () => {
     if (!authStore.isAuthenticated || eventSource.value) {
@@ -22,6 +25,7 @@ export function useInvitationsSSE() {
       eventSource.value.onopen = () => {
         console.log('Invitations SSE connection opened');
         isConnected.value = true;
+        reconnectAttempts.value = 0;
         resolve(true);
       };
 
@@ -34,16 +38,17 @@ export function useInvitationsSSE() {
       eventSource.value.onerror = (error) => {
         console.error('Invitations SSE error:', error);
         isConnected.value = false;
-        closeSSE();
 
-        // Attempt to reconnect after a delay
-        setTimeout(() => {
-          if (authStore.isAuthenticated && userStore.user?.isOnline) {
+        if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS) {
+          const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts.value);
+          setTimeout(() => {
+            reconnectAttempts.value++;
             setupSSE();
-          }
-        }, 3000);
-
-        reject(error);
+          }, delay);
+        } else {
+          closeSSE();
+          reject(error);
+        }
       };
     });
   };
@@ -52,9 +57,6 @@ export function useInvitationsSSE() {
     switch (data.type) {
       case 'game_invitation':
         invitationStore.handleGameInvitation(data.fromInviteId, data.fromInviteName, data.gameDuration);
-        break;
-      case 'game_invitation_expired':
-        invitationStore.expireInvitation();
         break;
       case 'game_start':
         router.push(`/game/${data.gameId}`);
@@ -73,6 +75,7 @@ export function useInvitationsSSE() {
     }
   };
 
+  // Следим за аутентификацией
   watch(
     () => authStore.isAuthenticated,
     (newValue) => {
@@ -84,6 +87,7 @@ export function useInvitationsSSE() {
     }
   );
 
+  // Следим за онлайн статусом пользователя
   watch(
     () => userStore.user?.isOnline,
     (newValue) => {

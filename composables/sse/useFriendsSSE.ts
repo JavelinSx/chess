@@ -8,6 +8,10 @@ export function useFriendsSSE() {
   const authStore = useAuthStore();
   const userStore = useUserStore();
   const eventSource = ref<EventSource | null>(null);
+  const isConnected = ref(false);
+  const reconnectAttempts = ref(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const RECONNECT_DELAY = 1000;
 
   const setupSSE = () => {
     if (!authStore.isAuthenticated || eventSource.value) {
@@ -19,53 +23,63 @@ export function useFriendsSSE() {
 
       eventSource.value.onopen = () => {
         console.log('Friends SSE connection opened');
+        isConnected.value = true;
+        reconnectAttempts.value = 0;
         resolve(true);
       };
 
       eventSource.value.onmessage = (event) => {
         const data = JSON.parse(event.data);
-
-        switch (data.type) {
-          case 'friend_request':
-            friendsStore.handleFriendRequest(data.request);
-            break;
-          case 'friend_request_update':
-            friendsStore.handleFriendRequestUpdate(data.request);
-            break;
-          case 'friend_list_update':
-            if (Array.isArray(data.friends) && data.friends.length > 0) {
-              friendsStore.handleFriendListUpdate(data.friends);
-            } else {
-              friendsStore.fetchFriends();
-            }
-            break;
-          case 'connection_established':
-            console.log('connection_established');
-            break;
-          default:
-            console.log('Unhandled friend event:', data.type);
-        }
+        console.log('Incoming invitation SSE event:', data);
+        handleFriendEvent(data);
       };
 
       eventSource.value.onerror = (error) => {
         console.error('Friends SSE error:', error);
-        closeSSE();
+        isConnected.value = false;
 
-        // Попытка переподключения через 5 секунд
-        setTimeout(() => {
-          if (authStore.isAuthenticated && userStore.user?.isOnline) {
+        if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS) {
+          const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts.value);
+          setTimeout(() => {
+            reconnectAttempts.value++;
             setupSSE();
-          }
-        }, 5000);
-        reject(error);
+          }, delay);
+        } else {
+          closeSSE();
+          reject(error);
+        }
       };
     });
+  };
+
+  const handleFriendEvent = (data: any) => {
+    switch (data.type) {
+      case 'friend_request':
+        friendsStore.handleFriendRequest(data.request);
+        break;
+      case 'friend_request_update':
+        friendsStore.handleFriendRequestUpdate(data.request);
+        break;
+      case 'friend_list_update':
+        if (Array.isArray(data.friends) && data.friends.length > 0) {
+          friendsStore.handleFriendListUpdate(data.friends);
+        } else {
+          friendsStore.fetchFriends();
+        }
+        break;
+      case 'connection_established':
+        console.log('connection_established');
+        break;
+      default:
+        console.log('Unhandled friend event:', data.type);
+    }
   };
 
   const closeSSE = () => {
     if (eventSource.value) {
       eventSource.value.close();
       eventSource.value = null;
+      isConnected.value = false;
     }
   };
 
@@ -94,18 +108,6 @@ export function useFriendsSSE() {
       }
     }
   );
-
-  // Очистка при размонтировании компонента
-  onBeforeUnmount(() => {
-    closeSSE();
-  });
-
-  // Инициализация при монтировании
-  onMounted(() => {
-    if (authStore.isAuthenticated && userStore.user?.isOnline) {
-      setupSSE();
-    }
-  });
 
   return {
     setupSSE,

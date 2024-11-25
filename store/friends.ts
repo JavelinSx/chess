@@ -157,7 +157,6 @@ export const useFriendsStore = defineStore('friends', {
       this.receivedRequests = requests.filter((req) => req.to === currentUserId);
       this.sentRequests = requests.filter((req) => req.from === currentUserId);
       this.friendRequests = requests;
-      console.log(requests);
     },
 
     async initializeFriendData() {

@@ -4,12 +4,6 @@ import { gameApi } from '~/shared/api/game';
 
 type GameDuration = 15 | 30 | 45 | 90;
 
-interface Invitation {
-  fromInviteId: string;
-  fromInviteName: string;
-  gameDuration: GameDuration;
-  expiresAt: number;
-}
 interface InfoInvitation {
   _id: string;
   username: string;
@@ -17,21 +11,22 @@ interface InfoInvitation {
 
 export const useInvitationStore = defineStore('invitation', {
   state: () => ({
-    currentInvitation: null as Invitation | null,
     showDurationSelector: false,
-    showInvitationModal: false,
     infoInvitation: null as InfoInvitation | null,
-    timeRemaining: 15,
+    isSending: false,
+    isProcessing: false,
     locales: useI18n(),
-    lastInviteTime: 0,
   }),
 
-  getters: {
-    progressValue: (state) => Math.round((state.timeRemaining / 15) * 100),
-  },
-
   actions: {
-    async showDurationSelectorFor(infoInvitation: InfoInvitation) {
+    showDurationSelectorFor(infoInvitation: InfoInvitation) {
+      if (this.isProcessing) {
+        console.log('Processing in progress, ignoring click');
+        return;
+      }
+
+      this.isProcessing = true;
+
       this.infoInvitation = {
         _id: infoInvitation._id,
         username: infoInvitation.username,
@@ -42,71 +37,88 @@ export const useInvitationStore = defineStore('invitation', {
 
     closeDurationSelector() {
       this.showDurationSelector = false;
+      this.isProcessing = false;
     },
 
     async sendGameInvitation(infoInvitation: InfoInvitation, gameDuration: GameDuration) {
       if (!infoInvitation) return false;
+
+      this.isSending = true;
       try {
         const response = await gameApi.sendInvitation(infoInvitation._id, gameDuration);
-
         if (response.data?.success) {
           this.closeDurationSelector();
           return true;
         }
       } catch (error) {
         console.error('Failed to send invitation:', error);
+      } finally {
+        this.isSending = false;
       }
       return false;
     },
 
     handleGameInvitation(fromInviteId: string, fromInviteName: string, gameDuration: GameDuration) {
-      this.currentInvitation = {
-        fromInviteId,
-        fromInviteName,
-        gameDuration,
-        expiresAt: Date.now() + 15000,
-      };
-      this.showInvitationModal = true;
-      this.timeRemaining = 15;
-      this.startCountdown();
+      const toast = useToast();
+
+      toast.add({
+        id: `game-invitation-${fromInviteId}`,
+        title: this.locales.t('game.gameInvitation'),
+        description: `${fromInviteName} ${this.locales.t('game.invitesYouToPlay')} (${gameDuration} ${this.locales.t(
+          'game.minutes'
+        )})`,
+        timeout: 15000,
+        color: 'primary',
+        icon: 'i-heroicons-play',
+        actions: [
+          {
+            label: this.locales.t('common.accept'),
+            color: 'green',
+            variant: 'solid',
+            click: () => this.acceptGameInvitation(fromInviteId, gameDuration),
+          },
+          {
+            label: this.locales.t('common.decline'),
+            color: 'red',
+            variant: 'soft',
+            click: () => toast.remove(`game-invitation-${fromInviteId}`),
+          },
+        ],
+      });
     },
 
-    startCountdown() {
-      const timer = setInterval(() => {
-        this.timeRemaining--;
-        if (this.timeRemaining <= 0) {
-          clearInterval(timer);
-          this.expireInvitation();
-        }
-      }, 1000);
-    },
-
-    expireInvitation() {
-      this.currentInvitation = null;
-      this.showInvitationModal = false;
-      this.timeRemaining = 15;
-    },
-
-    async acceptGameInvitation() {
-      if (!this.currentInvitation) return;
+    async acceptGameInvitation(fromInviteId: string, gameDuration: GameDuration) {
+      const toast = useToast();
 
       try {
-        const response = await gameApi.acceptInvitation(this.currentInvitation.fromInviteId, {
+        const response = await gameApi.acceptInvitation(fromInviteId, {
           type: 'timed',
-          initialTime: this.currentInvitation.gameDuration,
+          initialTime: gameDuration,
         });
 
         if (response.data?.gameId) {
-          this.expireInvitation();
+          toast.remove(`game-invitation-${fromInviteId}`);
           navigateTo(`/game/${response.data.gameId}`);
         }
       } catch (error) {
-        console.error(this.locales.t('errorAcceptingInvitation'), error);
+        toast.add({
+          title: this.locales.t('errorAcceptingInvitation'),
+          color: 'red',
+          icon: 'i-heroicons-x-circle',
+        });
       }
     },
-
-    rejectGameInvitation() {
-      this.expireInvitation();
+    async rejectGameInvitation() {
+      const toast = useToast();
+      try {
+        await gameApi.rejectInvitation();
+      } catch (error) {
+        toast.add({
+          title: this.locales.t('errorRejectingInvitation'),
+          color: 'red',
+          icon: 'i-heroicons-x-circle',
+        });
+      }
     },
   },
 });

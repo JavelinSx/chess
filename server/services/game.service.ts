@@ -11,7 +11,7 @@ import { isKingInCheck, isCheckmate } from '~/features/game-logic/model/game-log
 import { isDraw } from '~/features/game-logic/model/game-state/draw';
 import { isCastling, isEnPassant, isPawnPromotion } from '~/features/game-logic/model/game-logic/special-moves';
 import { updatePositionsHistory } from '~/features/game-logic/model/game-logic/utils';
-import { initializeBoard, updatePlayerStats } from '~/server/utils/services/gameServiceUtils';
+import { initializeBoard, updatePlayerStats } from '~/server/utils/services/GameServiceUtils';
 import type { GameResult, ChessGame, PieceColor, Position, MoveHistoryEntry } from '../types/game';
 import type { ClientUser } from '../types/user';
 import type { ApiResponse } from '../types/api';
@@ -250,8 +250,8 @@ export class GameService {
 
           // Обновляем статусы игроков
           await Promise.all([
-            UserService.updateUserStatus(whitePlayerId, whitePlayer.isOnline, false),
-            UserService.updateUserStatus(blackPlayerId, blackPlayer.isOnline, false),
+            UserService.updateUserStatus(whitePlayerId, true, false),
+            UserService.updateUserStatus(blackPlayerId, true, false),
           ]);
         }
       }

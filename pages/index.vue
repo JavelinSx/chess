@@ -18,9 +18,6 @@
 const { t } = useI18n()
 import { useInvitationStore } from '~/store/invitation';
 import UserList from '~/features/user-list/UserList.vue';
-import GameInvitationModal from '~/features/invite/GameInvitationModal.vue';
-
-const invitationStore = useInvitationStore()
 
 const { isAuthenticated, user } = useAuth()
 

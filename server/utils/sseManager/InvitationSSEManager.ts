@@ -49,7 +49,7 @@ export class InvitationSSEManager {
     this.invitationTimers.set(toUserId, timer);
   }
 
-  private clearInvitationTimer(userId: string) {
+  clearInvitationTimer(userId: string) {
     const timer = this.invitationTimers.get(userId);
     if (timer) {
       clearTimeout(timer);

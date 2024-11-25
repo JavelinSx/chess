@@ -11,6 +11,10 @@ export const gameApi = {
     return apiRequest<{ gameId: string }>('/game/accept-invite', 'POST', { inviterId, timeControl });
   },
 
+  async rejectInvitation(): Promise<ApiResponse<{ success: boolean }>> {
+    return apiRequest<{ success: boolean }>('/game/reject', 'POST');
+  },
+
   async sendInvitation(toInviteId: string, gameDuration: GameDuration): Promise<ApiResponse<{ success: boolean }>> {
     console.log('hellosendInvitationAPI');
     return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId, gameDuration });

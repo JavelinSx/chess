@@ -37,28 +37,12 @@ export function useHeartbeat() {
     }
   };
 
-  // Добавляем обработчики видимости страницы
-  const handleVisibilityChange = () => {
-    if (document.hidden) {
-      stopHeartbeat();
-    } else {
-      startHeartbeat();
-    }
-  };
-
   onMounted(() => {
-    if (import.meta.client) {
-      console.log(heartbeatInterval);
-      if (!heartbeatInterval) startHeartbeat();
-      document.addEventListener('visibilitychange', handleVisibilityChange);
-    }
+    startHeartbeat();
   });
 
   onUnmounted(() => {
-    if (import.meta.client) {
-      stopHeartbeat();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }
+    stopHeartbeat();
   });
 
   return {

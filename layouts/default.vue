@@ -75,8 +75,9 @@
                 class="absolute -top-2 -right-2" size="sm" />
         </UButton>
     </div>
-    <GameDurationSelector :selected-user="invitationStore.infoInvitation" @close="handleDurationSelectorClose" />
-    <GameInvitationModal />
+    <GameDurationSelector v-if="invitationStore.showDurationSelector" :selected-user="invitationStore.infoInvitation"
+        @close="handleDurationSelectorClose" />
+    <GameInvitationNotification />
     <!-- <debug /> используется для логов не мобилке -->
 </template>
 
@@ -92,7 +93,7 @@ import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'
 import LocalesSwitcher from '~/features/locales/ui/LocalesSwitcher.vue';
 import FloatingFriends from '~/features/friends/ui/FloatingFriends.vue';
 import GameDurationSelector from '~/features/game/ui/GameDurationSelector.vue';
-import GameInvitationModal from '~/features/invite/GameInvitationModal.vue';
+import GameInvitationNotification from '~/features/invite/GameInvitationNotification.vue';
 import debug from '~/features/debug.vue';
 
 const { t } = useI18n();

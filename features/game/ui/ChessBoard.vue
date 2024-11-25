@@ -214,12 +214,10 @@ const handleGameEnd = async (reason: 'checkmate' | 'stalemate' | 'draw' | 'forfe
 
 // Обработчики различных событий окончания игры
 const forfeitGame = () => {
-    if (!gameStore.currentGame || gameStore.currentGame.status === 'completed') return;
     handleGameEnd('forfeit');
 };
 
 const handleTimeUp = () => {
-    if (!gameStore.currentGame || gameStore.currentGame.status === 'completed') return;
     handleGameEnd('timeout');
 };
 

@@ -94,7 +94,7 @@ export const useGameStore = defineStore('game', {
         this.isProcessingGameEnd = true; // Устанавливаем флаг
 
         const response = await gameApi.endGame(this.currentGame._id, result);
-
+        console.log(response);
         if (response.data) {
           this.gameResult = response.data;
           this.showResultModal = true;
@@ -128,10 +128,10 @@ export const useGameStore = defineStore('game', {
       this.gameResult = null;
     },
 
-    showGameResult(result: GameResult) {
-      this.gameResult = result;
-      this.showResultModal = true;
-    },
+    // showGameResult(result: GameResult) {
+    //   this.gameResult = result;
+    //   this.showResultModal = true;
+    // },
 
     // Real-time Update Actions
     handleSSEUpdate(updatedGame: ChessGame) {

@@ -1,78 +1,99 @@
+// composables/useUserSSE.ts
+
 import { ref, watch } from 'vue';
 import { useUserStore } from '~/store/user';
-import { useInvitationStore } from '~/store/invitation';
-import { useFriendsStore } from '~/store/friends';
 import { useAuthStore } from '~/store/auth';
-import { useRouter } from 'vue-router';
 
 export function useUserSSE() {
   const userStore = useUserStore();
-  const friendsStore = useFriendsStore();
-  const invitationStore = useInvitationStore();
   const authStore = useAuthStore();
-  const router = useRouter();
   const eventSource = ref<EventSource | null>(null);
+  const isConnected = ref(false);
+  const reconnectAttempts = ref(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const RECONNECT_DELAY = 1000;
 
   const setupSSE = () => {
     if (!authStore.isAuthenticated || eventSource.value) {
       return;
     }
+
     return new Promise((resolve, reject) => {
       eventSource.value = new EventSource('/api/sse/user-status');
 
-      eventSource.value.onopen = (event) => {
+      eventSource.value.onopen = () => {
+        isConnected.value = true;
+        reconnectAttempts.value = 0;
         resolve(true);
-        console.log('User SSE connection opened');
       };
 
       eventSource.value.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-
-        switch (data.type) {
-          case 'user_status_update':
-            userStore.updateUserStatus(data.userId, data.status.isOnline, data.status.isGame);
-            break;
-          case 'user_stats_update':
-            userStore.updateUserStats(data.stats);
-            break;
-          case 'user_update':
-            userStore.updateUser(data.user);
-            break;
-          case 'user_list_update':
-            userStore.updateAllUsers(data.users);
-            break;
-          case 'user_added':
-            userStore.addUser(data.user);
-            break;
-          case 'user_removed':
-            userStore.removeUser(data.userId);
-            break;
-          case 'user_deleted':
-            userStore.handleUserDeleted(data.userId);
-            break;
-          case 'connection_established':
-            console.log('connection_established');
-            break;
-          default:
-            console.log('Unhandled user event type:', data.type);
+        try {
+          const data = JSON.parse(event.data);
+          handleSSEMessage(data);
+        } catch (error) {
+          console.error('Error parsing SSE message:', error);
         }
       };
 
       eventSource.value.onerror = (error) => {
         console.error('User SSE error:', error);
-        closeSSE();
-        reject(error);
+        isConnected.value = false;
+
+        if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS) {
+          const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts.value);
+          setTimeout(() => {
+            reconnectAttempts.value++;
+            setupSSE();
+          }, delay);
+        } else {
+          closeSSE();
+          reject(error);
+        }
       };
     });
+  };
+
+  const handleSSEMessage = (data: any) => {
+    switch (data.type) {
+      case 'user_status_update':
+        userStore.updateUserStatus(data.userId, data.status.isOnline, data.status.isGame);
+        break;
+      case 'user_stats_update':
+        userStore.updateUserStats(data.stats);
+        break;
+      case 'user_update':
+        userStore.updateUser(data.user);
+        break;
+      case 'user_list_update':
+        userStore.updateAllUsers(data.users);
+        break;
+      case 'user_added':
+        userStore.addUser(data.user);
+        break;
+      case 'user_removed':
+        userStore.removeUser(data.userId);
+        break;
+      case 'user_deleted':
+        userStore.handleUserDeleted(data.userId);
+        break;
+      case 'connection_established':
+        isConnected.value = true;
+        break;
+      default:
+        console.log('Unhandled user event type:', data.type);
+    }
   };
 
   const closeSSE = () => {
     if (eventSource.value) {
       eventSource.value.close();
       eventSource.value = null;
+      isConnected.value = false;
     }
   };
 
+  // Следим за аутентификацией
   watch(
     () => authStore.isAuthenticated,
     (newValue) => {
@@ -84,6 +105,7 @@ export function useUserSSE() {
     }
   );
 
+  // Следим за онлайн статусом пользователя
   watch(
     () => userStore.user?.isOnline,
     (newValue) => {
@@ -97,5 +119,10 @@ export function useUserSSE() {
     }
   );
 
-  return { setupSSE, closeSSE };
+  return {
+    isConnected,
+    reconnectAttempts,
+    setupSSE,
+    closeSSE,
+  };
 }

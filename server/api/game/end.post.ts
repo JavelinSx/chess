@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
     const gameResult = await GameService.endGame(gameId, result);
 
-    return { data: gameResult, error: null };
+    return gameResult;
   } catch (error) {
     return { data: null, error: 'Failed to end game' };
   }
