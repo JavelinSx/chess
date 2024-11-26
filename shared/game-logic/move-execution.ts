@@ -3,7 +3,7 @@ import { makeMove, isCapture, getPieceAt } from './board';
 import { isKingInCheck, isCheckmate, isStalemate } from './check';
 import { isPawnPromotion, isEnPassant, isCastling, performEnPassant, performCastling } from './special-moves';
 import { isPawnDoubleMove, getEnPassantTarget } from '../pieces/pawn';
-import { updatePositionsHistory } from './utils';
+import { updatePositionsHistory } from './game-history';
 
 export function performMove(game: ChessGame, from: Position, to: Position): ChessGame {
   let newBoard = makeMove(game.board, from, to);
@@ -47,11 +47,6 @@ export function performMove(game: ChessGame, from: Position, to: Position): Ches
   newGame.checkingPieces = checkingPieces;
   newGame.isCheckmate = isCheckmate(newGame);
   newGame.isStalemate = !newGame.isCheckmate && isStalemate(newGame);
-
-  if (newGame.isCheckmate || newGame.isStalemate) {
-    newGame.status = 'completed';
-    newGame.result.winner = newGame.isCheckmate ? game.currentTurn : null;
-  }
 
   return newGame;
 }

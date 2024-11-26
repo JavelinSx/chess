@@ -61,9 +61,9 @@ export function useGameMovesSSE(gameId: string) {
         break;
       case 'game_end':
         gameStore.handleGameEnd(data.result);
-        setTimeout(() => {
-          closeSSE();
-        }, 2000);
+        break;
+      case 'game_connection_close':
+        closeSSE();
         break;
       case 'connection_established':
         isConnected.value = true;

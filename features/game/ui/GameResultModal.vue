@@ -4,10 +4,10 @@
             <h2 class="text-xl font-bold mb-4">{{ getResultTitle(gameStore.gameResult.reason!) }}</h2>
             <p class="mb-2">{{ t('game.winner') }}: {{
                 userStore.getUserInUserList(gameStore.gameResult.winner!)?.username || t('game.draw')
-                }}</p>
+            }}</p>
             <p class="mb-4">{{ t('game.loser') }}: {{
                 userStore.getUserInUserList(gameStore.gameResult.loser!)?.username || t('common.nobody')
-                }}</p>
+            }}</p>
             <div v-if="gameStore.gameResult.ratingChanges" class="mb-4">
                 <h3 class="text-lg font-semibold mb-2">{{ t('game.ratingChanges') }}</h3>
                 <p v-for="(change, playerId) in gameStore.gameResult.ratingChanges" :key="playerId"
@@ -25,11 +25,9 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
-import { useRouter } from 'vue-router';
 
 const gameStore = useGameStore();
 const userStore = useUserStore();
-const router = useRouter();
 const { t } = useI18n();
 
 const countdown = ref(10);
@@ -52,7 +50,7 @@ const getPlayerName = (playerId: string | number | null) => {
 
 const onClose = () => {
     gameStore.closeGameResult();
-    router.push('/');
+    navigateTo('/')
 };
 
 const startCountdown = () => {

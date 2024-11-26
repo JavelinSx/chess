@@ -18,13 +18,13 @@
 
             <UFormGroup class="mb-4" name="avatar">
                 <div class="flex items-center space-x-4">
-                    <UAvatar :ui="{
-                        wrapper: 'object-contain'
+                    <UAvatar class="object-cover" :ui="{
+                        rounded: 'object-cover'
                     }" :src="user.avatar" :alt="user.username" size="xl" />
-                    <template v-if="showAvatarInput"> <!-- Используем template вместо div -->
+                    <template v-if="showAvatarInput">
                         <UInput v-model="profile.avatarUrl" type="url" placeholder="Enter avatar URL" class="flex-1" />
                     </template>
-                    <UButton v-else color="gray" variant="soft" @click="showAvatarInput = true">
+                    <UButton v-else color="green" variant="soft" @click="showAvatarInput = true">
                         {{ t('profile.changeAvatar') }}
                     </UButton>
                 </div>

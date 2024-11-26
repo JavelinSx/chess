@@ -1,22 +1,40 @@
 import type { ChessBoard, PieceType, Position, MoveHistoryEntry, ChessGame, GameResult } from '~/server/types/game';
 import type { IUser } from '~/server/types/user';
 
+// export function initializeBoard(): ChessBoard {
+//   const board: ChessBoard = Array(8)
+//     .fill(null)
+//     .map(() => Array(8).fill(null));
+
+//   const piecesOrder: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+
+//   for (let i = 0; i < 8; i++) {
+//     // Расставляем белые фигуры
+//     board[0][i] = { type: piecesOrder[i], color: 'white' };
+//     board[1][i] = { type: 'pawn', color: 'white' };
+
+//     // Расставляем черные фигуры
+//     board[7][i] = { type: piecesOrder[i], color: 'black' };
+//     board[6][i] = { type: 'pawn', color: 'black' };
+//   }
+
+//   return board;
+// }
+
 export function initializeBoard(): ChessBoard {
   const board: ChessBoard = Array(8)
     .fill(null)
     .map(() => Array(8).fill(null));
 
-  const piecesOrder: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
+  // Расставляем белые фигуры
+  board[0][4] = { type: 'king', color: 'white' }; // Белый король
+  board[3][4] = { type: 'queen', color: 'white' }; // Белый ферзь атакует черного короля
+  board[1][7] = { type: 'rook', color: 'white' }; // Белая ладья для будущего мата
 
-  for (let i = 0; i < 8; i++) {
-    // Расставляем белые фигуры
-    board[0][i] = { type: piecesOrder[i], color: 'white' };
-    board[1][i] = { type: 'pawn', color: 'white' };
-
-    // Расставляем черные фигуры
-    board[7][i] = { type: piecesOrder[i], color: 'black' };
-    board[6][i] = { type: 'pawn', color: 'black' };
-  }
+  // Расставляем черные фигуры
+  board[7][0] = { type: 'king', color: 'black' }; // Черный король под шахом
+  board[6][0] = { type: 'pawn', color: 'black' }; // Пешка защищает короля
+  board[6][1] = { type: 'pawn', color: 'black' }; // Пешка блокирует путь отступления
 
   return board;
 }

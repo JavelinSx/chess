@@ -14,7 +14,7 @@
             </template>
         </template>
         <UCard v-else-if="!errorMessage" class="mb-4">
-            <USkeleton class="h-64 w-full" />
+            <USkeleton class="h-full w-full" />
             <p class="text-center mt-2">{{ t('game.loadingGame') }}</p>
         </UCard>
     </UContainer>
@@ -26,7 +26,7 @@
 import { ref, onMounted } from 'vue';
 import { useGameStore } from '~/store/game';
 import ChessBoard from '~/features/game/ui/ChessBoard.vue';
-import CapturedPieces from '~/features/game-logic/ui/CapturedPieces.vue';
+import CapturedPieces from '~/features/game/ui/CapturedPieces.vue';
 import GameResultModal from '~/features/game/ui/GameResultModal.vue';
 import { useGameMovesSSE } from '~/composables/sse/useGameMovesSSE';
 

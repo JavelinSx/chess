@@ -1,10 +1,10 @@
 export const titles = [
-  { name: 'Beginner', minRating: 0, maxRating: 1199 },
-  { name: 'Amateur', minRating: 1200, maxRating: 1399 },
-  { name: 'Advanced', minRating: 1400, maxRating: 1599 },
-  { name: 'Expert', minRating: 1600, maxRating: 1799 },
-  { name: 'Master', minRating: 1800, maxRating: 2199 },
-  { name: 'GrandMaster', minRating: 2200, maxRating: Infinity },
+  { name: 'Beginner', minRating: 0, maxRating: 299 },
+  { name: 'Amateur', minRating: 300, maxRating: 599 },
+  { name: 'Advanced', minRating: 600, maxRating: 899 },
+  { name: 'Expert', minRating: 900, maxRating: 1199 },
+  { name: 'Master', minRating: 1200, maxRating: 1499 },
+  { name: 'GrandMaster', minRating: 1500, maxRating: Infinity },
 ];
 
 export function getTitleForRating(rating: number): string {

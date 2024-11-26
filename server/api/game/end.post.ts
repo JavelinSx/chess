@@ -4,13 +4,11 @@ export default defineEventHandler(async (event) => {
   const { gameId, result } = await readBody(event);
 
   try {
-    const existingGame = await GameService.getGame(gameId);
-
-    if (existingGame.data && existingGame.data.status === 'completed') {
-      return { data: existingGame.data.result, error: null };
-    }
-
     const gameResult = await GameService.endGame(gameId, result);
+
+    setTimeout(async () => {
+      await gameSSEManager.closeGameConnections(gameId);
+    }, 10000);
 
     return gameResult;
   } catch (error) {

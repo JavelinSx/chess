@@ -12,7 +12,9 @@
                 <UCard :ui="{ base: 'w-full' }">
                     <div class="flex justify-between">
                         <div class="flex flex-col items-center gap-2">
-                            <UAvatar :src="getUserAvatar(user)" :alt="user.username" size="lg" />
+                            <UAvatar :ui="{
+                                rounded: 'object-cover'
+                            }" :src="getUserAvatar(user)" :alt="user.username" size="lg" />
                             <p class="font-semibold">{{ user.username }}</p>
                         </div>
                         <div class="flex flex-col items-center gap-2">

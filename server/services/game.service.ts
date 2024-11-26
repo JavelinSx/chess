@@ -1,4 +1,3 @@
-import { Types } from 'mongoose';
 import Game from '~/server/db/models/game.model';
 import User from '~/server/db/models/user.model';
 import GameCache from '../utils/GameCache';
@@ -6,11 +5,7 @@ import UserListCache from '../utils/UserListCache';
 import { UserService } from './user.service';
 import { gameSSEManager } from '../utils/sseManager/GameSSEManager';
 import { userSSEManager } from '../utils/sseManager/UserSSEManager';
-import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
-import { isKingInCheck, isCheckmate } from '~/features/game-logic/model/game-logic/check';
-import { isDraw } from '~/features/game-logic/model/game-state/draw';
-import { isCastling, isEnPassant, isPawnPromotion } from '~/features/game-logic/model/game-logic/special-moves';
-import { updatePositionsHistory } from '~/features/game-logic/model/game-logic/utils';
+import { isCastling, isEnPassant, isPawnPromotion } from '~/shared/game-logic';
 import { initializeBoard, updatePlayerStats } from '~/server/utils/services/gameServiceUtils';
 import type { GameResult, ChessGame, PieceColor, Position, MoveHistoryEntry } from '../types/game';
 import type { ClientUser } from '../types/user';
@@ -131,37 +126,6 @@ export class GameService {
       return { data: undefined, error: null };
     } catch (error) {
       console.error('Error setting player color:', error);
-      return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
-    }
-  }
-
-  static async handleMove(gameId: string, from: Position, to: Position): Promise<ApiResponse<void>> {
-    try {
-      const gameResponse = await this.getGame(gameId);
-      if (gameResponse.error) return { data: null, error: gameResponse.error };
-      let game = gameResponse.data!;
-
-      const updatedGame = performMove(game, from, to);
-      const moveEntry = this.createMoveEntry(game, updatedGame, from, to);
-      updatedGame.moveHistory.push(moveEntry);
-      updatedGame.positions = updatePositionsHistory(updatedGame.positions, updatedGame.board);
-
-      const checkStatus = isKingInCheck(updatedGame);
-      updatedGame.isCheck = checkStatus.inCheck;
-      updatedGame.checkingPieces = checkStatus.checkingPieces;
-
-      if (updatedGame.isCheck && isCheckmate(updatedGame)) {
-        this.handleGameEnd(updatedGame, 'checkmate');
-      } else if (isDraw(updatedGame)) {
-        this.handleGameEnd(updatedGame, 'draw');
-      }
-
-      const saveResponse = await this.saveGame(updatedGame);
-      if (saveResponse.error) return saveResponse;
-
-      await gameSSEManager.broadcastGameUpdate(gameId, updatedGame);
-      return { data: undefined, error: null };
-    } catch (error) {
       return { data: null, error: error instanceof Error ? error.message : 'An unknown error occurred' };
     }
   }

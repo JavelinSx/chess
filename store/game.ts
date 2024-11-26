@@ -1,29 +1,25 @@
 import { defineStore } from 'pinia';
 import { gameApi } from '~/shared/api/game';
-import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
 import { useUserStore } from './user';
+import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
 export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     // Game State
     currentGame: null as ChessGame | null,
-    gameDuration: 30,
+    gameDuration: 30 as GameDuration,
     isLoading: false,
-
     // Promotion State
     promote: false,
     pendingPromotion: null as { from: Position; to: Position } | null,
-
     // Result State
     showResultModal: false,
     gameResult: null as GameResult | null,
     gameEndReason: null as Promise<GameResult> | null,
     // Error Handling
     error: null as string | null,
-
-    // Utils
-    locales: useI18n(),
-
+    // State
     isProcessingGameEnd: false,
   }),
 
@@ -40,7 +36,7 @@ export const useGameStore = defineStore('game', {
           this.error = response.error;
         }
       } catch (error) {
-        this.error = this.locales.t('failedToFetchGame');
+        this.error = this.getLocaleErrorMessage('failedToFetchGame');
         this.currentGame = null;
       }
     },
@@ -50,27 +46,27 @@ export const useGameStore = defineStore('game', {
     },
 
     async makeMove(from: Position, to: Position) {
-      if (!this.currentGame) throw new Error(this.locales.t('noActiveGame'));
+      if (!this.currentGame) throw new Error((this.error = this.getLocaleErrorMessage('noActiveGame')));
 
       const userStore = useUserStore();
       const userId = userStore.user?._id;
 
       if (!userId) {
-        throw new Error(this.locales.t('userNotAuthenticated'));
+        throw new Error((this.error = this.getLocaleErrorMessage('userNotAuthenticated')));
       }
 
       try {
         await gameApi.makeMove(this.currentGame._id, from, to);
         return { succes: true };
       } catch (error) {
-        this.error = this.locales.t('failedToMakeMove');
+        this.error = this.getLocaleErrorMessage('failedToMakeMove');
       }
     },
 
     // Pawn Promotion Actions
     async promotePawn(promoteTo: PieceType) {
       if (!this.currentGame || !this.pendingPromotion) {
-        throw new Error(this.locales.t('noPendingPromotion'));
+        throw new Error(this.getLocaleErrorMessage('noPendingPromotion'));
       }
 
       const { from, to } = this.pendingPromotion;
@@ -78,7 +74,7 @@ export const useGameStore = defineStore('game', {
       try {
         await gameApi.makeMove(this.currentGame._id, from, to, promoteTo);
       } catch (error) {
-        this.error = this.locales.t('failedToPromotePawn');
+        this.error = this.getLocaleErrorMessage('failedToPromotePawn');
       } finally {
         this.pendingPromotion = null;
         this.promote = false;
@@ -96,6 +92,7 @@ export const useGameStore = defineStore('game', {
         if (response.data) {
           this.gameResult = response.data;
           this.showResultModal = true;
+          setTimeout(() => this.clearGameState(), 10000);
         }
       } catch (error) {
         console.error('Error ending game:', error);
@@ -106,29 +103,33 @@ export const useGameStore = defineStore('game', {
     },
 
     // Time Control Actions
-    setGameDuration(duration: number) {
+    setGameDuration(duration: GameDuration) {
       this.gameDuration = duration;
     },
 
     // State Management Actions
     clearGameState() {
+      // Очищаем state
       this.currentGame = null;
       this.error = null;
       this.promote = false;
       this.pendingPromotion = null;
       this.isLoading = false;
+
+      // Очищаем localStorage
       localStorage.removeItem('game');
+      localStorage.removeItem(`game-timer`);
+      localStorage.removeItem(`game-state`);
+
+      // Очищаем persist storage Pinia
+      this.$reset();
+      navigateTo('/');
     },
 
     closeGameResult() {
       this.showResultModal = false;
       this.gameResult = null;
     },
-
-    // showGameResult(result: GameResult) {
-    //   this.gameResult = result;
-    //   this.showResultModal = true;
-    // },
 
     // Real-time Update Actions
     handleSSEUpdate(updatedGame: ChessGame) {
@@ -140,6 +141,11 @@ export const useGameStore = defineStore('game', {
     // Error Handling Actions
     resetError() {
       this.error = null;
+    },
+
+    getLocaleErrorMessage(key: string) {
+      const { t } = useI18n();
+      return t(key);
     },
   },
 

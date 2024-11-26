@@ -22,6 +22,28 @@ export class GameSSEManager {
     }
   }
 
+  async closeGameConnections(gameId: string) {
+    const clients = this.gameConnections.get(gameId);
+    if (clients) {
+      // Отправляем последнее событие о закрытии соединения
+      const message = JSON.stringify({
+        type: 'game_connection_close',
+        gameId,
+      });
+
+      await this.broadcastToClients(clients, message);
+
+      // Закрываем все соединения для данной игры
+      for (const [userId, connection] of clients.entries()) {
+        connection.node.res.end();
+        this.removeGameConnection(gameId, userId);
+      }
+
+      // Удаляем все соединения для этой игры
+      this.gameConnections.delete(gameId);
+    }
+  }
+
   async broadcastGameUpdate(gameId: string, gameState: ChessGame) {
     const clients = this.gameConnections.get(gameId);
     if (clients) {

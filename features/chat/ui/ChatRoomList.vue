@@ -7,7 +7,9 @@
                     class="cursor-pointer p-2 rounded hover:bg-slate-500 transition">
                     <div class="flex items-center justify-between" @click="openRoom(room._id.toString())">
                         <div class="flex items-center">
-                            <UAvatar :src="getOtherUserAvatar(room)" :alt="getOtherUsername(room)" class="mr-2" />
+                            <UAvatar :ui="{
+                                rounded: 'object-cover'
+                            }" :src="getOtherUserAvatar(room)" :alt="getOtherUsername(room)" class="mr-2" />
                             <div>
                                 <p class="font-semibold">{{ getOtherUsername(room) }}</p>
                                 <p class="text-sm">{{ getLastMessage(room) }}</p>

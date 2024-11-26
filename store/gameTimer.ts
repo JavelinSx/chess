@@ -155,6 +155,7 @@ export const useGameTimerStore = defineStore('gameTimer', {
       this.lastUpdateTime = 0;
       this.countdownTime = 5;
       this.init = false;
+      this.$reset();
     },
   },
 

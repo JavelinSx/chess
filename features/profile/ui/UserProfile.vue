@@ -17,7 +17,9 @@
         </template>
 
         <div class="flex items-center mb-4">
-            <UAvatar :src="getUserAvatar(user)" :alt="user.username" size="xl" class="mr-4" />
+            <UAvatar :ui="{
+                rounded: 'object-cover'
+            }" :src="getUserAvatar()" :alt="user.username" size="xl" class="mr-4" />
             <div class="flex flex-col gap-4 ml-2 sm:text-sm">
                 <div>
                     <p class="font-semibold">{{ t('auth.email') }}:</p>
@@ -103,7 +105,7 @@ const formattedLastLogin = computed(() => {
     return new Date(props.user.lastLogin).toLocaleString();
 });
 
-function getUserAvatar(user: ClientUser) {
-    return ''; // Реализуйте логику получения аватара, если необходимо
+function getUserAvatar() {
+    return props.user.avatar;
 }
 </script>

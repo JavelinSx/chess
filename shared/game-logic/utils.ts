@@ -23,10 +23,3 @@ export function isMoveBetween(from: Position, to: Position, pos1: Position, pos2
 
   return false;
 }
-
-export function updatePositionsHistory(positions: string[], board: ChessBoard): string[] {
-  const newPositions = [...positions];
-  const boardString = JSON.stringify(board);
-  newPositions.push(boardString);
-  return newPositions.slice(-10); // Keep only the last 10 positions
-}

@@ -1,13 +1,18 @@
 <template>
     <UCard class="chess-board-container sm:px-1">
-        <template #header v-if="currentGame">
+        <template #header v-if="currentGame?.status === 'active'">
             <ChessTimer :game-id="currentGame?._id" />
+        </template>
+        <template #header v-else="currentGame?.status === 'completed'">
+            <p class="w-full text-center text-xl">Игра завершена</p>
         </template>
 
         <UCard :ui="{ header: { padding: 'py-4' } }" class="mb-4">
             <template #header>
                 <div class="flex items-center space-x-2">
-                    <UAvatar :src="currentPlayerAvatar" :alt="currentPlayerName" size="sm" />
+                    <UAvatar :ui="{
+                        rounded: 'object-cover'
+                    }" :src="currentPlayerAvatar" :alt="currentPlayerName" size="sm" />
                     <p class="text-sm">{{ t('game.playerTurn', { name: currentPlayerName }) }}</p>
                 </div>
             </template>
@@ -46,24 +51,22 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onUnmounted } from 'vue';
-import ChessPiece from './ChessPiece.vue';
-import PawnPromotionDialog from '~/features/game-logic/ui/PawnPromotionDialog.vue';
-import { isDraw } from '~/features/game-logic/model/game-state/draw';
 import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
-import { useGameTimerStore } from '~/store/gameTimer';
-import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
-import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
+
+import { isDraw } from '~/shared/game-state';
+import { getValidMoves, isKingInCheck } from '~/shared/game-logic';
+
 import ChessTimer from './ChessTimer.vue';
-import { useGameAdditionalStore } from '~/store/gameAdditional';
+import ChessPiece from './ChessPiece.vue';
+import PawnPromotionDialog from '~/features/game/ui/PawnPromotionDialog.vue';
+
 import type { PieceType, Position, GameResult, GameResultReason } from '~/server/types/game';
 export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
 
 const { t } = useI18n();
 const gameStore = useGameStore();
 const userStore = useUserStore();
-const gameTimer = useGameTimerStore()
-const gameAdditionalStore = useGameAdditionalStore()
 
 const selectedCell = ref<Position | null>(null);
 const validMoves = ref<Position[]>([]);
@@ -97,13 +100,19 @@ function getCellClasses(row: number, col: number) {
         ? (row + col) % 2 === 0
         : (row + col) % 2 !== 0;
 
+    const piece = getPieceAt(row, col);
+    const isKingCell = piece?.type === 'king' && piece.color === currentGame.value?.currentTurn;
+    const isCheckingPieceCell = currentGame.value?.checkingPieces.some(
+        ([checkRow, checkCol]) => checkRow === adjustedRow && checkCol === adjustedCol
+    );
+
     return {
         'bg-beige': isLightSquare,
         'bg-brown': !isLightSquare,
         'highlight-selected': isSelected(adjustedRow, adjustedCol),
         'highlight-valid-move': isValidMove(adjustedRow, adjustedCol),
-        'highlight-check': isCheck.value && isKing(adjustedRow, adjustedCol),
-        'highlight-checking-piece': isCheckingPiece(adjustedRow, adjustedCol)
+        'highlight-check': isCheck.value && isKingCell,
+        'highlight-checking-piece': isCheckingPieceCell
     };
 }
 
@@ -117,11 +126,6 @@ function getPieceAt(row: number, col: number) {
     return currentGame.value.board[adjustedRow]?.[adjustedCol] ?? null;
 }
 
-function isKing(row: number, col: number) {
-    const piece = getPieceAt(row, col);
-    return piece && piece.type === 'king' && piece.color === currentGame.value?.currentTurn;
-}
-
 function isSelected(row: number, col: number) {
     return selectedCell.value && selectedCell.value[0] === row && selectedCell.value[1] === col;
 }
@@ -130,13 +134,8 @@ function isValidMove(row: number, col: number) {
     return validMoves.value.some(move => move[0] === row && move[1] === col);
 }
 
-function isCheckingPiece(row: number, col: number) {
-    return currentGame.value?.checkingPieces.some((pos: Position) => pos[0] === row && pos[1] === col) ?? false;
-}
-
 function handlePromotion(promoteTo: PieceType) {
     if (isCurrentPlayerTurn.value && gameStore.pendingPromotion) {
-        const { from, to } = gameStore.pendingPromotion;
         gameStore.promotePawn(promoteTo);
     }
 }
@@ -212,7 +211,6 @@ const handleGameEnd = async (reason: 'checkmate' | 'stalemate' | 'draw' | 'forfe
         result.winner = gameStore.currentGame.players[timeoutColor === 'white' ? 'black' : 'white'];
     }
     // При пате или ничьей winner и loser остаются null
-
     await gameStore.handleGameEnd(result);
 };
 
@@ -229,12 +227,6 @@ watch(
     },
     { deep: true }
 );
-
-onMounted(() => {
-    if (gameStore.currentGame) {
-        gameAdditionalStore.initializeGameTime();
-    }
-});
 
 onUnmounted(() => {
     gameStore.resetError();

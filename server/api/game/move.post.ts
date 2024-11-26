@@ -1,8 +1,6 @@
 import { defineEventHandler, readBody, createError } from 'h3';
-import { performMove } from '~/features/game-logic/model/game-logic/move-execution';
 import { GameService } from '~/server/services/game.service';
-import { promotePawn } from '~/features/game-logic/model/game-logic/special-moves';
-import { isValidMove } from '~/features/game-logic/model/game-logic/moves';
+import { isValidMove, promotePawn, performMove } from '~/shared/game-logic';
 import { gameSSEManager } from '../../utils/sseManager/GameSSEManager';
 
 export default defineEventHandler(async (event) => {
@@ -41,7 +39,7 @@ export default defineEventHandler(async (event) => {
       throw new Error(saveResponse.error);
     }
 
-    const gameTest = await GameService.getGame(gameId);
+    const gameTest = await GameService.getGame(gameId); // ПОНЯТЬ ПОЧЕМУ БЕЗ ЭТОГО НЕ РАБОТАЕТ
 
     // Отправляем обновление игры через SSE
     await gameSSEManager.broadcastGameUpdate(gameId, gameTest.data!);

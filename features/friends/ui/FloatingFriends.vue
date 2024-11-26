@@ -36,7 +36,9 @@
                         class="flex flex-col items-center justify-between p-2 rounded hover:bg-slate-100 dark:hover:bg-slate-700 gap-3">
                         <div class="flex items-center gap-3 justify-between w-full">
                             <div class="flex flex-row gap-3">
-                                <UAvatar :src="friend.avatar" :alt="friend.username" size="lg" />
+                                <UAvatar :ui="{
+                                    rounded: 'object-cover'
+                                }" :src="friend.avatar" :alt="friend.username" size="lg" />
                                 <div class="flex flex-col w-full">
                                     <span class="font-medium">{{ friend.username }}</span>
                                     <span class="text-xs" :class="friend.isOnline ? 'text-green-500' : 'text-gray-500'">
