@@ -11,7 +11,7 @@ import { isKingInCheck, isCheckmate } from '~/features/game-logic/model/game-log
 import { isDraw } from '~/features/game-logic/model/game-state/draw';
 import { isCastling, isEnPassant, isPawnPromotion } from '~/features/game-logic/model/game-logic/special-moves';
 import { updatePositionsHistory } from '~/features/game-logic/model/game-logic/utils';
-import { initializeBoard, updatePlayerStats } from '~/server/utils/services/GameServiceUtils';
+import { initializeBoard, updatePlayerStats } from '~/server/utils/services/gameServiceUtils';
 import type { GameResult, ChessGame, PieceColor, Position, MoveHistoryEntry } from '../types/game';
 import type { ClientUser } from '../types/user';
 import type { ApiResponse } from '../types/api';

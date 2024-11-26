@@ -21,7 +21,6 @@ export const useInvitationStore = defineStore('invitation', {
   actions: {
     showDurationSelectorFor(infoInvitation: InfoInvitation) {
       if (this.isProcessing) {
-        console.log('Processing in progress, ignoring click');
         return;
       }
 

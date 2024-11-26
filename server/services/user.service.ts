@@ -51,7 +51,6 @@ export class UserService {
     avatar: string
   ): Promise<ApiResponse<UserProfileResponse>> {
     try {
-      console.log(username, email, avatar);
       const user = await User.findByIdAndUpdate(id, { username, email, avatar }, { new: true }).lean();
       if (!this.isValidAvatarUrl(avatar)) {
         throw new Error('Invalid avatar URL format');

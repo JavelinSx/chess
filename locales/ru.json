@@ -49,6 +49,7 @@
     "unknownError": "Произошла неизвестная ошибка"
   },
   "game": {
+    "gameStartsIn": "Игра начнётся через...",
     "promotionPawn": "Продвижение пешки",
     "gameResult": "Результат игры",
     "gameEndedByForfeit": "{player} проиграл(а) из-за сдачи",

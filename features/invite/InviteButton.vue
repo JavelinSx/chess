@@ -21,23 +21,15 @@ const userStore = useUserStore();
 const isEnabled = computed(() => {
     const user = userStore.getUserInUserList(props.userId);
     if (!user) {
-        console.log('User not found:', props.userId);
         return false;
     }
-    console.log('User status:', {
-        username: user.username,
-        isOnline: user.isOnline,
-        isGame: user.isGame
-    });
     return props.disabled && !user.isGame;
 });
 
 const handleInvite = async () => {
     try {
-        console.log('Invite button clicked');
         const user = userStore.getUserInUserList(props.userId);
         if (!user || !isEnabled.value) {
-            console.log('Invite blocked:', { user, isEnabled: isEnabled.value });
             return;
         }
         await invitationStore.showDurationSelectorFor({

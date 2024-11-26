@@ -6,8 +6,6 @@ export default defineEventHandler(async (event) => {
   const { code } = query; // Убираем проверку state из query
   const savedState = getCookie(event, 'google_auth_state');
 
-  console.log('Callback received:', { code, savedState });
-
   if (!code) {
     throw createError({
       statusCode: 400,

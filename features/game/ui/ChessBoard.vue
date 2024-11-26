@@ -1,8 +1,7 @@
 <template>
     <UCard class="chess-board-container sm:px-1">
-        <template #header>
-            <ChessTimer :duration="gameStore.currentGame?.timeControl?.initialTime"
-                :player-color="gameStore.currentGame?.currentTurn!" @time-up="handleTimeUp" />
+        <template #header v-if="currentGame">
+            <ChessTimer :game-id="currentGame?._id" />
         </template>
 
         <UCard :ui="{ header: { padding: 'py-4' } }" class="mb-4">
@@ -52,6 +51,7 @@ import PawnPromotionDialog from '~/features/game-logic/ui/PawnPromotionDialog.vu
 import { isDraw } from '~/features/game-logic/model/game-state/draw';
 import { useGameStore } from '~/store/game';
 import { useUserStore } from '~/store/user';
+import { useGameTimerStore } from '~/store/gameTimer';
 import { getValidMoves } from '~/features/game-logic/model/game-logic/moves';
 import { isKingInCheck } from '~/features/game-logic/model/game-logic/check';
 import ChessTimer from './ChessTimer.vue';
@@ -62,6 +62,7 @@ export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'ti
 const { t } = useI18n();
 const gameStore = useGameStore();
 const userStore = useUserStore();
+const gameTimer = useGameTimerStore()
 const gameAdditionalStore = useGameAdditionalStore()
 
 const selectedCell = ref<Position | null>(null);
@@ -171,10 +172,13 @@ const checkGameEnd = () => {
     if (!gameStore.currentGame || gameStore.currentGame.status === 'completed') return;
 
     if (gameStore.currentGame.isCheckmate) {
+
         handleGameEnd('checkmate');
     } else if (gameStore.currentGame.isStalemate) {
+
         handleGameEnd('stalemate');
     } else if (isDraw(gameStore.currentGame)) {
+
         handleGameEnd('draw');
     }
 };
@@ -214,7 +218,7 @@ const handleGameEnd = async (reason: 'checkmate' | 'stalemate' | 'draw' | 'forfe
 
 // Обработчики различных событий окончания игры
 const forfeitGame = () => {
-    handleGameEnd('forfeit');
+    handleGameEnd('timeout');
 };
 
 const handleTimeUp = () => {

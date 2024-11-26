@@ -19,7 +19,6 @@ export default defineEventHandler(
     const result = CreateOrGetRoomParamsSchema.safeParse(body);
 
     if (!result.success) {
-      console.log('Invalid data:', result.error.issues); // Добавьте это для отладки
       return {
         data: null,
         error: 'Invalid or missing required parameters',

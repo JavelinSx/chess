@@ -87,24 +87,21 @@ export const useGameStore = defineStore('game', {
 
     // Обработка окончания игры
     async handleGameEnd(result: GameResult) {
-      // Проверяем флаг перед выполнением
       if (this.isProcessingGameEnd || !this.currentGame) return;
 
       try {
-        this.isProcessingGameEnd = true; // Устанавливаем флаг
+        this.isProcessingGameEnd = true;
 
         const response = await gameApi.endGame(this.currentGame._id, result);
-        console.log(response);
         if (response.data) {
           this.gameResult = response.data;
           this.showResultModal = true;
-          this.currentGame.status = 'completed'; // Явно устанавливаем статус
         }
       } catch (error) {
         console.error('Error ending game:', error);
         this.error = 'Failed to end game';
       } finally {
-        this.isProcessingGameEnd = false; // Сбрасываем флаг
+        this.isProcessingGameEnd = false;
       }
     },
 

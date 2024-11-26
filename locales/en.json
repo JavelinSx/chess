@@ -49,6 +49,7 @@
     "unknownError": "An unknown error occurred"
   },
   "game": {
+    "gameStartsIn": "Game Sstarts in...",
     "promotionPawn": "Promotion pawn",
     "gameResult": "Game Result",
     "gameEndedByForfeit": "{player} forfeited the game",

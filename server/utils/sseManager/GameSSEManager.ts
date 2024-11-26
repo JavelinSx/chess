@@ -24,7 +24,6 @@ export class GameSSEManager {
 
   async broadcastGameUpdate(gameId: string, gameState: ChessGame) {
     const clients = this.gameConnections.get(gameId);
-    console.log(clients);
     if (clients) {
       const message = JSON.stringify({
         type: 'game_update',
@@ -51,6 +50,47 @@ export class GameSSEManager {
       this.sendEvent(event, message).catch((error) => console.error('Error sending SSE event:', error))
     );
     await Promise.all(sendPromises);
+  }
+
+  async broadcastTimerSync(
+    gameId: string,
+    timerData: {
+      whiteTime: number;
+      blackTime: number;
+      activeColor: 'white' | 'black';
+      lastUpdateTime: number;
+    }
+  ) {
+    const clients = this.gameConnections.get(gameId);
+    if (clients) {
+      const message = JSON.stringify({
+        type: 'timer_sync',
+        data: timerData,
+      });
+      await this.broadcastToClients(clients, message);
+    }
+  }
+
+  async broadcastGameCountdown(gameId: string, countdownTime: number) {
+    const clients = this.gameConnections.get(gameId);
+    if (clients) {
+      const message = JSON.stringify({
+        type: 'game_countdown',
+        data: { countdownTime },
+      });
+      await this.broadcastToClients(clients, message);
+    }
+  }
+
+  async broadcastTimeOut(gameId: string, color: 'white' | 'black') {
+    const clients = this.gameConnections.get(gameId);
+    if (clients) {
+      const message = JSON.stringify({
+        type: 'time_out',
+        data: { color },
+      });
+      await this.broadcastToClients(clients, message);
+    }
   }
 
   private async sendEvent(event: H3Event, data: string) {

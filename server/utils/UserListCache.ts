@@ -32,8 +32,6 @@ class UserListCache {
         };
         this.cache.set(clientUser._id, clientUser, 3600);
       });
-
-      console.log(`Initialized UserListCache with ${users.length} users`);
     } catch (error) {
       console.error('Error initializing cache:', error);
       throw error;
