@@ -218,11 +218,7 @@ const handleGameEnd = async (reason: 'checkmate' | 'stalemate' | 'draw' | 'forfe
 
 // Обработчики различных событий окончания игры
 const forfeitGame = () => {
-    handleGameEnd('timeout');
-};
-
-const handleTimeUp = () => {
-    handleGameEnd('timeout');
+    handleGameEnd('forfeit');
 };
 
 // Один watch вместо нескольких
