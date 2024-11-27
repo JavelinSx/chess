@@ -20,6 +20,7 @@ export class UserService {
       await User.findByIdAndUpdate(userId, { isOnline, isGame });
       UserListCache.updateUserStatus(userId, isOnline, isGame);
       await userSSEManager.broadcastUserStatusUpdate(userId, { isOnline, isGame });
+
       return { data: undefined, error: null };
     } catch (error) {
       return {

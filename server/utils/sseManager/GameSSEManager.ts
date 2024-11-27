@@ -8,6 +8,7 @@ export class GameSSEManager {
   addGameConnection(gameId: string, userId: string, event: H3Event) {
     if (!this.gameConnections.has(gameId)) {
       this.gameConnections.set(gameId, new Map());
+      this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     }
     this.gameConnections.get(gameId)!.set(userId, event);
   }

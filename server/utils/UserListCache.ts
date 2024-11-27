@@ -59,10 +59,9 @@ class UserListCache {
     }
   }
 
-  getUserById(userId: string): ClientUser | undefined {
-    if (typeof userId !== 'string') {
-      console.error('Invalid userId type in getUserById:', typeof userId);
-      return undefined;
+  getUserById(userId: string | object): ClientUser | undefined {
+    if (typeof userId === 'object') {
+      return this.cache.get<ClientUser>(userId.toString());
     }
     return this.cache.get<ClientUser>(userId);
   }

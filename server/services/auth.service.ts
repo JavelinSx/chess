@@ -14,7 +14,6 @@ export const registerUser = async (
 ): Promise<ApiResponse<{ register: boolean }>> => {
   try {
     const user = new User({ username, email, password });
-    await userSSEManager.broadcastUserStatusUpdate(user._id.toString(), { isOnline: false, isGame: false });
     await user.save();
 
     return { data: { register: true }, error: null };

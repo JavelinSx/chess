@@ -4,7 +4,7 @@ import { UserService } from '~/server/services/user.service';
 import { invitationSSEManager } from '../../utils/sseManager/InvitationSSEManager';
 
 export default defineEventHandler(async (event) => {
-  const { inviterId, timeControl } = await readBody(event);
+  const { inviterId, timeControl, startColor } = await readBody(event);
   const inviteeId = event.context.auth?.userId;
 
   if (!inviteeId || !inviterId || !timeControl) {
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const gameResponse = await GameService.createGame(inviterId, inviteeId, timeControl);
+    const gameResponse = await GameService.createGame(inviterId, inviteeId, timeControl, startColor);
     if (!gameResponse.data) {
       throw new Error(gameResponse.error || 'Failed to create game');
     }
@@ -27,13 +27,6 @@ export default defineEventHandler(async (event) => {
 
     if (!updatedGameResponse.data) {
       throw new Error(updatedGameResponse.error || 'Failed to get updated game');
-    }
-
-    const updatedGame = updatedGameResponse.data;
-
-    if (updatedGame.players.white && updatedGame.players.black) {
-      await UserService.updateUserStatus(updatedGame.players.white, true, true);
-      await UserService.updateUserStatus(updatedGame.players.black, true, true);
     }
 
     // Отправляем уведомление о начале игры через пользовательский SSE канал

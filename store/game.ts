@@ -4,6 +4,22 @@ import { useUserStore } from './user';
 import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
 export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
 
+export interface GameStore {
+  currentGame: ChessGame | null;
+  gameDuration: GameDuration;
+  isLoading: boolean;
+  promote: boolean;
+  pendingPromotion: { from: Position; to: Position } | null;
+  showResultModal: boolean;
+  gameResult: GameResult | null;
+  gameEndReason: Promise<GameResult> | null;
+  error: string | null;
+  isProcessingGameEnd: boolean;
+  makeMove(from: Position, to: Position): Promise<{ success: boolean }>;
+  promotePawn(promoteTo: PieceType): Promise<void>;
+  handleGameEnd(result: GameResult): Promise<void>;
+}
+
 export const useGameStore = defineStore('game', {
   state: () => ({
     // Game State
@@ -57,9 +73,10 @@ export const useGameStore = defineStore('game', {
 
       try {
         await gameApi.makeMove(this.currentGame._id, from, to);
-        return { succes: true };
+        return { success: true };
       } catch (error) {
         this.error = this.getLocaleErrorMessage('failedToMakeMove');
+        return { success: false };
       }
     },
 
@@ -115,11 +132,6 @@ export const useGameStore = defineStore('game', {
       this.promote = false;
       this.pendingPromotion = null;
       this.isLoading = false;
-
-      // Очищаем localStorage
-      localStorage.removeItem('game');
-      localStorage.removeItem(`game-timer`);
-      localStorage.removeItem(`game-state`);
 
       // Очищаем persist storage Pinia
       this.$reset();

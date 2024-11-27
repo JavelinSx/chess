@@ -1,9 +1,13 @@
 import { UserService } from '~/server/services/user.service';
-import type { GameDuration } from '~/server/types/game';
+import type { GameDuration, StartColor } from '~/server/types/game';
 import { invitationSSEManager } from '../../utils/sseManager/InvitationSSEManager';
 // invite.ts
 export default defineEventHandler(async (event) => {
-  const { toInviteId, gameDuration } = await readBody<{ toInviteId: string; gameDuration: GameDuration }>(event);
+  const { toInviteId, gameDuration, startColor } = await readBody<{
+    toInviteId: string;
+    gameDuration: GameDuration;
+    startColor: StartColor;
+  }>(event);
   const fromInviteId = event.context.auth?.userId;
 
   if (!fromInviteId) {
@@ -19,7 +23,13 @@ export default defineEventHandler(async (event) => {
       throw new Error('Inviter not found');
     }
 
-    await invitationSSEManager.sendGameInvitation(fromInviteId, toInviteId, inviter.data.username, gameDuration);
+    await invitationSSEManager.sendGameInvitation(
+      fromInviteId,
+      toInviteId,
+      inviter.data.username,
+      gameDuration,
+      startColor
+    );
 
     return { data: { success: true }, error: null };
   } catch (error) {

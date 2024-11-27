@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  if (game.players.white !== userId && game.players.black !== userId) {
+  if (game.players.white?._id.toString() !== userId && game.players.black?._id.toString() !== userId) {
     throw createError({
       statusCode: 403,
       statusMessage: 'You are not a participant of this game',
@@ -49,6 +49,8 @@ export default defineEventHandler(async (event) => {
   };
 
   event.node.req.on('close', closeHandler);
-
+  setInterval(() => {
+    event.node.res.write(':\n\n');
+  }, 10000);
   return new Promise(() => {});
 });

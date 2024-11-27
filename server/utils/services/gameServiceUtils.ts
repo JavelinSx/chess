@@ -1,143 +1,169 @@
 import type { ChessBoard, PieceType, Position, MoveHistoryEntry, ChessGame, GameResult } from '~/server/types/game';
 import type { IUser } from '~/server/types/user';
-
-// export function initializeBoard(): ChessBoard {
-//   const board: ChessBoard = Array(8)
-//     .fill(null)
-//     .map(() => Array(8).fill(null));
-
-//   const piecesOrder: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
-
-//   for (let i = 0; i < 8; i++) {
-//     // Расставляем белые фигуры
-//     board[0][i] = { type: piecesOrder[i], color: 'white' };
-//     board[1][i] = { type: 'pawn', color: 'white' };
-
-//     // Расставляем черные фигуры
-//     board[7][i] = { type: piecesOrder[i], color: 'black' };
-//     board[6][i] = { type: 'pawn', color: 'black' };
-//   }
-
-//   return board;
-// }
-
+import type { UserStats } from '~/server/types/user';
 export function initializeBoard(): ChessBoard {
   const board: ChessBoard = Array(8)
     .fill(null)
     .map(() => Array(8).fill(null));
 
-  // Расставляем белые фигуры
-  board[0][4] = { type: 'king', color: 'white' }; // Белый король
-  board[3][4] = { type: 'queen', color: 'white' }; // Белый ферзь атакует черного короля
-  board[1][7] = { type: 'rook', color: 'white' }; // Белая ладья для будущего мата
+  const piecesOrder: PieceType[] = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop', 'knight', 'rook'];
 
-  // Расставляем черные фигуры
-  board[7][0] = { type: 'king', color: 'black' }; // Черный король под шахом
-  board[6][0] = { type: 'pawn', color: 'black' }; // Пешка защищает короля
-  board[6][1] = { type: 'pawn', color: 'black' }; // Пешка блокирует путь отступления
+  for (let i = 0; i < 8; i++) {
+    // Расставляем белые фигуры
+    board[0][i] = { type: piecesOrder[i], color: 'white' };
+    board[1][i] = { type: 'pawn', color: 'white' };
+
+    // Расставляем черные фигуры
+    board[7][i] = { type: piecesOrder[i], color: 'black' };
+    board[6][i] = { type: 'pawn', color: 'black' };
+  }
 
   return board;
 }
+//расстановка для теста прохода пешки
+// export function initializeBoard(): ChessBoard {
+//   const board: ChessBoard = Array(8)
+//     .fill(null)
+//     .map(() => Array(8).fill(null));
 
-export function countSpecialMoves(moves: MoveHistoryEntry[]): {
-  queenSacrifices: number;
-  discoveredChecks: number;
-  doubleChecks: number;
-} {
-  let queenSacrifices = 0;
-  let discoveredChecks = 0;
-  let doubleChecks = 0;
+//   // Расставляем белые фигуры
+//   board[3][4] = { type: 'king', color: 'white' }; // Белый король
 
-  moves.forEach((move, index) => {
-    if (move.piece.type === 'queen' && move.capturedPiece && move.capturedPiece.type !== 'queen') {
-      queenSacrifices++;
+//   // Расставляем черные фигуры
+//   board[4][0] = { type: 'king', color: 'black' }; // Черный король под шахом
+//   for (let i = 0; i < 8; i++) {
+//     // Расставляем белые фигуры
+
+//     board[6][i] = { type: 'pawn', color: 'white' };
+
+//     // Расставляем черные фигуры
+
+//     board[1][i] = { type: 'pawn', color: 'black' };
+//   }
+
+//   return board;
+// }
+
+export async function updateGameStats(
+  stats: UserStats,
+  game: ChessGame,
+  isWinner: boolean,
+  playerColor: 'white' | 'black'
+): Promise<UserStats> {
+  // Создаем новый объект статистики
+  const newStats: UserStats = { ...stats };
+
+  // Обновляем базовую статистику игр
+  newStats.gamesPlayed++;
+
+  if (isWinner) {
+    newStats.gamesWon++;
+    newStats.currentWinStreak++;
+    newStats.winStreakBest = Math.max(newStats.winStreakBest, newStats.currentWinStreak);
+    // Обновляем рекорд самой быстрой победы
+    if (game.moveCount < (newStats.shortestWin || Infinity)) {
+      newStats.shortestWin = game.moveCount;
     }
-    if (move.isCheck && move.piece.type !== 'knight' && move.piece.type !== 'queen') {
-      discoveredChecks++;
-    }
-    if (index > 0 && move.isCheck && moves[index - 1].isCheck) {
-      doubleChecks++;
+  } else if (game.result.reason === 'draw') {
+    newStats.gamesDraw++;
+    newStats.currentWinStreak = 0;
+  } else {
+    newStats.gamesLost++;
+    newStats.currentWinStreak = 0;
+  }
+
+  // Подсчет захваченных фигур
+  const opponentColor = playerColor === 'white' ? 'black' : 'white';
+  newStats.capturedPawns += game.capturedPieces[opponentColor].filter((piece) => piece === 'pawn').length;
+
+  // Анализ истории ходов для специальных событий
+  game.moveHistory.forEach((move) => {
+    if (move.player === playerColor) {
+      // Подсчет шахов и специальных ходов
+      if (move.isCheck) newStats.checksGiven++;
+      if (move.isCastling) newStats.castlingsMade++;
+      if (move.isPromotion) newStats.promotions++;
+      if (move.isEnPassant) newStats.enPassantCaptures++;
+
+      // Отслеживание жертв ферзя
+      if (move.piece.type === 'queen' && move.capturedPiece && move.capturedPiece.type !== 'queen') {
+        newStats.queenSacrifices++;
+      }
     }
   });
 
-  return { queenSacrifices, discoveredChecks, doubleChecks };
+  // Обновление среднего количества ходов за игру
+  const totalMoves = newStats.averageMovesPerGame * (newStats.gamesPlayed - 1);
+  newStats.averageMovesPerGame = (totalMoves + game.moveCount) / newStats.gamesPlayed;
+
+  // Обновление рекорда самой длинной игры
+  if (game.moveCount > newStats.longestGame) {
+    newStats.longestGame = game.moveCount;
+  }
+
+  // Подсчет сдач
+  if (game.result.reason === 'forfeit' && !isWinner) {
+    newStats.resignations++;
+  }
+
+  // Статистика по контролю времени
+  if (game.timeControl?.type === 'timed' && game.timeControl.initialTime) {
+    const duration = game.timeControl.initialTime;
+    if (duration === 15 || duration === 30 || duration === 45 || duration === 90) {
+      if (!newStats.gamesByDuration) {
+        newStats.gamesByDuration = { 15: 0, 30: 0, 45: 0, 90: 0 };
+      }
+      newStats.gamesByDuration[duration] = (newStats.gamesByDuration[duration] || 0) + 1;
+    }
+  }
+  return newStats;
 }
 
-function calculateEloRatingChange(
+export function calculateEloChange(
   playerRating: number,
   opponentRating: number,
   result: 'win' | 'loss' | 'draw'
 ): number {
-  const K = 32; // Фактор K, определяющий максимальное изменение рейтинга
+  const K = 32; // Коэффициент изменения рейтинга
   const expectedScore = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
-  const actualScore = result === 'win' ? 1 : result === 'loss' ? 0 : 0.5;
-  if (Math.round(K * (actualScore - expectedScore)) < 0) {
-    return 0;
-  } else {
-    return Math.round(K * (actualScore - expectedScore));
-  }
+  const actualScore = result === 'win' ? 1 : result === 'draw' ? 0.5 : 0;
+
+  const change = Math.round(K * (actualScore - expectedScore));
+  return change;
 }
 
-export function updatePlayerStats(
-  player: IUser,
-  opponent: IUser,
+export async function processGameEnd(
   game: ChessGame,
-  isWinner: boolean,
-  playerColor: 'white' | 'black'
-): number {
-  const playerMoves = game.moveHistory.filter((move) => move.player === player._id.toString());
-  const specialMoves = countSpecialMoves(playerMoves);
+  result: GameResult
+): Promise<{ ratingChanges: Record<string, number> }> {
+  const ratingChanges: Record<string, number> = {};
 
-  // Рассчитываем изменение рейтинга
-  const result = isWinner ? 'win' : game.result?.reason === 'draw' ? 'draw' : 'loss';
-  const ratingChange = calculateEloRatingChange(player.rating, opponent.rating, result);
+  // Получаем игроков
+  const whitePlaying = game.players.white;
+  const blackPlaying = game.players.black;
 
-  // Обновляем рейтинг
-  player.rating += ratingChange;
-
-  // Обновляем averageRatingChange
-  player.stats.averageRatingChange =
-    (player.stats.averageRatingChange * player.stats.gamesPlayed + ratingChange) / (player.stats.gamesPlayed + 1);
-
-  // Остальные обновления статистики
-  player.stats.gamesPlayed++;
-  player.stats.capturedPawns += game.capturedPieces[playerColor].filter((piece) => piece === 'pawn').length;
-  player.stats.checksGiven += playerMoves.filter((move) => move.isCheck).length;
-  player.stats.castlingsMade += playerMoves.filter((move) => move.isCastling).length;
-  player.stats.promotions += playerMoves.filter((move) => move.isPromotion).length;
-  player.stats.enPassantCaptures += playerMoves.filter((move) => move.isEnPassant).length;
-  player.stats.queenSacrifices += specialMoves.queenSacrifices;
-  player.stats.averageMovesPerGame =
-    (player.stats.averageMovesPerGame * player.stats.gamesPlayed + game.moveCount) / (player.stats.gamesPlayed + 1);
-  player.stats.longestGame = Math.max(player.stats.longestGame, game.moveCount);
-
-  if (isWinner) {
-    player.stats.gamesWon++;
-    player.stats.shortestWin = Math.min(player.stats.shortestWin || Infinity, game.moveCount);
-    player.stats.currentWinStreak++;
-    player.stats.winStreakBest = Math.max(player.stats.winStreakBest, player.stats.currentWinStreak);
-  } else if (game.result?.reason === 'draw') {
-    player.stats.gamesDraw++;
-    player.stats.currentWinStreak = 0;
-  } else {
-    player.stats.gamesLost++;
-    player.stats.currentWinStreak = 0;
+  if (!whitePlaying || !blackPlaying) {
+    throw new Error('Неверные данные игроков');
   }
 
-  if (game.result?.reason === 'forfeit' && isWinner) {
-    player.stats.resignations++;
-  }
+  // Определяем результат для каждого игрока
+  const getResult = (playerId: string): 'win' | 'loss' | 'draw' => {
+    if (result.reason === 'draw') return 'draw';
+    return playerId === result.winner ? 'win' : 'loss';
+  };
 
-  // Обновляем статистику по длительности игр
-  if (game.timeControl && game.timeControl.type === 'timed' && game.timeControl.initialTime) {
-    const gameDuration = game.timeControl.initialTime;
-    if (gameDuration === 15 || gameDuration === 30 || gameDuration === 45 || gameDuration === 90) {
-      player.stats.gamesByDuration[gameDuration] = (player.stats.gamesByDuration[gameDuration] || 0) + 1;
-    }
-  }
+  // Рассчитываем и применяем изменения рейтинга
+  ratingChanges[whitePlaying._id] = calculateEloChange(
+    whitePlaying.rating,
+    blackPlaying.rating,
+    getResult(whitePlaying._id)
+  );
 
-  // Обновляем winRate
-  player.winRate = (player.stats.gamesWon / player.stats.gamesPlayed) * 100;
+  ratingChanges[blackPlaying._id] = calculateEloChange(
+    blackPlaying.rating,
+    whitePlaying.rating,
+    getResult(blackPlaying._id)
+  );
 
-  return ratingChange;
+  return { ratingChanges };
 }

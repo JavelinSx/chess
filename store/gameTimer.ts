@@ -89,8 +89,8 @@ export const useGameTimerStore = defineStore('gameTimer', {
 
       if (gameStore.currentGame) {
         const result = {
-          winner: gameStore.currentGame.players[color === 'white' ? 'black' : 'white'],
-          loser: gameStore.currentGame.players[color],
+          winner: gameStore.currentGame.players[color === 'white' ? 'black' : 'white']!._id,
+          loser: gameStore.currentGame.players[color]!._id,
           reason: 'timeout' as GameResultReason,
         };
         gameStore.handleGameEnd(result);

@@ -1,7 +1,7 @@
 import { H3Event } from 'h3';
 import { GameService } from '../../services/game.service';
 import { UserService } from '../../services/user.service';
-import type { GameDuration } from '../../types/game';
+import type { GameDuration, StartColor } from '../../types/game';
 
 export class InvitationSSEManager {
   private invitationConnections: Map<string, H3Event> = new Map();
@@ -19,7 +19,13 @@ export class InvitationSSEManager {
     this.clearInvitationTimer(userId);
   }
 
-  async sendGameInvitation(fromUserId: string, toUserId: string, fromUsername: string, gameDuration: GameDuration) {
+  async sendGameInvitation(
+    fromUserId: string,
+    toUserId: string,
+    fromUsername: string,
+    gameDuration: GameDuration,
+    startColor: StartColor
+  ) {
     const event = this.invitationConnections.get(toUserId);
 
     if (event) {
@@ -28,6 +34,7 @@ export class InvitationSSEManager {
         fromInviteId: fromUserId,
         fromInviteName: fromUsername,
         gameDuration,
+        startColor,
       });
 
       try {
@@ -84,8 +91,8 @@ export class InvitationSSEManager {
 
         if (gameResponse.data && gameResponse.data.players.white && gameResponse.data.players.black) {
           await Promise.all([
-            UserService.updateUserStatus(gameResponse.data.players.white, true, true),
-            UserService.updateUserStatus(gameResponse.data.players.black, true, true),
+            UserService.updateUserStatus(gameResponse.data.players.white._id, true, true),
+            UserService.updateUserStatus(gameResponse.data.players.black._id, true, true),
           ]);
         } else {
           console.error(`Game with id ${gameId} not found or has invalid player data`);

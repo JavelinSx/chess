@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
 
     const game = gameResponse.data;
 
-    if (game.players.white !== userId && game.players.black !== userId) {
+    if (game.players.white?._id.toString() !== userId && game.players.black?._id.toString() !== userId) {
       throw createError({
         statusCode: 403,
         statusMessage: 'You are not a participant of this game',

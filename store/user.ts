@@ -4,6 +4,11 @@ import type { GameResult } from '~/server/types/game';
 import { userApi } from '~/shared/api/user';
 import { useAuthStore } from './auth';
 
+export interface UserStore {
+  user: ClientUser | null;
+  usersList: ClientUser[];
+}
+
 export const useUserStore = defineStore('user', {
   state: () => ({
     user: null as ClientUser | null,

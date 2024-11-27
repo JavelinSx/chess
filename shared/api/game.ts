@@ -1,22 +1,27 @@
 import { apiRequest } from './api';
 import type { ApiResponse } from '~/server/types/api';
-import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
+import type { ChessGame, Position, PieceType, GameResult, GameDuration, StartColor } from '~/server/types/game';
 import type { UserStats } from '~/server/types/user';
 
 export const gameApi = {
   async acceptInvitation(
     inviterId: string,
-    timeControl: { type: 'timed' | 'untimed'; initialTime?: GameDuration }
+    timeControl: { type: 'timed' | 'untimed'; initialTime?: GameDuration },
+    startColor: StartColor
   ): Promise<ApiResponse<{ gameId: string }>> {
-    return apiRequest<{ gameId: string }>('/game/accept-invite', 'POST', { inviterId, timeControl });
+    return apiRequest<{ gameId: string }>('/game/accept-invite', 'POST', { inviterId, timeControl, startColor });
   },
 
   async rejectInvitation(): Promise<ApiResponse<{ success: boolean }>> {
     return apiRequest<{ success: boolean }>('/game/reject', 'POST');
   },
 
-  async sendInvitation(toInviteId: string, gameDuration: GameDuration): Promise<ApiResponse<{ success: boolean }>> {
-    return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId, gameDuration });
+  async sendInvitation(
+    toInviteId: string,
+    gameDuration: GameDuration,
+    startColor: StartColor
+  ): Promise<ApiResponse<{ success: boolean }>> {
+    return apiRequest<{ success: boolean }>('/game/invite', 'POST', { toInviteId, gameDuration, startColor });
   },
 
   async getGame(gameId: string): Promise<ApiResponse<ChessGame>> {

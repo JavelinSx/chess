@@ -1,17 +1,40 @@
 import { GameService } from '~/server/services/game.service';
+import type { GameResult } from '~/server/types/game';
 
 export default defineEventHandler(async (event) => {
-  const { gameId, result } = await readBody(event);
-
   try {
-    const gameResult = await GameService.endGame(gameId, result);
+    const { gameId, result } = await readBody<{
+      gameId: string;
+      result: GameResult;
+    }>(event);
 
+    if (!gameId || !result) {
+      throw createError({
+        statusCode: 400,
+        message: 'Missing required parameters: gameId and result',
+      });
+    }
+
+    const response = await GameService.endGame(gameId, result);
+
+    if (response.error) {
+      throw createError({
+        statusCode: 400,
+        message: response.error,
+      });
+    }
+
+    // Закрываем соединения SSE с небольшой задержкой
     setTimeout(async () => {
       await gameSSEManager.closeGameConnections(gameId);
     }, 10000);
 
-    return gameResult;
+    return response;
   } catch (error) {
-    return { data: null, error: 'Failed to end game' };
+    console.error('Error ending game:', error);
+    throw createError({
+      statusCode: 500,
+      message: error instanceof Error ? error.message : 'An unknown error occurred while ending game',
+    });
   }
 });

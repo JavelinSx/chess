@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
     });
   }
   try {
-    await UserActivityService.updateUserActivity(userId);
+    await UserActivityService.updateUserActivity(userId, event);
     return { status: 'success' };
   } catch (error) {
     console.error('Error updating offline status:', error);

@@ -107,16 +107,19 @@ export class UserSSEManager {
   async broadcastUserStatusUpdate(userId: string, status: UserStatus) {
     UserListCache.updateUserStatus(userId, status.isOnline, status.isGame);
     const user = UserListCache.getUserById(userId);
-
     if (user) {
       const message = JSON.stringify({
         type: 'user_status_update',
         userId,
         status,
       });
-      for (const [userId, connection] of this.userConnections) {
-        await this.sendEvent(connection, message);
-      }
+
+      // Отправляем обновление всем подключенным пользователям
+      const sendPromises = Array.from(this.userConnections.values()).map((connection) =>
+        this.sendEvent(connection, message).catch((error) => console.error('Error sending status update:', error))
+      );
+
+      await Promise.all(sendPromises);
     }
   }
 

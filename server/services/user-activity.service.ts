@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3';
 import User from '../db/models/user.model';
 import { UserService } from './user.service';
 
@@ -13,12 +14,13 @@ export class UserActivityService {
     }
   }
 
-  static async updateUserActivity(userId: string) {
+  static async updateUserActivity(userId: string, event: H3Event) {
     try {
       this.clearTimeout(userId);
 
       const timeout = setTimeout(() => this.handleUserInactivity(userId), this.TIMEOUT_DURATION);
       this.userActivityTimeout.set(userId, timeout);
+
       await UserService.updateUserStatus(userId, true, false);
     } catch (error) {
       console.error('Error handling update user activity:', error);

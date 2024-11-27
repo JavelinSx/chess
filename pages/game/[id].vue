@@ -8,8 +8,7 @@
                 <p class="text-center">{{ t('game.waitingForOpponent') }}</p>
             </UCard>
             <template v-else>
-                <chess-board :game="gameStore.currentGame" :board="gameStore.currentGame.board"
-                    :current-turn="gameStore.currentGame.currentTurn" @move="makeMove" class="mb-4" />
+                <chess-board class="mb-4" />
                 <captured-pieces :captured-pieces="gameStore.currentGame.capturedPieces" />
             </template>
         </template>

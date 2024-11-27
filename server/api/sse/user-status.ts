@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   const closeHandler = async () => {
     try {
       const activeGame = await gameModel.findOne({
-        $or: [{ 'players.white': userId }, { 'players.black': userId }],
+        $or: [{ 'players.white._id': userId }, { 'players.black._id': userId }],
         status: 'active',
       });
 

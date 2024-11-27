@@ -78,10 +78,12 @@ const handleTimerSync = (event: CustomEvent) => {
     timerStore.syncTimerState(event.detail);
 };
 
+
 // Жизненный цикл компонента
 onMounted(() => {
     const duration = gameStore.currentGame?.timeControl?.initialTime;
     if (duration) {
+        timerStore.resetTimer()
         timerStore.initializeTimer(duration);
         // Запускаем таймер после обратного отсчета
         if (timerStore.status === 'countdown' || timerStore.init) {

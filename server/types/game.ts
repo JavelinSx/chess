@@ -1,3 +1,5 @@
+import type { UserStats } from './user';
+
 export function initializeBoard(): ChessBoard {
   const board: ChessBoard = Array(8)
     .fill(null)
@@ -17,10 +19,19 @@ export function initializeBoard(): ChessBoard {
 }
 
 export type GameDuration = 15 | 30 | 45 | 90;
+export type StartColor = 'white' | 'black' | 'random';
 export type PieceType = 'pawn' | 'rook' | 'knight' | 'bishop' | 'queen' | 'king';
 export type PieceColor = 'white' | 'black';
 export type Position = [number, number];
 export type GameResultReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
+
+export interface GamePlayer {
+  _id: string;
+  username: string;
+  avatar: string;
+  rating: number;
+  gameStats: UserStats;
+}
 
 export interface MoveHistoryEntry {
   from: Position;
@@ -69,13 +80,11 @@ export interface ChessGame {
   board: ChessBoard;
   currentTurn: PieceColor;
   players: {
-    white: string | null;
-    black: string | null;
+    white: GamePlayer | null;
+    black: GamePlayer | null;
   };
   status: 'waiting' | 'active' | 'completed';
   result: GameResult;
-  inviterId: string;
-  inviteeId: string;
   moveCount: number;
   halfMoveClock: number;
   enPassantTarget: [number, number] | null;
@@ -104,49 +113,47 @@ export interface TimeControl {
   initialTime?: 15 | 30 | 45 | 90;
 }
 
-export function initializeGame(inviterId: string, inviteeId: string): ChessGame {
-  return {
-    _id: '',
-    board: initializeBoard(),
-    currentTurn: 'white',
-    players: {
-      white: null,
-      black: null,
-    },
-    status: 'waiting',
-    result: {
-      winner: null,
-      loser: null,
-      reason: null,
-      ratingChanges: null,
-    },
-    inviterId,
-    inviteeId,
-    moveCount: 0,
-    halfMoveClock: 0,
-    enPassantTarget: null,
-    positions: [],
-    castlingRights: {
-      whiteKingSide: true,
-      whiteQueenSide: true,
-      blackKingSide: true,
-      blackQueenSide: true,
-    },
-    isCheck: false,
-    checkingPieces: [],
-    capturedPieces: {
-      white: [],
-      black: [],
-    },
-    isCheckmate: false,
-    isStalemate: false,
-    pendingPromotion: {
-      from: null,
-      to: null,
-      promoteTo: null,
-    },
-    moveHistory: [],
-    timeControl: null,
-    startedAt: null,
-  };
-}
+// export function initializeGame(inviterId: string, inviteeId: string): ChessGame {
+//   return {
+//     _id: '',
+//     board: initializeBoard(),
+//     currentTurn: 'white',
+//     players: {
+//       white: null,
+//       black: null,
+//     },
+//     status: 'waiting',
+//     result: {
+//       winner: null,
+//       loser: null,
+//       reason: null,
+//       ratingChanges: null,
+//     },
+//     moveCount: 0,
+//     halfMoveClock: 0,
+//     enPassantTarget: null,
+//     positions: [],
+//     castlingRights: {
+//       whiteKingSide: true,
+//       whiteQueenSide: true,
+//       blackKingSide: true,
+//       blackQueenSide: true,
+//     },
+//     isCheck: false,
+//     checkingPieces: [],
+//     capturedPieces: {
+//       white: [],
+//       black: [],
+//     },
+//     isCheckmate: false,
+//     isStalemate: false,
+//     pendingPromotion: {
+//       from: null,
+//       to: null,
+//       promoteTo: null,
+//     },
+//     moveHistory: [],
+//     timeControl: null,
+//     startedAt: null,
+//   };
+// }

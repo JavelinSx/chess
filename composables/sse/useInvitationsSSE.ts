@@ -56,7 +56,12 @@ export function useInvitationsSSE() {
   const handleInvitationEvent = (data: any) => {
     switch (data.type) {
       case 'game_invitation':
-        invitationStore.handleGameInvitation(data.fromInviteId, data.fromInviteName, data.gameDuration);
+        invitationStore.handleGameInvitation(
+          data.fromInviteId,
+          data.fromInviteName,
+          data.gameDuration,
+          data.startColor
+        );
         break;
       case 'game_start':
         router.push(`/game/${data.gameId}`);

@@ -1,13 +1,58 @@
 import mongoose from 'mongoose';
 import type { ChessGame } from '~/server/types/game';
 
+const gameStatsSchema = new mongoose.Schema(
+  {
+    gamesPlayed: { type: Number, default: 0 },
+    gamesWon: { type: Number, default: 0 },
+    gamesLost: { type: Number, default: 0 },
+    gamesDraw: { type: Number, default: 0 },
+    capturedPawns: { type: Number, default: 0 },
+    checksGiven: { type: Number, default: 0 },
+    castlingsMade: { type: Number, default: 0 },
+    promotions: { type: Number, default: 0 },
+    averageMovesPerGame: { type: Number, default: 0 },
+    longestGame: { type: Number, default: 0 },
+    shortestWin: { type: Number, default: 0 },
+    comebacks: { type: Number, default: 0 },
+    queenSacrifices: { type: Number, default: 0 },
+    enPassantCaptures: { type: Number, default: 0 },
+    stalemateCaused: { type: Number, default: 0 },
+    averageRatingChange: { type: Number, default: 0 },
+    winStreakBest: { type: Number, default: 0 },
+    currentWinStreak: { type: Number, default: 0 },
+    resignations: { type: Number, default: 0 },
+    gamesByDuration: {
+      15: { type: Number, default: 0 },
+      30: { type: Number, default: 0 },
+      45: { type: Number, default: 0 },
+      90: { type: Number, default: 0 },
+    },
+  },
+  { _id: false }
+);
+
+const playerSchema = new mongoose.Schema({
+  _id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    get: (id: mongoose.Types.ObjectId) => id.toString(),
+  },
+  username: { type: String, required: true },
+  avatar: { type: String },
+  rating: { type: Number, required: true },
+  gameStats: gameStatsSchema,
+  ratingChange: { type: Number },
+});
+
 const gameSchema = new mongoose.Schema<ChessGame>(
   {
     board: { type: mongoose.Schema.Types.Mixed, required: true },
     currentTurn: { type: String, enum: ['white', 'black'], required: true },
     players: {
-      white: { type: String, ref: 'User' },
-      black: { type: String, ref: 'User' },
+      white: { type: playerSchema, required: true },
+      black: { type: playerSchema, required: true },
     },
     status: { type: String, enum: ['waiting', 'active', 'completed'], required: true },
     result: {
@@ -16,8 +61,6 @@ const gameSchema = new mongoose.Schema<ChessGame>(
       reason: { type: String, enum: ['checkmate', 'stalemate', 'draw', 'forfeit', 'timeout'] },
     },
 
-    inviterId: { type: String, ref: 'User', required: true },
-    inviteeId: { type: String, ref: 'User', required: true },
     moveCount: { type: Number, default: 0 },
     halfMoveClock: { type: Number, default: 0 },
     enPassantTarget: { type: [Number], default: null },

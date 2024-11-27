@@ -19,7 +19,9 @@ export default defineEventHandler(async (event) => {
 
     const isWhiteTurn = game.currentTurn === 'white';
     const isPlayersTurn =
-      (isWhiteTurn && game.players.white === userId) || (!isWhiteTurn && game.players.black === userId);
+      (isWhiteTurn && game.players.white?._id.toString() === userId) ||
+      (!isWhiteTurn && game.players.black?._id.toString() === userId);
+
     if (!isPlayersTurn) {
       throw createError({ statusCode: 400, statusMessage: 'Not your turn' });
     }

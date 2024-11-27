@@ -1,5 +1,6 @@
 // store/invitation.ts
 import { defineStore } from 'pinia';
+import type { StartColor } from '~/server/types/game';
 import { gameApi } from '~/shared/api/game';
 
 type GameDuration = 15 | 30 | 45 | 90;
@@ -39,12 +40,12 @@ export const useInvitationStore = defineStore('invitation', {
       this.isProcessing = false;
     },
 
-    async sendGameInvitation(infoInvitation: InfoInvitation, gameDuration: GameDuration) {
+    async sendGameInvitation(infoInvitation: InfoInvitation, gameDuration: GameDuration, startColor: StartColor) {
       if (!infoInvitation) return false;
 
       this.isSending = true;
       try {
-        const response = await gameApi.sendInvitation(infoInvitation._id, gameDuration);
+        const response = await gameApi.sendInvitation(infoInvitation._id, gameDuration, startColor);
         if (response.data?.success) {
           this.closeDurationSelector();
           return true;
@@ -57,7 +58,12 @@ export const useInvitationStore = defineStore('invitation', {
       return false;
     },
 
-    handleGameInvitation(fromInviteId: string, fromInviteName: string, gameDuration: GameDuration) {
+    handleGameInvitation(
+      fromInviteId: string,
+      fromInviteName: string,
+      gameDuration: GameDuration,
+      startColor: StartColor
+    ) {
       const toast = useToast();
 
       toast.add({
@@ -74,7 +80,7 @@ export const useInvitationStore = defineStore('invitation', {
             label: this.locales.t('common.accept'),
             color: 'green',
             variant: 'solid',
-            click: () => this.acceptGameInvitation(fromInviteId, gameDuration),
+            click: () => this.acceptGameInvitation(fromInviteId, gameDuration, startColor),
           },
           {
             label: this.locales.t('common.decline'),
@@ -86,14 +92,18 @@ export const useInvitationStore = defineStore('invitation', {
       });
     },
 
-    async acceptGameInvitation(fromInviteId: string, gameDuration: GameDuration) {
+    async acceptGameInvitation(fromInviteId: string, gameDuration: GameDuration, startColor: StartColor) {
       const toast = useToast();
 
       try {
-        const response = await gameApi.acceptInvitation(fromInviteId, {
-          type: 'timed',
-          initialTime: gameDuration,
-        });
+        const response = await gameApi.acceptInvitation(
+          fromInviteId,
+          {
+            type: 'timed',
+            initialTime: gameDuration,
+          },
+          startColor
+        );
 
         if (response.data?.gameId) {
           toast.remove(`game-invitation-${fromInviteId}`);

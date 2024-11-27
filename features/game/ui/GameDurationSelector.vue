@@ -9,7 +9,7 @@
             </template>
 
             <URadioGroup v-model="selectedDuration" name="duration" :options="durationOptions" />
-
+            <URadioGroup v-model="selectedColor" name="color" :options="colorOptions" />
             <template #footer>
                 <div class="flex justify-end gap-2">
                     <UButton @click="invitationStore.closeDurationSelector">
@@ -27,12 +27,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useInvitationStore } from '~/store/invitation';
-import type { GameDuration } from '~/server/types/game';
+import type { GameDuration, StartColor } from '~/server/types/game';
 
 const { t } = useI18n();
 const invitationStore = useInvitationStore();
 
 const selectedDuration = ref<GameDuration>(30);
+const selectedColor = ref<StartColor>('random')
 
 // Опции для выбора длительности игры
 const durationOptions = computed(() => [
@@ -41,6 +42,18 @@ const durationOptions = computed(() => [
     { label: t('game.45minutes'), value: 45 },
     { label: t('game.90minutes'), value: 90 },
 ] as { label: string; value: GameDuration }[]);
+
+const colorOptions = computed(() => [
+    {
+        label: t('game.white'), value: 'white'
+    },
+    {
+        label: t('game.black'), value: 'black'
+    },
+    {
+        label: t('game.random'), value: 'random'
+    },
+] as { label: string; value: StartColor }[])
 
 // Управление видимостью модального окна через store
 const showModal = computed({
@@ -54,7 +67,7 @@ const showModal = computed({
 const inviteeData = computed(() => invitationStore.infoInvitation)
 const handleConfirm = async () => {
     if (inviteeData.value) {
-        await invitationStore.sendGameInvitation(inviteeData.value, selectedDuration.value);
+        await invitationStore.sendGameInvitation(inviteeData.value, selectedDuration.value, selectedColor.value);
     }
 };
 </script>
