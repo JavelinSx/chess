@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node .output/server/index.mjs",
     "build": "nuxt build",
-    "dev": "nuxt dev --port 80 --host 0.0.0.0",
+    "dev": "nuxt dev --port 3000 --host 0.0.0.0",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -20,14 +20,15 @@
     "@vkid/sdk": "^2.4.0",
     "@yandex-cloud/nodejs-sdk": "^2.7.7",
     "bcryptjs": "^2.4.3",
+    "crossws": "^0.3.1",
     "dotenv": "^16.4.5",
-    "h3": "^1.12.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.1",
     "node-cache": "^5.1.2",
     "node-fetch": "^3.3.2",
     "nuxt-socket-io": "^3.0.13",
     "pinia": "^2.1.7",
+    "ws": "^8.18.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mongoose": "^5.11.97",
+    "@types/ws": "^8.5.13",
     "@vitejs/plugin-vue": "^5.1.1",
     "@vue/test-utils": "^2.4.6",
     "eslint": "^9.1.1",
@@ -49,5 +51,8 @@
     "vite-svg-loader": "^5.1.0",
     "vitest": "^2.0.4",
     "vue-tsc": "^1"
+  },
+  "overrides": {
+    "h3": "npm:h3-nightly@latest"
   }
 }

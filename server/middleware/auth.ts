@@ -21,6 +21,8 @@ export default defineEventHandler(async (event) => {
     '/api/auth/google/init',
     '/api/auth/google',
     '/auth/google/callback',
+    '_ws',
+    '/websocket',
   ];
 
   const isPublicRoute = publicRoutes.some((route) => event.path.startsWith(route));

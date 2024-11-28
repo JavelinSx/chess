@@ -18,6 +18,10 @@ export default defineNuxtConfig({
         proxy: 'https://id.vk.com/**',
       },
     },
+    experimental: {
+      websocket: true,
+    },
+    preset: 'node-server', // Обеспечивает поддержку WebSocket
   },
 
   i18n: {
