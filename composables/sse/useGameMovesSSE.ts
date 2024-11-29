@@ -1,11 +1,14 @@
 // composables/useGameMovesSSE.ts
 
 import { ref, onUnmounted, watch } from 'vue';
+import { gameApi } from '~/shared/api/game';
 import { useAuthStore } from '~/store/auth';
 import { useGameStore } from '~/store/game';
+import { useGameTimerStore } from '~/store/gameTimer';
 
 export function useGameMovesSSE(gameId: string) {
   const gameStore = useGameStore();
+  const gameTimerStore = useGameTimerStore();
   const authStore = useAuthStore();
   const eventSource = ref<EventSource | null>(null);
   const isConnected = ref(false);
@@ -24,6 +27,7 @@ export function useGameMovesSSE(gameId: string) {
       eventSource.value.onopen = () => {
         isConnected.value = true;
         reconnectAttempts.value = 0;
+        console.log('Game SSE event onopen:');
         resolve(true);
       };
 
@@ -62,6 +66,9 @@ export function useGameMovesSSE(gameId: string) {
       case 'game_end':
         gameStore.handleGameEnd(data.result);
         break;
+      case 'timer_sync':
+        gameTimerStore.handleSSEUpdate(data.data);
+        break;
       case 'game_connection_close':
         closeSSE();
         break;
@@ -73,7 +80,7 @@ export function useGameMovesSSE(gameId: string) {
     }
   };
 
-  const closeSSE = () => {
+  const closeSSE = async () => {
     if (eventSource.value) {
       eventSource.value.close();
       eventSource.value = null;

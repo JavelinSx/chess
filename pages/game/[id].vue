@@ -28,21 +28,27 @@ import ChessBoard from '~/features/game/ui/ChessBoard.vue';
 import CapturedPieces from '~/features/game/ui/CapturedPieces.vue';
 import GameResultModal from '~/features/game/ui/GameResultModal.vue';
 import { useGameMovesSSE } from '~/composables/sse/useGameMovesSSE';
+import { useGameTimerStore } from '~/store/gameTimer';
 
 const { t } = useI18n();
 const route = useRoute();
 const gameStore = useGameStore();
+const timerStore = useGameTimerStore()
 const gameId = route.params.id as string;
 const errorMessage = ref<string | null>(null);
 
 useGameMovesSSE(gameId)
 
 onMounted(async () => {
-    try {
+    const gameId = route.params.id as string;
+    if (gameId) {
         await gameStore.fetchGame(gameId);
-
-    } catch (error) {
-        errorMessage.value = 'Failed to load the game. Please try again.';
+        if (gameStore.currentGame?.timeControl?.initialTime) {
+            await timerStore.initialize(
+                gameId,
+                gameStore.currentGame.timeControl.initialTime
+            );
+        }
     }
 });
 

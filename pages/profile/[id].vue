@@ -12,6 +12,6 @@ import { useRoute } from 'vue-router';
 const userStore = useUserStore();
 const route = useRoute();
 const userId = route.params.id as string;
-const user = computed(() => userStore.user)
+const user = ref(userStore.user)
 
 </script>

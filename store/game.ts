@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { gameApi } from '~/shared/api/game';
 import { useUserStore } from './user';
 import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
+import { useGameTimerStore } from './gameTimer';
 export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
 
 export interface GameStore {
@@ -65,6 +66,7 @@ export const useGameStore = defineStore('game', {
       if (!this.currentGame) throw new Error((this.error = this.getLocaleErrorMessage('noActiveGame')));
 
       const userStore = useUserStore();
+      const timerStore = useGameTimerStore();
       const userId = userStore.user?._id;
 
       if (!userId) {
@@ -72,7 +74,7 @@ export const useGameStore = defineStore('game', {
       }
 
       try {
-        await gameApi.makeMove(this.currentGame._id, from, to);
+        await gameApi.makeMove(this.currentGame._id, from, to, timerStore.whiteTime, timerStore.blackTime);
         return { success: true };
       } catch (error) {
         this.error = this.getLocaleErrorMessage('failedToMakeMove');
@@ -82,6 +84,7 @@ export const useGameStore = defineStore('game', {
 
     // Pawn Promotion Actions
     async promotePawn(promoteTo: PieceType) {
+      const timerStore = useGameTimerStore();
       if (!this.currentGame || !this.pendingPromotion) {
         throw new Error(this.getLocaleErrorMessage('noPendingPromotion'));
       }
@@ -89,7 +92,7 @@ export const useGameStore = defineStore('game', {
       const { from, to } = this.pendingPromotion;
 
       try {
-        await gameApi.makeMove(this.currentGame._id, from, to, promoteTo);
+        await gameApi.makeMove(this.currentGame._id, from, to, timerStore.whiteTime, timerStore.blackTime, promoteTo);
       } catch (error) {
         this.error = this.getLocaleErrorMessage('failedToPromotePawn');
       } finally {
@@ -100,11 +103,10 @@ export const useGameStore = defineStore('game', {
 
     // Обработка окончания игры
     async handleGameEnd(result: GameResult) {
-      if (this.isProcessingGameEnd || !this.currentGame) return;
+      if (!this.currentGame) return;
 
       try {
         this.isProcessingGameEnd = true;
-
         const response = await gameApi.endGame(this.currentGame._id, result);
         if (response.data) {
           this.gameResult = response.data;

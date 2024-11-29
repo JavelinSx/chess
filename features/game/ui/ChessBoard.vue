@@ -67,6 +67,7 @@ const { t } = useI18n();
 const gameStore = useGameStore();
 const userStore = useUserStore();
 const route = useRoute()
+
 // Используем композаблы
 const {
     currentGame,
@@ -82,7 +83,7 @@ const {
 const {
     currentPlayerName,
     currentPlayerAvatar
-} = useCurrentPlayer(gameStore, userStore);
+} = useCurrentPlayer(gameStore);
 
 const {
     handleGameEnd,
@@ -103,13 +104,7 @@ onBeforeMount(async () => {
         await gameStore.fetchGame(gameId);
     }
 });
-// onMounted(async () => {
-//     const gameId = route.params.id as string;
-//     if (gameId) {
-//         await gameStore.fetchGame(gameId);
-//     }
-// });
-// Очищаем ошибки при размонтировании
+
 onUnmounted(() => {
     gameStore.resetError();
 });

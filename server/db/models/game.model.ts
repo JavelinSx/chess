@@ -116,6 +116,9 @@ const gameSchema = new mongoose.Schema<ChessGame>(
         enum: [15, 30, 45, 90],
       },
     },
+    whiteTime: { type: Number, required: true },
+    blackTime: { type: Number, required: true },
+    lastTimerUpdate: { type: Number, required: true },
     startedAt: {
       type: Date,
       default: Date.now,

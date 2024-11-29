@@ -1,28 +1,27 @@
 import { computed } from 'vue';
 import type { GameStore } from '~/store/game';
-import type { UserStore } from '~/store/user';
 
-export function useCurrentPlayer(gameStore: GameStore, userStore: UserStore) {
-  const currentPlayerId = computed(() => {
-    const game = gameStore.currentGame;
-    if (!game) return null;
-
-    return game.currentTurn === 'white' ? game.players.white?._id : game.players.black?._id;
-  });
+export function useCurrentPlayer(gameStore: GameStore) {
+  const whitePlayer = computed(() => gameStore.currentGame?.players.white);
+  const blackPlayer = computed(() => gameStore.currentGame?.players.black);
 
   const currentPlayerName = computed(() => {
-    if (currentPlayerId.value === userStore.user?._id) {
-      return userStore.user?.username || 'Your';
+    if (gameStore.currentGame?.currentTurn === 'white') {
+      return whitePlayer.value?.username;
+    } else {
+      return blackPlayer.value?.username;
     }
-
-    const opponent = userStore.usersList.find((user) => user._id === currentPlayerId.value);
-    return opponent ? opponent.username : "Opponent's";
   });
 
-  const currentPlayerAvatar = computed(() => userStore.user?.avatar);
+  const currentPlayerAvatar = computed(() => {
+    if (gameStore.currentGame?.currentTurn === 'white') {
+      return whitePlayer.value?.avatar;
+    } else {
+      return blackPlayer.value?.avatar;
+    }
+  });
 
   return {
-    currentPlayerId,
     currentPlayerName,
     currentPlayerAvatar,
   };

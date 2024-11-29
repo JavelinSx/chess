@@ -5,7 +5,7 @@ import { gameSSEManager } from '../../utils/sseManager/GameSSEManager';
 
 export default defineEventHandler(async (event) => {
   try {
-    const { gameId, from, to, promoteTo } = await readBody(event);
+    const { gameId, from, to, promoteTo, whiteTime, blackTime } = await readBody(event);
     const userId = event.context.auth?.userId;
     if (!userId) {
       throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
@@ -41,11 +41,13 @@ export default defineEventHandler(async (event) => {
       throw new Error(saveResponse.error);
     }
 
-    const gameTest = await GameService.getGame(gameId); // ПОНЯТЬ ПОЧЕМУ БЕЗ ЭТОГО НЕ РАБОТАЕТ
+    const gameTest = await GameService.getGame(gameId);
+    game = gameTest.data!;
+    game.whiteTime = whiteTime;
+    game.blackTime = blackTime;
 
-    // Отправляем обновление игры через SSE
-    await gameSSEManager.broadcastGameUpdate(gameId, gameTest.data!);
-
+    await gameSSEManager.broadcastGameUpdate(gameId, game);
+    await GameService.updateGameTimer(gameId, whiteTime, blackTime);
     return { data: { success: true }, error: null };
   } catch (error: any) {
     console.error('Error in move handler:', error);

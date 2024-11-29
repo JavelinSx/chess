@@ -33,6 +33,13 @@ export interface GamePlayer {
   gameStats: UserStats;
 }
 
+export interface UpdateTime {
+  whiteTime: number;
+  blackTime: number;
+  activeColor: PieceColor;
+  lastUpdateTime: number;
+}
+
 export interface MoveHistoryEntry {
   from: Position;
   to: Position;
@@ -106,6 +113,9 @@ export interface ChessGame {
   moveHistory: MoveHistoryEntry[];
   timeControl: TimeControl | null;
   startedAt: Date | null;
+  whiteTime: number;
+  blackTime: number;
+  lastTimerUpdate: number;
 }
 
 export interface TimeControl {

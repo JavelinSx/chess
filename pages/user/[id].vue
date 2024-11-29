@@ -5,9 +5,7 @@
     <div v-else-if="error">
         <p>{{ error }}</p>
     </div>
-    <div v-else>
-        <p>{{ t('common.loading') }}</p>
-    </div>
+    <USkeleton v-else class="h-full w-full" />
 </template>
 
 <script setup lang="ts">
@@ -20,12 +18,20 @@ import type { ClientUser } from '~/server/types/user';
 const { t } = useI18n();
 const route = useRoute();
 const userStore = useUserStore();
-
+const userId = route.params.id as string;
 const user = ref<ClientUser | null>(null);
 const error = ref<string | null>(null);
 
-onMounted(() => {
-    const userId = route.params.id as string;
-    user.value = userStore.getUserById(userId)!
-});
+const fetchUser = async () => {
+    try {
+        user.value = await userStore.getUserById(userId);
+    } catch (e) {
+        error.value = e instanceof Error ? e.message : String(e);
+    }
+};
+
+onMounted(fetchUser);
+watch(() => route.params.id, fetchUser);
+
+
 </script>

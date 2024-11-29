@@ -1,6 +1,6 @@
 <template>
-    <UCard :ui="{ base: cardClasses }">
-        <template v-if="timerStore.initCountdown">
+    <UCard>
+        <template v-if="timerStore.isCountingDown">
             <div class="countdown-display text-center">
                 <h3 class="text-xl font-bold mb-2">{{ t('game.gameStartsIn') }}</h3>
                 <span class="text-3xl">{{ timerStore.countdownTime }}</span>
@@ -10,11 +10,11 @@
             <div class="flex justify-between items-center">
                 <div class="timer-display" :class="{ 'active': activeColor === 'white' }">
                     <span class="font-bold">White:</span>
-                    <span>{{ formatTimeValue(whiteTime) }}</span>
+                    <span>{{ formatTimeValue(timerStore.remainingTime('white')) }}</span>
                 </div>
                 <div class="timer-display" :class="{ 'active': activeColor === 'black' }">
                     <span class="font-bold">Black:</span>
-                    <span>{{ formatTimeValue(blackTime) }}</span>
+                    <span>{{ formatTimeValue(timerStore.remainingTime('black')) }}</span>
                 </div>
             </div>
         </template>
@@ -22,110 +22,90 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { useGameTimerStore } from '~/store/gameTimer';
 import { useGameStore } from '~/store/game';
-import { storeToRefs } from 'pinia';
-
-const props = defineProps<{
-    gameId: string;
-}>();
+import { useGameTimerStore } from '~/store/gameTimer';
+import type { PieceColor } from '~/server/types/game';
+import { gameApi } from '~/shared/api/game';
 
 const { t } = useI18n();
-const timerStore = useGameTimerStore();
+
 const gameStore = useGameStore();
+const timerStore = useGameTimerStore();
 
-const { whiteTime, blackTime, status, activeColor } = storeToRefs(timerStore);
-let syncInterval = ref<ReturnType<typeof setInterval> | null>(null);
-// Вычисляемые свойства
-const cardClasses = computed(() => ({
-    'bg-gray-100 dark:bg-gray-800 p-4 rounded-lg': true,
-    'border-l-4': true,
-    'border-yellow-500': status.value === 'countdown',
-    'border-green-500': status.value === 'active',
-    'border-red-500': status.value === 'completed',
-    'border-gray-500': status.value === 'not_started',
-}));
+const { activeColor } = storeToRefs(timerStore)
+const { whiteTime } = storeToRefs(timerStore)
+const { blackTime } = storeToRefs(timerStore)
 
-// Функции
 const formatTimeValue = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-// Локальное обновление времени
-const startTimeSync = () => {
+const syncInterval = ref<NodeJS.Timeout | null>(null);
+
+const startTimerSync = () => {
     if (syncInterval.value) {
-        return;
-    };
-    syncInterval.value = setInterval(() => {
-        if (timerStore.status === 'active') {
-            timerStore.updateTimeAndSync();
+        clearInterval(syncInterval.value);
+    }
+
+    syncInterval.value = setInterval(async () => {
+        if (!gameStore.currentGame || timerStore.status !== 'active') return;
+
+        try {
+            await gameApi.updateTimer(
+                gameStore.currentGame._id,
+                timerStore.whiteTime,
+                timerStore.blackTime
+            );
+        } catch (error) {
+            console.error('Timer sync error:', error);
         }
-    }, 1000);
+    }, 5000);
 };
 
-const stopTimeSync = () => {
+const stopTimerSync = () => {
     if (syncInterval.value) {
         clearInterval(syncInterval.value);
         syncInterval.value = null;
     }
 };
 
-// Обработчики SSE событий
-const handleTimerSync = (event: CustomEvent) => {
-    timerStore.syncTimerState(event.detail);
-};
-
-
-// Жизненный цикл компонента
-onMounted(() => {
-    const duration = gameStore.currentGame?.timeControl?.initialTime;
-    if (duration) {
-        timerStore.resetTimer()
-        timerStore.initializeTimer(duration);
-        // Запускаем таймер после обратного отсчета
-        if (timerStore.status === 'countdown' || timerStore.init) {
-            timerStore.startCountdown();
-        }
-        // Устанавливаем слушатели событий
-        window.addEventListener('timer-sync', handleTimerSync as EventListener);
-    }
-});
-
-onUnmounted(() => {
-    window.removeEventListener('timer-sync', handleTimerSync as EventListener);
-    stopTimeSync();
-});
-
-// Слежение за изменениями
+// Добавляем наблюдение за статусом таймера
 watch(() => timerStore.status, (newStatus) => {
     if (newStatus === 'active') {
-        startTimeSync();
+        startTimerSync();
     } else {
-        stopTimeSync();
+        stopTimerSync();
     }
 });
 
-watch(() => gameStore.currentGame?.currentTurn, (newTurn, oldTurn) => {
-    if (newTurn && newTurn !== oldTurn && gameStore.currentGame?.status === 'active') {
-        timerStore.updateTimeAfterMove();
+onMounted(async () => {
+    const game = gameStore.currentGame;
+    if (!game) return;
+
+    await timerStore.initialize(
+        game._id,
+        game.timeControl?.initialTime
+    );
+
+    if (timerStore.status === 'countdown' && !timerStore.isCountingStarted) {
+        timerStore.startCountdown();
+    } else if (timerStore.status === 'active') {
+        // Если игра уже активна (например после перезагрузки)
+        startTimerSync();
     }
 });
 
-watch(() => gameStore.currentGame?.status, (newStatus) => {
-    if (newStatus === 'completed') {
-        stopTimeSync();
-        timerStore.resetTimer();
-    }
+onBeforeUnmount(() => {
+    stopTimerSync();
+    timerStore.cleanup();
 });
 </script>
 
 <style scoped>
 .timer-display {
-    @apply px-4 py-2 rounded;
-    transition: all 0.3s ease;
+    @apply px-4 py-2 rounded transition-colors duration-300;
 }
 
 .timer-display.active {

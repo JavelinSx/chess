@@ -39,9 +39,13 @@ export const useUserStore = defineStore('user', {
       this.usersList = [];
     },
 
-    getUserById(userId: string) {
-      const userInList = this.usersList.find((u) => u._id === userId);
-      return userInList;
+    async getUserById(userId: string): Promise<ClientUser | null> {
+      let userInList = this.usersList.find((u) => u._id === userId);
+      if (!userInList && this.usersList.length === 0) {
+        await this.getUsersList();
+        userInList = this.usersList.find((u) => u._id === userId);
+      }
+      return userInList || null;
     },
 
     updateUserStatus(userId: string, isOnline: boolean, isGame: boolean) {

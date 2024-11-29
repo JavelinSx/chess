@@ -5,7 +5,6 @@ import type { GameStore } from '~/store/game';
 export function useGameEnd(gameStore: GameStore) {
   async function handleGameEnd(reason: GameResultReason) {
     if (!gameStore.currentGame) return;
-
     const result: GameResult = {
       winner: null,
       loser: null,

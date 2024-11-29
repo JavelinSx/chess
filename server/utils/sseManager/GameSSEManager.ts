@@ -1,14 +1,38 @@
 import { H3Event } from 'h3';
 import type { ChessGame } from '../../types/game';
 import type { GameResult } from '../../types/game';
-
+import GameCache from '../GameCache';
 export class GameSSEManager {
   private gameConnections: Map<string, Map<string, H3Event>> = new Map();
+  private gameTimer: Map<string, NodeJS.Timeout> = new Map();
 
-  addGameConnection(gameId: string, userId: string, event: H3Event) {
+  private async setGameTimer(gameId: string) {
+    const game = GameCache.get<ChessGame>(gameId);
+    if (!game) return;
+
+    this.clearGameTimer(gameId);
+    const timer = setInterval(() => {
+      if (game.currentTurn === 'white') {
+        game.whiteTime--;
+      } else {
+        game.blackTime--;
+      }
+    }, 1000);
+    this.gameTimer.set(gameId, timer);
+  }
+
+  private async clearGameTimer(gameId: string) {
+    const timer = this.gameTimer.get(gameId);
+    if (timer) {
+      clearInterval(timer);
+      this.gameTimer.delete(gameId);
+    }
+  }
+
+  async addGameConnection(gameId: string, userId: string, event: H3Event) {
     if (!this.gameConnections.has(gameId)) {
       this.gameConnections.set(gameId, new Map());
-      this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
+      await this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     }
     this.gameConnections.get(gameId)!.set(userId, event);
   }
@@ -80,8 +104,10 @@ export class GameSSEManager {
     timerData: {
       whiteTime: number;
       blackTime: number;
-      activeColor: 'white' | 'black';
-      lastUpdateTime: number;
+      activeColor: string;
+      gameId: string;
+      status: string;
+      timestamp: number;
     }
   ) {
     const clients = this.gameConnections.get(gameId);

@@ -46,7 +46,7 @@ export class GameService {
       }
 
       const players = this.assignPlayers(inviter, invitee, startColor);
-
+      const initialTime = timeControl.type === 'timed' ? (timeControl.initialTime || 0) * 60 : 0;
       const newGame = new Game({
         board: initializeBoard(),
         currentTurn: 'white',
@@ -73,6 +73,9 @@ export class GameService {
         moveHistory: [],
         timeControl,
         startedAt: new Date(),
+        whiteTime: initialTime,
+        blackTime: initialTime,
+        lastTimerUpdate: Date.now(),
       });
 
       const savedGame = await newGame.save();
@@ -202,7 +205,14 @@ export class GameService {
       const finalResult = { ...result, ratingChanges };
 
       await this.updateCacheAndBroadcast(gameId, game, finalResult);
-
+      await gameSSEManager.broadcastTimerSync(gameId, {
+        whiteTime: game.whiteTime,
+        blackTime: game.blackTime,
+        activeColor: game.currentTurn,
+        gameId: game._id.toString(),
+        status: 'completed',
+        timestamp: Date.now(),
+      });
       return { data: finalResult, error: null };
     } catch (error) {
       return {
@@ -292,6 +302,37 @@ export class GameService {
     }));
 
     await userSSEManager.broadcastUserListUpdate(updatedUserList);
+  }
+
+  static async updateGameTimer(gameId: string, whiteTime: number, blackTime: number): Promise<ApiResponse<void>> {
+    try {
+      const game = await this.getGame(gameId);
+      if (!game.data) {
+        return { data: null, error: 'Game not found' };
+      }
+
+      game.data.whiteTime = whiteTime;
+      game.data.blackTime = blackTime;
+      game.data.lastTimerUpdate = Date.now();
+      const ttl = this.getGameCacheTTL(game.data);
+      GameCache.set(gameId, game.data, ttl);
+      // Отправляем обновление всем клиентам
+      await gameSSEManager.broadcastTimerSync(gameId, {
+        whiteTime: game.data.whiteTime,
+        blackTime: game.data.blackTime,
+        activeColor: game.data.currentTurn,
+        gameId: game.data._id,
+        status: game.data.status,
+        timestamp: Date.now(),
+      });
+
+      return { data: undefined, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'Failed to update game timer',
+      };
+    }
   }
 
   static async handleTimeout(gameId: string, userId: string, color: PieceColor): Promise<ApiResponse<void>> {

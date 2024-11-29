@@ -10,16 +10,16 @@
             <div class="flex items-center justify-between cursor-pointer px-4 py-5 md:px-6"
                 @click="navigateToUserProfile">
                 <UCard :ui="{ base: 'w-full' }">
-                    <div class="flex justify-between">
-                        <div class="flex flex-col items-center gap-2">
+                    <div class="flex justify-between gap-2">
+                        <div class="flex flex-col items-center justify-center gap-2 w-24">
                             <UAvatar :ui="{
                                 rounded: 'object-cover'
                             }" :src="getUserAvatar(user)" :alt="user.username" size="lg" />
-                            <p class="font-semibold">{{ user.username }}</p>
+                            <p class="font-semibold text-sm text-center">{{ user.username }}</p>
                         </div>
-                        <div class="flex flex-col items-center gap-2">
+                        <div class="flex flex-col items-center gap-2 w-24">
                             <TitleIcon :rating="user.rating" />
-                            <p>{{ t('profile.rating') }}: {{ user.rating }}</p>
+                            <p class="text-sm text-center">{{ t('profile.rating') }}: {{ user.rating }}</p>
                         </div>
                     </div>
                 </UCard>

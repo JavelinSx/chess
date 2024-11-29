@@ -44,6 +44,16 @@ export default defineEventHandler(async (event) => {
 
   gameSSEManager.addGameConnection(gameId, userId, event);
 
+  if (game.status === 'active') {
+    await gameSSEManager.broadcastTimerSync(gameId, {
+      whiteTime: game.whiteTime,
+      blackTime: game.blackTime,
+      activeColor: game.currentTurn,
+      gameId: game._id,
+      status: game.status,
+      timestamp: Date.now(),
+    });
+  }
   const closeHandler = () => {
     gameSSEManager.removeGameConnection(gameId, userId);
   };
