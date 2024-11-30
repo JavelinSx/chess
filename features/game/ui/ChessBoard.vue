@@ -28,7 +28,10 @@
                 <div v-for="col in 8" :key="col" class="board-row">
                     <div v-for="row in 8" :key="row" class="board-cell" :class="getCellClasses(row, col)"
                         @click="handleCellClick(getAdjustedPosition(row, col))">
-                        <chess-piece :piece="getPieceAt(row, col)" />
+                        <chess-piece :piece="getPieceAt(row, col)" :class="{
+                            'piece-moving': isMovingPiece(row, col),
+                            'piece-captured': isCapturedPiece(row, col)
+                        }" />
                     </div>
                 </div>
             </div>
@@ -77,7 +80,9 @@ const {
     getPieceAt,
     handleCellClick,
     handlePromotion,
-    getCellClasses
+    getCellClasses,
+    isMovingPiece,
+    isCapturedPiece
 } = useChessBoard();
 
 const {
@@ -111,6 +116,45 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.piece-moving {
+    animation: move-piece 0.3s ease-out;
+    z-index: 2;
+}
+
+.piece-captured {
+    animation: capture-piece 0.3s ease-out;
+    z-index: 1;
+}
+
+@keyframes move-piece {
+    0% {
+        transform: scale(1.1) translate(0, 0);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1) translate(0, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes capture-piece {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+}
+
 .chess-board-container {
     @apply max-w-xl mx-auto w-full;
 }

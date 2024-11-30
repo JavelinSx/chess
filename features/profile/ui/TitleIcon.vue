@@ -1,5 +1,8 @@
 <template>
-    <img :src="titleIcon" :alt="title" class="w-12">
+    <div class="perspective-[1000px]">
+        <img :src="titleIcon" :alt="title" class="w-12">
+    </div>
+
 </template>
 
 <script setup lang="ts">

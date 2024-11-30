@@ -10,6 +10,7 @@ export function useChessBoard() {
   const userStore = useUserStore();
   const selectedCell = ref<Position | null>(null);
   const validMoves = ref<Position[]>([]);
+  const lastMove = ref<{ from: Position; to: Position } | null>(null);
   const { currentGame } = storeToRefs(gameStore);
 
   const isUserPlayingWhite = computed(() => currentGame.value?.players.white!._id === userStore.user?._id);
@@ -59,12 +60,27 @@ export function useChessBoard() {
           gameStore.pendingPromotion = { from, to };
           gameStore.promote = true;
         } else {
-          await gameStore.makeMove(from, to);
+          const result = await gameStore.makeMove(from, to);
+          if (result.success) {
+            lastMove.value = { from, to };
+          }
         }
       }
       selectedCell.value = null;
       validMoves.value = [];
     }
+  }
+
+  function isMovingPiece(row: number, col: number) {
+    if (!lastMove.value) return false;
+    const [adjustedRow, adjustedCol] = getAdjustedPosition(row, col);
+    return adjustedRow === lastMove.value.to[0] && adjustedCol === lastMove.value.to[1];
+  }
+
+  function isCapturedPiece(row: number, col: number) {
+    if (!lastMove.value) return false;
+    const [adjustedRow, adjustedCol] = getAdjustedPosition(row, col);
+    return adjustedRow === lastMove.value.from[0] && adjustedCol === lastMove.value.from[1];
   }
 
   function handlePromotion(promoteTo: PieceType) {
@@ -99,6 +115,8 @@ export function useChessBoard() {
     currentGame,
     isUserPlayingWhite,
     isCurrentPlayerTurn,
+    isMovingPiece,
+    isCapturedPiece,
     getAdjustedPosition,
     getPieceAt,
     isSelected,
