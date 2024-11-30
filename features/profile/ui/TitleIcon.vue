@@ -8,12 +8,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { getTitleForRating } from '../utils/titles';
-import beginnerIcon from '~/app/styles/title-icon/beginner-icon.png';
-import amateurIcon from '~/app/styles/title-icon/amateur-icon.png';
-import advancedIcon from '~/app/styles/title-icon/advanced-icon.png';
-import expertIcon from '~/app/styles/title-icon/expert-icon.png';
-import masterIcon from '~/app/styles/title-icon/master-icon.png';
-import grandMasterIcon from '~/app/styles/title-icon/grandmaster-icon.png';
+import beginnerIcon from '~/app/styles/title-icon/beginner-icon.svg?url';
+import amateurIcon from '~/app/styles/title-icon/amateur-icon.svg?url';
+import advancedIcon from '~/app/styles/title-icon/advanced-icon.svg?url';
+import expertIcon from '~/app/styles/title-icon/expert-icon.svg?url';
+import masterIcon from '~/app/styles/title-icon/master-icon.svg?url';
+import grandMasterIcon from '~/app/styles/title-icon/grandmaster-icon.svg?url';
 
 const props = defineProps<{
     rating: number;
@@ -42,3 +42,4 @@ const titleIcon = computed(() => {
     }
 });
 </script>
+<style lang="scss"></style>

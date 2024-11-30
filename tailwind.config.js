@@ -28,10 +28,19 @@ module.exports = {
                 },
                 wiggleMiddle: {
                     '0%': { transform: 'rotate(-1deg) translate(-1px, -1px)' },
-                    '25%': { transform: 'rotate(0deg) translate(1px, 0px)' },
-                    '50%': { transform: 'rotate(1deg) translate(-1px, 1px)' },
-                    '75%': { transform: 'rotate(0deg) translate(0px, -1px)' },
-                    '100%': { transform: 'rotate(-1deg) translate(-1px, -1px)' }
+                    '12%': { transform: 'rotate(0deg) translate(1px, 0px)' },
+                    '14%': { transform: 'rotate(0deg) translate(-1px, 1px)' },
+                    '16%': { transform: 'rotate(0deg) translate(1px, -1px)' },
+                    '18%': { transform: 'rotate(0deg) translate(-1px, -1px)' },
+                    '20%': { transform: 'rotate(1deg) translate(1px, -1px)' },
+                    '30%': { transform: 'rotate(0deg) translate(0px, 0px)' },
+                    '40%': { transform: 'rotate(-1deg) translate(0px, 0px)' },
+                    '50%': { transform: 'rotate(0deg) translate(0px, 0px)' },
+                    '60%': { transform: 'rotate(1deg) translate(0px, 0px)' },
+                    '70%': { transform: 'rotate(0deg) translate(0px, 0px)' },
+                    '80%': { transform: 'rotate(-1deg) translate(0px, 0px)' },
+                    '90%': { transform: 'rotate(-1deg) translate(0px, 0px)' },
+                    '100%': { transform: 'rotate(-1deg) translate(0px, 0px)' }
                 },
                 aroundY: {
                     '0%, 100%': { transform: 'rotateY(-360deg)' },
@@ -41,7 +50,7 @@ module.exports = {
             },
             animation: {
                 wiggle: 'wiggle 1s ease-in-out infinite',
-                wiggleMiddle: 'wiggleMiddle .8s ease-in-out infinite',
+                wiggleMiddle: 'wiggleMiddle 2s ease-in-out infinite',
                 aroundY: 'aroundY 20s ease-in-out infinite'
             }
         },
