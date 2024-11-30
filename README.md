@@ -1,7 +1,134 @@
-test .env API_BASE='/api' MONGODB_URI='mongodb://localhost:27017/chess_game' JWT_SECRET='your_secret_key_here'
+# ChessNexus
 
-├─ app │ ├─ providers │ │ └─ index.ts │ ├─ styles │ │ ├─ chess-icon │ │ │ ├─ chess-bishop.svg │ │ │ ├─ chess-king.svg │ │ │ ├─ chess-knight.svg │ │ │ ├─ chess-pawn.svg │ │ │ ├─ chess-queen.svg │ │ │ └─ chess-rook.svg │ │ └─ global.css │ └─ types │ └─ index.ts ├─ app.vue ├─ composables │ ├─ useAlert.ts │ ├─ useAuth.ts │ ├─ useChatSSE.ts │ ├─ useGameSSE.ts │ └─ useUserSSE.ts ├─ features │ ├─ auth │ │ └─ ui │ │ ├─ LoginForm.vue │ │ └─ RegisterForm.vue │ ├─ chat │ │ └─ ui │ │ ├─ ChatButton.vue │ │ ├─ ChatMessages.vue │ │ ├─ ChatRoomList.vue │ │ └─ FloatingChat.vue │ ├─ friends │ │ └─ ui │ │ ├─ FriendRequest.vue │ │ └─ FriendsList.vue │ ├─ game │ │ └─ ui │ │ ├─ ChessBoard.vue │ │ └─ ChessPiece.vue │ ├─ game-logic │ │ ├─ model │ │ │ ├─ game-logic │ │ │ │ ├─ board.ts │ │ │ │ ├─ castling.ts │ │ │ │ ├─ check.ts │ │ │ │ ├─ game-history.ts │ │ │ │ ├─ move-execution.ts │ │ │ │ ├─ moves.ts │ │ │ │ ├─ special-moves.ts │ │ │ │ └─ utils.ts │ │ │ ├─ game-state │ │ │ │ ├─ draw.ts │ │ │ │ ├─ game-over.ts │ │ │ │ ├─ move-generation.ts │ │ │ │ └─ state-update.ts │ │ │ └─ pieces │ │ │ ├─ bishop.ts │ │ │ ├─ king.ts │ │ │ ├─ knight.ts │ │ │ ├─ pawn.ts │ │ │ ├─ queen.ts │ │ │ └─ rook.ts │ │ └─ ui │ │ ├─ CapturedPieces.vue │ │ └─ PawnPromotionDialog.vue │ ├─ invite-modal │ │ └─ GameInvitationModal.vue │ ├─ locales │ │ └─ ui │ │ └─ LocalesSwitcher.vue │ ├─ profile-edit │ │ └─ ui │ │ ├─ ChangePassword.vue │ │ └─ ProfileEdit.vue │ ├─ toggleTheme │ │ └─ ui │ │ └─ ToggleTheme.vue │ ├─ user │ │ └─ ui │ │ └─ UserCard.vue │ └─ user-list │ ├─ Pagination.vue │ ├─ SortingPlayers.vue │ └─ UserList.vue ├─ fetch-secret.js ├─ layouts │ └─ default.vue ├─ locales │ ├─ en.json │ └─ ru.json ├─ nuxt.config.ts ├─ package-lock.json ├─ package.json ├─ pages │ ├─ game │ │ └─ [id].vue │ ├─ index.vue │ ├─ login.vue │ ├─ profile │ │ └─ [id].vue │ └─ register.vue ├─ README.md ├─ server │ ├─ api │ │ ├─ auth │ │ │ └─ [...].ts │ │ ├─ chat │ │ │ ├─ create-or-get-room.post.ts │ │ │ ├─ rooms.get.ts │ │ │ ├─ send-message.post.ts │ │ │ ├─ sse.ts │ │ │ └─ [roomId] │ │ │ └─ messages.get.ts │ │ ├─ friends │ │ │ ├─ index.ts │ │ │ ├─ requests.post.ts │ │ │ └─ [id] │ │ │ ├─ accept.post.ts │ │ │ └─ remove.post.ts │ │ ├─ game │ │ │ ├─ accept-invite.post.ts │ │ │ ├─ forced-end-game.ts │ │ │ ├─ invite.ts │ │ │ ├─ move.post.ts │ │ │ └─ [id].get.ts │ │ ├─ sse │ │ │ ├─ chat.ts │ │ │ ├─ game-moves.ts │ │ │ └─ user-status.ts │ │ ├─ user │ │ │ ├─ change-password.post.ts │ │ │ ├─ profile-update.post.ts │ │ │ ├─ profile.get.ts │ │ │ └─ update-status.post.ts │ │ └─ users │ │ ├─ list.ts │ │ └─ [...].ts │ ├─ db │ │ ├─ index.ts │ │ └─ models │ │ ├─ chat-room.model.ts │ │ ├─ game.model.ts │ │ └─ user.model.ts │ ├─ middleware │ │ └─ auth.ts │ ├─ schemas │ │ └─ auth.schema.ts │ ├─ services │ │ ├─ auth.service.ts │ │ ├─ chat.service.ts │ │ ├─ friends.service.ts │ │ ├─ game.service.ts │ │ ├─ user.service.ts │ │ └─ user.status.service.ts │ ├─ types │ │ ├─ auth.ts │ │ ├─ chat.ts │ │ ├─ friends.ts │ │ ├─ game.ts │ │ └─ user.ts │ └─ utils │ ├─ apiResponse.ts │ ├─ auth.ts │ ├─ ChatSSEManager.ts │ ├─ GameSSEManager.ts │ ├─ InvitationSSEManager.ts │ ├─ SSEManager.ts │ └─ UserSSEManager.ts ├─ shared │ └─ api │ ├─ api.ts │ ├─ auth.ts │ ├─ chat.ts │ ├─ friends.ts │ ├─ game.ts │ └─ user.ts ├─ store │ ├─ auth.ts │ ├─ chat.ts │ ├─ friends.ts │ ├─ game.ts │ ├─ invitation.ts │ ├─ pagination.ts │ ├─ theme.ts │ └─ user.ts ├─ tailwind.config.js ├─ test ├─ tsconfig.json ├─ vitest.config.ts └─ widgets ├─ Footer.vue ├─ Header.vue └─ UserList.vue
+Онлайн шахматная платформа, разработанная с использованием Nuxt 3, Vue 3 и TypeScript. Включает в себя рейтинговую систему, профили пользователей и социальные функции.
 
+## Возможности
+
+### Шахматная игра
+
+- Игра в реальном времени с соблюдением стандартных правил
+- Контроль времени (15, 30, 45, 90 минут)
+- Поддержка всех шахматных ходов:
+  - Рокировка
+  - Взятие на проходе
+  - Превращение пешки
+- Проверка корректности ходов
+- Определение шаха, мата и пата
+
+### Пользовательские функции
+
+- Авторизация через:
+  - Email
+  - GitHub
+  - Google
+  - VK
+- Профили пользователей со статистикой
+- Рейтинговая система
+- Система друзей с отслеживанием статуса
+- Личные сообщения между пользователями
+
+### Интерфейс
+
+- Адаптивный дизайн (ПК и мобильные устройства)
+- Тёмная и светлая темы
+- Поддержка русского и английского языков
+- Приглашения на игру в реальном времени
+- Чат во время игры (пока общее соедиенение для всех пользователей(приватности - 0))
+- История ходов
+- Отображение взятых фигур
+
+## Технологии
+
+### Фронтенд
+
+- Nuxt 3
+- Vue 3
+- TypeScript
+- Tailwind CSS
+- Pinia (управление состоянием)
+- @nuxt/ui (библиотека компонентов)
+
+### Бэкенд
+
+- Node.js
+- MongoDB с Mongoose
+- JWT аутентификация
+- Server-Sent Events (SSE) для обновлений в реальном времени
+
+## Установка
+
+1. Клонирование репозитория:
+
+```bash
+git clone https://github.com/yourusername/chessnexus.git
 ```
 
+2. Установка зависимостей:
+
+```bash
+cd chessnexus
+npm install
 ```
+
+3. Создание файла `.env` в корневой директории:
+
+```env
+API_BASE='/api'
+MONGODB_URI='ваш_mongodb_uri'
+JWT_SECRET='ваш_jwt_secret'
+GITHUB_CLIENT_ID='ваш_github_client_id'
+GITHUB_CLIENT_SECRET='ваш_github_client_secret'
+GITHUB_REDIRECT_URI='http://localhost:3000/auth/github/callback'
+GOOGLE_CLIENT_ID='ваш_google_client_id'
+GOOGLE_CLIENT_SECRET='ваш_google_client_secret'
+GOOGLE_REDIRECT_URI='http://localhost:3000/auth/google/callback'
+VK_CLIENT_ID='ваш_vk_client_id'
+VK_CLIENT_SECRET='ваш_vk_client_secret'
+VK_REDIRECT_URI='http://localhost:3000/auth/vk/callback'
+```
+
+4. Запуск в режиме разработки:
+
+```bash
+npm run dev
+```
+
+5. Сборка для продакшена:
+
+```bash
+npm run build
+```
+
+## Структура проекта
+
+```
+├── app/
+│   ├── styles/          # Глобальные стили
+│   └── types/           # TypeScript типы
+├── composables/         # Vue компоненты
+├── features/           # Компоненты по функционалу
+│   ├── auth/           # Компоненты авторизации
+│   ├── chat/           # Функционал чата
+│   ├── game/           # Игровые компоненты
+│   └── user/           # Пользовательские компоненты
+├── server/             # Backend API и сервисы
+│   ├── api/            # API эндпоинты
+│   ├── db/             # Модели базы данных
+│   └── services/       # Бизнес-логика
+└── store/              # Хранилища Pinia
+```
+
+## Разработка
+
+### Структура API
+
+- RESTful API эндпоинты в `/server/api/`
+- SSE эндпоинты для обновлений в реальном времени
+- Сервисный слой для бизнес-логики
+- MongoDB модели с использованием Mongoose
+
+### Управление состоянием
+
+- Хранилища Pinia для глобального состояния
+- Composables для переиспользуемой логики
+- SSE для обновлений в реальном времени
