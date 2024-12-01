@@ -38,7 +38,7 @@ const titleIcon = computed(() => {
         case t('title.grandMaster'):
             return grandMasterIcon;
         default:
-            return beginnerIcon;
+            return grandMasterIcon;
     }
 });
 </script>

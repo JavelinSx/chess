@@ -1,6 +1,8 @@
 <!-- features/game/ui/GameDurationSelector.vue -->
 <template>
-    <UModal v-model="showModal">
+    <UModal v-model="showModal" :ui="{
+        width: 'w-72 md:w-full'
+    }">
         <UCard>
             <template #header>
                 <h3 class="text-xl font-semibold">
@@ -8,11 +10,27 @@
                 </h3>
             </template>
 
-            <URadioGroup v-model="selectedDuration" name="duration" :options="durationOptions" />
-            <URadioGroup v-model="selectedColor" name="color" :options="colorOptions" />
+            <UCard class="mb-4">
+                <template #header>
+                    <h3 class="text-base md:text-xl font-semibold">
+                        {{ t('common.colorSelect') }}
+                    </h3>
+                </template>
+                <URadioGroup v-model="selectedColor" name="color" :options="colorOptions" />
+            </UCard>
+
+            <UCard>
+                <template #header>
+                    <h3 class="text-base md:text-xl font-semibold">
+                        {{ t('common.timeSelect') }}
+                    </h3>
+                </template>
+                <URadioGroup v-model="selectedDuration" name="duration" :options="durationOptions" />
+            </UCard>
+
             <template #footer>
                 <div class="flex justify-end gap-2">
-                    <UButton @click="invitationStore.closeDurationSelector">
+                    <UButton @click="invitationStore.closeDurationSelector" color="red">
                         {{ t('common.cancel') }}
                     </UButton>
                     <UButton @click="handleConfirm" color="primary">

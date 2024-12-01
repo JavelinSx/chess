@@ -5,6 +5,7 @@ const chatParticipantSchema = new mongoose.Schema<ChatParticipant>({
   _id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   username: { type: String, required: true },
   chatSetting: { type: String, enum: ['all', 'friends_only', 'nobody'], required: true },
+  avatar: { type: String },
 });
 
 const chatMessageSchema = new mongoose.Schema<ChatMessage>({

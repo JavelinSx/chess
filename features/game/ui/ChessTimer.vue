@@ -1,5 +1,11 @@
 <template>
-    <UCard>
+    <UCard :ui="{
+        body: {
+            base: '',
+            background: '',
+            padding: 'px-4 py-5 sm:p-2 md:p-6'
+        },
+    }">
         <template v-if="timerStore.isCountingDown">
             <div class="countdown-display text-center">
                 <h3 class="text-xl font-bold mb-2">{{ t('game.gameStartsIn') }}</h3>

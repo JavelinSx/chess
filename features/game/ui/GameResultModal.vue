@@ -4,15 +4,15 @@
             <h2 class="text-xl font-bold mb-4">{{ getResultTitle(gameResult.reason!) }}</h2>
             <p class="mb-2">{{ t('game.winner') }}: {{
                 userStore.getUserInUserList(gameResult.winner!)?.username || t('game.draw')
-            }}</p>
+                }}</p>
             <p class="mb-4">{{ t('game.loser') }}: {{
                 userStore.getUserInUserList(gameResult.loser!)?.username || t('common.nobody')
-            }}</p>
+                }}</p>
             <div v-if="gameResult.ratingChanges" class="mb-4">
                 <h3 class="text-lg font-semibold mb-2">{{ t('game.ratingChanges') }}</h3>
                 <p v-for="(change, playerId) in gameResult.ratingChanges" :key="playerId"
-                    :class="change > 0 ? 'text-green-500' : 'text-red-500'">
-                    {{ getPlayerName(playerId) }}: {{ change > 0 ? '+' : ' ' }}{{ change }}
+                    :class="change >= 0 ? 'text-green-500' : 'text-red-500'">
+                    {{ getPlayerName(playerId) }}: {{ change >= 0 ? '+' : ' ' }}{{ change }}
                 </p>
             </div>
             <p class="text-sm text-gray-500 mb-4">{{ t('game.closingIn', { seconds: countdown }) }}</p>

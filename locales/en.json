@@ -13,7 +13,9 @@
     "unknown": "Unknown",
     "or": "or",
     "online": "Online",
-    "offline": "Offline"
+    "offline": "Offline",
+    "timeSelect": "Select a timer for each player",
+    "colorSelect": "Choose a color"
   },
   "auth": {
     "textRedirectRegister": "If there is no account",

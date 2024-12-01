@@ -30,8 +30,18 @@ export class ChatService {
 
         room = new ChatRoom({
           participants: [
-            { _id: currentUserId, username: currentUser.username, chatSetting: currentUser.chatSetting },
-            { _id: otherUserId, username: otherUser.username, chatSetting: otherUser.chatSetting },
+            {
+              _id: currentUserId,
+              username: currentUser.username,
+              chatSetting: currentUser.chatSetting,
+              avatar: currentUser.avatar,
+            },
+            {
+              _id: otherUserId,
+              username: otherUser.username,
+              chatSetting: otherUser.chatSetting,
+              avatar: otherUser.avatar,
+            },
           ],
           messages: [],
           messageCount: 0,
@@ -55,7 +65,7 @@ export class ChatService {
       // Находим все комнаты, в которых участвует пользователь
       const rooms = await ChatRoom.find({ 'participants._id': userId }).populate(
         'participants',
-        '_id username chatSetting'
+        '_id username chatSetting avatar'
       );
 
       // Обновляем настройки пользователя в каждой комнате
@@ -91,7 +101,7 @@ export class ChatService {
       const rooms = await ChatRoom.find({
         'participants._id': userId,
       })
-        .populate('participants', '_id username chatSetting')
+        .populate('participants', '_id username chatSetting avatar')
         .lean();
 
       const user = await User.findById(userId).populate('friends').lean();
@@ -101,7 +111,6 @@ export class ChatService {
 
       const roomsWithInteractionStatus = rooms.map((room) => {
         const otherParticipant = room.participants.find((p: any) => p._id.toString() !== userId);
-
         // Ensure canInteract is always boolean (true/false)
         const canInteract = this.canInteract(userChatSetting, otherParticipant?.chatSetting!) ?? false; // Fallback to false if undefined
 
@@ -198,6 +207,7 @@ export class ChatService {
           _id: new mongoose.Types.ObjectId(userId),
           username: 'Deleted User',
           chatSetting: 'nobody',
+          avatar: 'None',
         };
         await room.save();
       }

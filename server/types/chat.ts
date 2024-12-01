@@ -11,6 +11,7 @@ export interface ChatMessage {
 export interface ChatParticipant {
   _id: mongoose.Types.ObjectId;
   username: string;
+  avatar: string;
   chatSetting: ChatSetting;
 }
 

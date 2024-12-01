@@ -102,17 +102,23 @@ export const useGameStore = defineStore('game', {
     },
 
     // Обработка окончания игры
-    async handleGameEnd(result: GameResult) {
+    async handleGameEnd(result: GameResult, fromSSE: boolean = false) {
       if (!this.currentGame) return;
 
       try {
-        this.isProcessingGameEnd = true;
-        const response = await gameApi.endGame(this.currentGame._id, result);
-        if (response.data) {
-          this.gameResult = response.data;
+        if (!fromSSE) {
+          // Только для прямого действия игрока
+          const response = await gameApi.endGame(this.currentGame._id, result);
+          if (response.data) {
+            this.gameResult = response.data;
+            this.showResultModal = true;
+          }
+        } else {
+          // Для SSE обновления
+          this.gameResult = result;
           this.showResultModal = true;
-          setTimeout(() => this.clearGameState(), 10000);
         }
+        setTimeout(() => this.clearGameState(), 10000);
       } catch (error) {
         console.error('Error ending game:', error);
         this.error = 'Failed to end game';

@@ -64,7 +64,7 @@ export function useGameMovesSSE(gameId: string) {
         gameStore.updateGameState(data.game);
         break;
       case 'game_end':
-        gameStore.handleGameEnd(data.result);
+        gameStore.handleGameEnd(data.result, true);
         break;
       case 'timer_sync':
         gameTimerStore.handleSSEUpdate(data.data);

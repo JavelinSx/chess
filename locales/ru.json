@@ -13,7 +13,9 @@
     "unknown": "Неизвестно",
     "or": "или",
     "online": "Онлайн",
-    "offline": "Оффлайн"
+    "offline": "Оффлайн",
+    "timeSelect": "Выберите таймер для каждого игрока",
+    "colorSelect": "Выберите цвет"
   },
   "auth": {
     "textRedirectRegister": "Если нет аккаунта",
@@ -124,7 +126,7 @@
     "promotions": "Превращений пешек",
     "enPassantCaptures": "Взятий на проходе",
     "queenSacrifices": "Жертв ферзя",
-    "averageMovesPerGame": "Среднее количество ходов за игру",
+    "averageMovesPerGame": "Среднее количество ходов",
     "longestGame": "Самая длинная игра",
     "shortestWin": "Самая быстрая победа",
     "comebacks": "Камбэков",

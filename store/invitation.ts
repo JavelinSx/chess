@@ -80,7 +80,7 @@ export const useInvitationStore = defineStore('invitation', {
             label: this.locales.t('common.accept'),
             color: 'green',
             variant: 'solid',
-            click: () => this.acceptGameInvitation(fromInviteId, gameDuration, startColor),
+            click: async () => await this.acceptGameInvitation(fromInviteId, gameDuration, startColor),
           },
           {
             label: this.locales.t('common.decline'),

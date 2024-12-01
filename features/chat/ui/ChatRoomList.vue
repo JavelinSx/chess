@@ -83,7 +83,8 @@ const getOtherUsername = (room: IChatRoom) => {
 
 const getOtherUserAvatar = (room: IChatRoom) => {
     const otherUser = room.participants.find(p => p._id.toString() !== chatStore.currentUserId);
-    return otherUser ? `https://avatar.example.com/${otherUser.username}` : '';
+    console.log(otherUser)
+    return otherUser ? otherUser.avatar : '';
 };
 
 const getLastMessage = (room: IChatRoom) => {

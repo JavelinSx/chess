@@ -12,7 +12,5 @@
 </template>
 
 <script setup lang="ts">
-defineOptions({
-    name: 'GameInvitationNotification'
-});
+
 </script>

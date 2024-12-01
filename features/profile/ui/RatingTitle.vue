@@ -17,15 +17,21 @@ import { computed } from 'vue';
 import { getTitleForRating } from '../utils/titles';
 import TitleIcon from './TitleIcon.vue';
 import { useUserStore } from '~/store/user';
-
+import { titles } from '../utils/titles';
 const props = defineProps<{
     rating: number;
 }>();
 
 const { t } = useI18n();
 
-const userStore = useUserStore()
+const maxToCurrentRang = computed(() => {
+    for (const item of titles) {
+        if (item.minRating <= props.rating && props.rating <= item.maxRating) return item.maxRating
+        else if (props.rating > titles[titles.length - 1].maxRating) return 3000
+    }
+})
+
 const title = computed(() => getTitleForRating(props.rating));
-const ratingPercentage = computed(() => (props.rating / 2200) * 100);
+const ratingPercentage = computed(() => (props.rating / maxToCurrentRang.value!) * 100);
 
 </script>

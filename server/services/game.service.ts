@@ -6,7 +6,7 @@ import { UserService } from './user.service';
 import { gameSSEManager } from '../utils/sseManager/GameSSEManager';
 import { userSSEManager } from '../utils/sseManager/UserSSEManager';
 import { calculateEloChange, initializeBoard } from '~/server/utils/services/gameServiceUtils';
-import type { GameResult, ChessGame, PieceColor, TimeControl, GamePlayer } from '../types/game';
+import type { GameResult, ChessGame, PieceColor, TimeControl, GamePlayer, GameResultReason } from '../types/game';
 import type { ClientUser, IUser } from '../types/user';
 import type { ApiResponse } from '../types/api';
 
@@ -181,8 +181,12 @@ export class GameService {
 
   static async endGame(
     gameId: string,
-    result: GameResult
-  ): Promise<ApiResponse<GameResult & { ratingChanges: { [key: string]: number } }>> {
+    result: {
+      winner: string | null;
+      loser: string | null;
+      reason: GameResultReason | null;
+    }
+  ): Promise<ApiResponse<GameResult>> {
     try {
       const game = await Game.findById(gameId);
       if (!game) {
@@ -191,7 +195,7 @@ export class GameService {
 
       if (game.status === 'completed') {
         return {
-          data: game.result as GameResult & { ratingChanges: { [key: string]: number } },
+          data: game.result as GameResult,
           error: null,
         };
       }
@@ -261,10 +265,14 @@ export class GameService {
 
     // Обновляем статистику и рейтинги игроков
     whiteUserObject.stats = { ...whiteUser.stats, ...whiteUserStats };
-    whiteUserObject.rating += ratingChanges[whitePlayer._id];
+    if (whiteUserObject.rating !== 0) {
+      whiteUserObject.rating += ratingChanges[whitePlayer._id];
+    }
 
     blackUserObject.stats = { ...blackUser.stats, ...blackUserStats };
-    blackUserObject.rating += ratingChanges[blackPlayer._id];
+    if (blackUserObject.rating !== 0) {
+      blackUserObject.rating += ratingChanges[blackPlayer._id];
+    }
 
     await Promise.all([
       User.findByIdAndUpdate(whiteUser._id, whiteUserObject),
@@ -299,6 +307,8 @@ export class GameService {
     const updatedUserList = UserListCache.getAllUsers().map((user) => ({
       ...user,
       _id: user._id.toString(),
+      isOnline: true,
+      isGame: false,
     }));
 
     await userSSEManager.broadcastUserListUpdate(updatedUserList);

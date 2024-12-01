@@ -92,19 +92,20 @@ export function useInvitationsSSE() {
     }
   );
 
-  // Следим за онлайн статусом пользователя
-  watch(
-    () => userStore.user?.isOnline,
-    (newValue) => {
-      if (authStore.isAuthenticated) {
-        if (newValue) {
-          setupSSE();
-        } else {
-          closeSSE();
-        }
-      }
-    }
-  );
+  // // Следим за онлайн статусом пользователя
+  // watch(
+  //   () => userStore.user?.isOnline,
+  //   (newValue) => {
+  //     if (authStore.isAuthenticated) {
+  //       if (newValue) {
+  //         setupSSE();
+  //       } else {
+  //         console.log('hello1111111111111111111111111111');
+  //         closeSSE();
+  //       }
+  //     }
+  //   }
+  // );
 
   return {
     setupSSE,
