@@ -2,7 +2,7 @@
     <div class="flex items-center md:ml-4">
         <!-- Кнопка для выбора русского языка -->
         <UButton :color="locale === 'ru' ? 'violet' : 'gray'" :variant="locale === 'ru' ? 'solid' : 'outline'" size="md"
-            @click="setLocale('ru')">
+            @click="setLocaleClient('ru')">
             Ru
         </UButton>
 
@@ -22,18 +22,23 @@
 </template>
 
 <script setup>
-import { useI18n } from 'vue-i18n'
-import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n';
+import { onMounted } from 'vue';
 
-// Используем $i18n для получения текущего языка
-const { locales, locale, setLocale } = useI18n()
-
-// Активный и неактивный классы для кнопок
-const activeClass = 'bg-violet-500 text-white rounded-md'
-const inactiveClass = 'bg-gray-200 text-black rounded-md hover:bg-gray-300'
+// Подключаем i18n
+const { locale, setLocale } = useI18n();
 
 // Функция для смены языка
 const setLocaleClient = (newLocale) => {
-    setLocale(newLocale)
-}
+    setLocale(newLocale);
+    localStorage.setItem('locale', newLocale); // Сохраняем выбор в localStorage
+};
+
+// Устанавливаем язык при загрузке компонента
+onMounted(() => {
+    const savedLocale = localStorage.getItem('locale');
+    if (savedLocale) {
+        setLocale(savedLocale);
+    }
+});
 </script>

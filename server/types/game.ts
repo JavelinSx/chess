@@ -67,8 +67,16 @@ export interface ChessPiece {
 export type ChessBoard = (ChessPiece | null)[][];
 
 export interface GameResult {
-  winner: string | null;
-  loser: string | null;
+  winner: {
+    _id: string;
+    username: string;
+    avatar: string;
+  };
+  loser: {
+    _id: string;
+    username: string;
+    avatar: string;
+  };
   reason: GameResultReason | null;
   ratingChanges?: {
     [key: string]: number;
@@ -87,8 +95,8 @@ export interface ChessGame {
   board: ChessBoard;
   currentTurn: PieceColor;
   players: {
-    white: GamePlayer | null;
-    black: GamePlayer | null;
+    white: GamePlayer;
+    black: GamePlayer;
   };
   status: 'waiting' | 'active' | 'completed';
   result: GameResult;
@@ -111,8 +119,8 @@ export interface ChessGame {
     promoteTo: string | null;
   };
   moveHistory: MoveHistoryEntry[];
-  timeControl: TimeControl | null;
-  startedAt: Date | null;
+  timeControl: TimeControl;
+  startedAt: Date;
   whiteTime: number;
   blackTime: number;
   lastTimerUpdate: number;

@@ -67,7 +67,7 @@ const startTimerSync = () => {
         } catch (error) {
             console.error('Timer sync error:', error);
         }
-    }, 5000);
+    }, 10000);
 };
 
 const stopTimerSync = () => {

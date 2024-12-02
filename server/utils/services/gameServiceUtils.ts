@@ -124,46 +124,22 @@ export function calculateEloChange(
   opponentRating: number,
   result: 'win' | 'loss' | 'draw'
 ): number {
-  const K = 32; // Коэффициент изменения рейтинга
-  const expectedScore = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
+  // Уменьшаем коэффициент K для более стабильных изменений
+  const K = 32;
+
+  // Проверяем корректность входных данных
+  const safePlayerRating = Math.max(0, playerRating);
+  const safeOpponentRating = Math.max(0, opponentRating);
+
+  const expectedScore = 1 / (1 + Math.pow(10, (safeOpponentRating - safePlayerRating) / 400));
   const actualScore = result === 'win' ? 1 : result === 'draw' ? 0.5 : 0;
 
   const change = Math.round(K * (actualScore - expectedScore));
-  return change;
-}
 
-export async function processGameEnd(
-  game: ChessGame,
-  result: GameResult
-): Promise<{ ratingChanges: Record<string, number> }> {
-  const ratingChanges: Record<string, number> = {};
-
-  // Получаем игроков
-  const whitePlaying = game.players.white;
-  const blackPlaying = game.players.black;
-
-  if (!whitePlaying || !blackPlaying) {
-    throw new Error('Неверные данные игроков');
+  // Проверяем, чтобы итоговый рейтинг не стал отрицательным
+  if (safePlayerRating + change < 0) {
+    return -safePlayerRating;
   }
 
-  // Определяем результат для каждого игрока
-  const getResult = (playerId: string): 'win' | 'loss' | 'draw' => {
-    if (result.reason === 'draw') return 'draw';
-    return playerId === result.winner ? 'win' : 'loss';
-  };
-
-  // Рассчитываем и применяем изменения рейтинга
-  ratingChanges[whitePlaying._id] = calculateEloChange(
-    whitePlaying.rating,
-    blackPlaying.rating,
-    getResult(whitePlaying._id)
-  );
-
-  ratingChanges[blackPlaying._id] = calculateEloChange(
-    blackPlaying.rating,
-    whitePlaying.rating,
-    getResult(blackPlaying._id)
-  );
-
-  return { ratingChanges };
+  return change;
 }

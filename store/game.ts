@@ -3,6 +3,7 @@ import { gameApi } from '~/shared/api/game';
 import { useUserStore } from './user';
 import type { ChessGame, Position, PieceType, GameResult, GameDuration } from '~/server/types/game';
 import { useGameTimerStore } from './gameTimer';
+import { userApi } from '~/shared/api/user';
 export type GameEndReason = 'checkmate' | 'stalemate' | 'draw' | 'forfeit' | 'timeout';
 
 export interface GameStore {
@@ -106,24 +107,25 @@ export const useGameStore = defineStore('game', {
       if (!this.currentGame) return;
 
       try {
+        const userStore = useUserStore();
+
         if (!fromSSE) {
-          // Только для прямого действия игрока
-          const response = await gameApi.endGame(this.currentGame._id, result);
-          if (response.data) {
-            this.gameResult = response.data;
-            this.showResultModal = true;
-          }
+          // Если это не SSE событие, только отправляем запрос на сервер
+          // Не показываем модальное окно - ждем события через SSE
+          await gameApi.endGame(this.currentGame._id, result);
         } else {
-          // Для SSE обновления
+          // Для SSE события обновляем данные и показываем модальное
+          await Promise.all([
+            userStore.getUsersList(),
+            userStore.user ? userApi.profileGet(userStore.user._id) : Promise.resolve(null),
+          ]);
+
           this.gameResult = result;
           this.showResultModal = true;
         }
-        setTimeout(() => this.clearGameState(), 10000);
       } catch (error) {
         console.error('Error ending game:', error);
         this.error = 'Failed to end game';
-      } finally {
-        this.isProcessingGameEnd = false;
       }
     },
 

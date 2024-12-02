@@ -57,7 +57,7 @@
 
         <main class="flex-grow w-full max-w-[750px] xl:max-w-[1024px]">
             <UContainer class="py-4 sm:px-2 max-w-[750px] xl:max-w-[1024px] flex flex-col justify-center items-center">
-                <slot />
+                <NuxtPage />
             </UContainer>
             <FloatingChat />
             <FloatingFriends />

@@ -46,6 +46,27 @@ const playerSchema = new mongoose.Schema({
   ratingChange: { type: Number },
 });
 
+const resultSchema = new mongoose.Schema({
+  winner: {
+    _id: { type: String, required: true },
+    username: { type: String, required: true },
+    avatar: { type: String, default: '' },
+  },
+  loser: {
+    _id: { type: String, required: true },
+    username: { type: String, required: true },
+    avatar: { type: String, default: '' },
+  },
+  reason: {
+    type: String,
+    enum: ['checkmate', 'stalemate', 'draw', 'forfeit', 'timeout'],
+  },
+  ratingChanges: {
+    type: Map,
+    of: Number,
+  },
+});
+
 const gameSchema = new mongoose.Schema<ChessGame>(
   {
     board: { type: mongoose.Schema.Types.Mixed, required: true },
@@ -56,9 +77,9 @@ const gameSchema = new mongoose.Schema<ChessGame>(
     },
     status: { type: String, enum: ['waiting', 'active', 'completed'], required: true },
     result: {
-      winner: { type: String, ref: 'User', default: null },
-      loser: { type: String, ref: 'User', default: null },
-      reason: { type: String, enum: ['checkmate', 'stalemate', 'draw', 'forfeit', 'timeout'] },
+      type: resultSchema,
+      required: false,
+      default: null,
     },
 
     moveCount: { type: Number, default: 0 },

@@ -5,16 +5,40 @@ import type { GameStore } from '~/store/game';
 export function useGameEnd(gameStore: GameStore) {
   async function handleGameEnd(reason: GameResultReason) {
     if (!gameStore.currentGame) return;
+
+    const currentGame = gameStore.currentGame;
+    const currentTurn = currentGame.currentTurn;
+    const whitePlayer = currentGame.players.white;
+    const blackPlayer = currentGame.players.black;
+
     const result: GameResult = {
-      winner: null,
-      loser: null,
+      winner: {
+        _id: whitePlayer!._id,
+        username: whitePlayer!.username,
+        avatar: whitePlayer!.avatar || '',
+      },
+      loser: {
+        _id: blackPlayer!._id,
+        username: blackPlayer!.username,
+        avatar: blackPlayer!.avatar || '',
+      },
       reason,
     };
 
     if (reason === 'checkmate' || reason === 'forfeit' || reason === 'timeout') {
-      const currentTurn = gameStore.currentGame.currentTurn;
-      result.loser = gameStore.currentGame.players[currentTurn]!._id;
-      result.winner = gameStore.currentGame.players[currentTurn === 'white' ? 'black' : 'white']!._id;
+      const currentPlayer = currentGame.players[currentTurn];
+      const otherPlayer = currentGame.players[currentTurn === 'white' ? 'black' : 'white'];
+
+      result.winner = {
+        _id: otherPlayer!._id,
+        username: otherPlayer!.username,
+        avatar: otherPlayer!.avatar || '',
+      };
+      result.loser = {
+        _id: currentPlayer!._id,
+        username: currentPlayer!.username,
+        avatar: currentPlayer!.avatar || '',
+      };
     }
 
     await gameStore.handleGameEnd(result);

@@ -77,6 +77,7 @@ export default defineNuxtConfig({
         { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/chess-48.svg' },
       ],
     },
+    pageTransition: { name: 'page', mode: 'out-in' },
   },
 
   vite: {

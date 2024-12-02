@@ -1,23 +1,26 @@
 <template>
-    <UContainer class="py-8 px-0 sm:px-1">
-        <UCard v-if="errorMessage" color="red" class="mb-4 ">
-            <p>{{ t(errorMessage) }}</p>
-        </UCard>
-        <template v-if="gameStore.currentGame">
-            <UCard v-if="gameStore.currentGame.status === 'waiting'" class="mb-4">
-                <p class="text-center">{{ t('game.waitingForOpponent') }}</p>
+    <div>
+        <UContainer class="py-8 px-0 sm:px-1">
+            <UCard v-if="errorMessage" color="red" class="mb-4 ">
+                <p>{{ t(errorMessage) }}</p>
             </UCard>
-            <template v-else>
-                <chess-board class="mb-4" />
-                <captured-pieces :captured-pieces="gameStore.currentGame.capturedPieces" />
+            <template v-if="gameStore.currentGame">
+                <UCard v-if="gameStore.currentGame.status === 'waiting'" class="mb-4">
+                    <p class="text-center">{{ t('game.waitingForOpponent') }}</p>
+                </UCard>
+                <template v-else>
+                    <chess-board class="mb-4" />
+                    <captured-pieces :captured-pieces="gameStore.currentGame.capturedPieces" />
+                </template>
             </template>
-        </template>
-        <UCard v-else-if="!errorMessage" class="mb-4">
-            <USkeleton class="h-full w-full" />
-            <p class="text-center mt-2">{{ t('game.loadingGame') }}</p>
-        </UCard>
-    </UContainer>
-    <GameResultModal v-if="gameStore.showResultModal" />
+            <UCard v-else-if="!errorMessage" class="mb-4">
+                <USkeleton class="h-full w-full" />
+                <p class="text-center mt-2">{{ t('game.loadingGame') }}</p>
+            </UCard>
+        </UContainer>
+        <GameResultModal v-if="gameStore.showResultModal" />
+    </div>
+
 </template>
 
 

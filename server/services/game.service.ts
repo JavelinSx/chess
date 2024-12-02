@@ -84,7 +84,8 @@ export class GameService {
       const ttl = this.getGameCacheTTL(savedGame);
       GameCache.set(savedGame._id.toString(), savedGame.toObject(), ttl);
 
-      await Promise.all([this.updateUserStatus(inviterId, true, true), this.updateUserStatus(inviteeId, true, true)]);
+      UserListCache.updateUserStatus(inviterId, true, true);
+      UserListCache.updateUserStatus(inviteeId, true, true);
 
       return { data: savedGame, error: null };
     } catch (error) {
@@ -173,20 +174,7 @@ export class GameService {
     return 24 * 3600; // 24 часа по умолчанию
   }
 
-  private static async updateUserStatus(userId: string, isOnline: boolean, isGame: boolean): Promise<void> {
-    await User.findByIdAndUpdate(userId, { isOnline, isGame });
-    UserListCache.updateUserStatus(userId, isOnline, isGame);
-    await userSSEManager.broadcastUserStatusUpdate(userId, { isOnline, isGame });
-  }
-
-  static async endGame(
-    gameId: string,
-    result: {
-      winner: string | null;
-      loser: string | null;
-      reason: GameResultReason | null;
-    }
-  ): Promise<ApiResponse<GameResult>> {
+  static async endGame(gameId: string, result: GameResult): Promise<ApiResponse<GameResult>> {
     try {
       const game = await Game.findById(gameId);
       if (!game) {
@@ -209,6 +197,7 @@ export class GameService {
       const finalResult = { ...result, ratingChanges };
 
       await this.updateCacheAndBroadcast(gameId, game, finalResult);
+
       await gameSSEManager.broadcastTimerSync(gameId, {
         whiteTime: game.whiteTime,
         blackTime: game.blackTime,
@@ -217,6 +206,7 @@ export class GameService {
         status: 'completed',
         timestamp: Date.now(),
       });
+
       return { data: finalResult, error: null };
     } catch (error) {
       return {
@@ -234,60 +224,60 @@ export class GameService {
       throw new Error('Players not found in game data');
     }
 
-    const [whiteUser, blackUser] = await Promise.all([User.findById(whitePlayer._id), User.findById(blackPlayer._id)]);
-    const whiteUserObject = whiteUser?.toObject();
-    const blackUserObject = blackUser?.toObject();
-    if (!whiteUserObject || !blackUserObject) {
-      throw new Error('Players object not found in database');
-    }
+    const [whiteUser, blackUser] = await Promise.all([
+      User.findById(whitePlayer._id).lean(),
+      User.findById(blackPlayer._id).lean(),
+    ]);
+
     if (!whiteUser || !blackUser) {
       throw new Error('Players not found in database');
     }
 
-    const isWhiteWinner = result.winner === whitePlayer._id;
+    const isWhiteWinner = result.winner?._id === whitePlayer._id;
     const ratingChanges: Record<string, number> = {};
 
-    // Рассчитываем изменения рейтинга
-    ratingChanges[whitePlayer._id] = calculateEloChange(
-      whiteUser.rating,
-      blackUser.rating,
-      isWhiteWinner ? 'win' : result.reason === 'draw' ? 'draw' : 'loss'
-    );
+    const whiteOutcome = result.reason === 'draw' ? 'draw' : isWhiteWinner ? 'win' : 'loss';
+    const blackOutcome = result.reason === 'draw' ? 'draw' : !isWhiteWinner ? 'win' : 'loss';
 
-    ratingChanges[blackPlayer._id] = calculateEloChange(
-      blackUser.rating,
-      whiteUser.rating,
-      !isWhiteWinner ? 'win' : result.reason === 'draw' ? 'draw' : 'loss'
-    );
+    // Обновляем статистику игроков
+    const whiteStats = await updateGameStats(whiteUser.stats, game, isWhiteWinner, 'white');
+    const blackStats = await updateGameStats(blackUser.stats, game, !isWhiteWinner, 'black');
 
-    const whiteUserStats = await updateGameStats(whiteUser.stats, game, isWhiteWinner, 'white');
-    const blackUserStats = await updateGameStats(blackUser.stats, game, !isWhiteWinner, 'black');
+    const whiteRatingChange = calculateEloChange(whiteUser.rating, blackUser.rating, whiteOutcome);
+    const blackRatingChange = calculateEloChange(blackUser.rating, whiteUser.rating, blackOutcome);
 
-    // Обновляем статистику и рейтинги игроков
-    whiteUserObject.stats = { ...whiteUser.stats, ...whiteUserStats };
-    if (whiteUserObject.rating !== 0) {
-      whiteUserObject.rating += ratingChanges[whitePlayer._id];
-    }
+    const newWhiteRating = Math.max(0, whiteUser.rating + whiteRatingChange);
+    const newBlackRating = Math.max(0, blackUser.rating + blackRatingChange);
 
-    blackUserObject.stats = { ...blackUser.stats, ...blackUserStats };
-    if (blackUserObject.rating !== 0) {
-      blackUserObject.rating += ratingChanges[blackPlayer._id];
-    }
+    ratingChanges[whitePlayer._id] = newWhiteRating - whiteUser.rating;
+    ratingChanges[blackPlayer._id] = newBlackRating - blackUser.rating;
 
+    // Обновляем пользователей в БД с новой статистикой
     await Promise.all([
-      User.findByIdAndUpdate(whiteUser._id, whiteUserObject),
-      User.findByIdAndUpdate(blackUser._id, blackUserObject),
+      User.findByIdAndUpdate(
+        whitePlayer._id,
+        {
+          $set: {
+            rating: newWhiteRating,
+            stats: whiteStats,
+          },
+        },
+        { new: true }
+      ),
+      User.findByIdAndUpdate(
+        blackPlayer._id,
+        {
+          $set: {
+            rating: newBlackRating,
+            stats: blackStats,
+          },
+        },
+        { new: true }
+      ),
     ]);
 
-    // Обновляем кэш пользователей
-    UserListCache.updateUser(whitePlayer._id, {
-      ...whiteUser.toObject(),
-      _id: whitePlayer._id,
-    });
-    UserListCache.updateUser(blackPlayer._id, {
-      ...blackUser.toObject(),
-      _id: blackPlayer._id,
-    });
+    UserListCache.updateUser(whitePlayer._id, { rating: newWhiteRating, stats: whiteStats });
+    UserListCache.updateUser(blackPlayer._id, { rating: newBlackRating, stats: blackStats });
 
     return ratingChanges;
   }
@@ -303,6 +293,19 @@ export class GameService {
     ]);
 
     GameCache.del(gameId);
+
+    // Обновляем рейтинги в кэше
+    if (finalResult.ratingChanges) {
+      for (const [userId, ratingChange] of Object.entries(finalResult.ratingChanges)) {
+        const user = UserListCache.getUserById(userId);
+        if (user) {
+          UserListCache.updateUser(userId, {
+            ...user,
+            rating: user.rating + ratingChange,
+          });
+        }
+      }
+    }
 
     const updatedUserList = UserListCache.getAllUsers().map((user) => ({
       ...user,
@@ -351,18 +354,28 @@ export class GameService {
       if (!game || game.status === 'completed') {
         return { data: null, error: 'Game not found or already completed' };
       }
-      if (game.players.black && game.players.white) {
-        const result: GameResult = {
-          winner: color === 'white' ? game.players.black._id : game.players.white._id,
-          loser: userId,
-          reason: 'timeout',
-        };
 
-        await this.endGame(gameId, result);
-        return { data: undefined, error: null };
-      } else {
+      const { white, black } = game.players;
+      if (!white || !black) {
         return { data: undefined, error: 'Error game.players' };
       }
+
+      const result: GameResult = {
+        winner: {
+          _id: color === 'white' ? black._id : white._id,
+          username: color === 'white' ? black.username : white.username,
+          avatar: color === 'white' ? black.avatar : white.avatar,
+        },
+        loser: {
+          _id: userId,
+          username: color === 'white' ? white.username : black.username,
+          avatar: color === 'white' ? white.avatar : black.avatar,
+        },
+        reason: 'timeout',
+      };
+
+      await this.endGame(gameId, result);
+      return { data: undefined, error: null };
     } catch (error) {
       return {
         data: null,

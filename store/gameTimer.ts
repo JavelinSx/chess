@@ -138,9 +138,20 @@ export const useGameTimerStore = defineStore('gameTimer', {
       const gameStore = useGameStore();
 
       if (gameStore.currentGame && gameStore.currentGame._id === this.gameId) {
+        const winner = gameStore.currentGame.players[color === 'white' ? 'black' : 'white']!;
+        const loser = gameStore.currentGame.players[color]!;
+
         gameStore.handleGameEnd({
-          winner: gameStore.currentGame.players[color === 'white' ? 'black' : 'white']!._id,
-          loser: gameStore.currentGame.players[color]!._id,
+          winner: {
+            _id: winner._id,
+            username: winner.username,
+            avatar: winner.avatar || '',
+          },
+          loser: {
+            _id: loser._id,
+            username: loser.username,
+            avatar: loser.avatar || '',
+          },
           reason: 'timeout',
         });
       }
