@@ -1,5 +1,6 @@
 import { H3Event } from 'h3';
-import type { ChatMessage, IChatRoom } from '~/server/types/chat';
+import type { IChatRoom } from '~/server/types/chat';
+import type { ChatMessage } from '~/server/services/chat/types';
 
 export class ChatSSEManager {
   private chatConnections: Map<string, H3Event> = new Map();

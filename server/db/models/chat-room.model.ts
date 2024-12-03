@@ -1,21 +1,22 @@
-import mongoose from 'mongoose';
-import type { IChatRoom, ChatMessage, ChatParticipant } from '~/server/types/chat';
+// server/db/models/chat-room.model.ts
 
-const chatParticipantSchema = new mongoose.Schema<ChatParticipant>({
-  _id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  username: { type: String, required: true },
-  chatSetting: { type: String, enum: ['all', 'friends_only', 'nobody'], required: true },
-  avatar: { type: String },
-});
+import mongoose from 'mongoose';
+import type { ChatMessage, ChatParticipant, ChatRoom } from '~/server/services/chat/types';
 
 const chatMessageSchema = new mongoose.Schema<ChatMessage>({
-  _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
   username: { type: String, required: true },
   content: { type: String, required: true },
   timestamp: { type: Number, default: Date.now },
 });
 
-const chatRoomSchema = new mongoose.Schema<IChatRoom>(
+const chatParticipantSchema = new mongoose.Schema<ChatParticipant>({
+  userId: { type: String, required: true },
+  username: { type: String, required: true },
+  chatSetting: { type: String, enum: ['all', 'friends_only', 'nobody'], required: true },
+  avatar: { type: String },
+});
+
+const chatRoomSchema = new mongoose.Schema<ChatRoom>(
   {
     participants: [chatParticipantSchema],
     messages: [chatMessageSchema],
@@ -23,12 +24,15 @@ const chatRoomSchema = new mongoose.Schema<IChatRoom>(
     lastMessage: { type: chatMessageSchema, default: null },
     lastMessageAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  {
+    timestamps: true, // Используем стандартные timestamps
+  }
 );
 
-chatRoomSchema.index({ 'participants._id': 1 });
+// Создаем индексы для оптимизации
+chatRoomSchema.index({ 'participants.id': 1 });
 chatRoomSchema.index({ lastMessageAt: -1 });
 
-const ChatRoom = mongoose.model<IChatRoom>('ChatRoom', chatRoomSchema);
+const ChatRoomModel = mongoose.model<ChatRoom>('ChatRoom', chatRoomSchema);
 
-export default ChatRoom;
+export default ChatRoomModel;
