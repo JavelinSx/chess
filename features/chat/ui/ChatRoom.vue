@@ -47,13 +47,10 @@ const userStore = useUserStore()
 if (chatStore.currentRoom) {
     usePrivateChatSSE(String(chatStore.currentRoom._id));
 }
-// 1. Проверьте значение в chatStore.blockedRooms
-console.log('blockedRooms:', chatStore.blockedRooms);
+
 
 // 2. Проверьте вычисление isRoomBlocked
 const isRoomBlocked = computed(() => {
-    console.log('Current room:', chatStore.currentRoom?._id);
-    console.log('Is blocked:', chatStore.blockedRooms.has(String(chatStore.currentRoom?._id)));
     return chatStore.blockedRooms.has(String(chatStore.currentRoom?._id));
 });
 

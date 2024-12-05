@@ -1,7 +1,7 @@
 <!-- pages/index.vue -->
 <template>
     <div class="flex flex-col items-center justify-center gap-4 sm:px-4">
-        <p v-if="isAuthenticated">
+        <p v-if="isAuthenticated" class=" max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap">
             {{ t('common.hello') }} {{ user?.username }}!
         </p>
         <p v-else>

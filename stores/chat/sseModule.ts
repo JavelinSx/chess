@@ -1,24 +1,35 @@
+import { usePrivateChatSSE } from '~/composables/chat/usePrivateChatSSE';
 import type { ChatStoreState } from './types';
+import { useChatRoomsSSE } from '~/composables/chat/useChatRoomsSSE';
 
 export const useSSEModule = (state: ChatStoreState) => {
   const handlePrivateChatConnection = async (roomId: string, userId: string) => {
-    if (state.privateChatConnection?.roomId === roomId) return;
-    state.privateChatConnection = { roomId, userId };
-  };
+    // Если уже есть соединение с этой комнатой - игнорируем
+    if (state.privateChatConnection?.roomId === roomId) {
+      return;
+    }
 
-  const handleRoomsConnection = async (userId: string) => {
-    if (state.roomsConnection === userId) return;
-    state.roomsConnection = userId;
+    // Устанавливаем новое соединение
+    const { setupSSE, closeSSE } = usePrivateChatSSE(roomId);
+    await setupSSE();
+
+    state.privateChatConnection = {
+      roomId,
+      userId,
+      connection: closeSSE, // Сохраняем функцию закрытия соединения
+    };
   };
 
   const disconnectAll = async () => {
+    // Закрываем приватное соединение если есть
+    if (state.privateChatConnection?.connection) {
+      state.privateChatConnection.connection();
+    }
     state.privateChatConnection = null;
-    state.roomsConnection = null;
   };
 
   return {
     handlePrivateChatConnection,
-    handleRoomsConnection,
     disconnectAll,
   };
 };

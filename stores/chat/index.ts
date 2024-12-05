@@ -19,7 +19,6 @@ export const useChatStore = defineStore('chat', () => {
     currentUserId: null,
     unreadMessagesCount: 0,
     privateChatConnection: null,
-    roomsConnection: null,
   });
 
   const sseModule = useSSEModule(state);
@@ -51,11 +50,9 @@ export const useChatStore = defineStore('chat', () => {
     const userStore = useUserStore();
     if (!userStore.user) return;
 
-    await sseModule.handleRoomsConnection(userStore.user._id);
-
     state.isLoading = true;
     try {
-      const response = await chatApi.getRooms(userStore.user._id);
+      const response = await chatApi.getRooms();
       if (response.data) {
         state.rooms = response.data;
         privacyModule.updateBlockedRooms();

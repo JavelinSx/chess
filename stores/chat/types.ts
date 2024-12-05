@@ -11,6 +11,9 @@ export interface ChatStoreState {
   isLoading: boolean;
   currentUserId: string | null;
   unreadMessagesCount: number;
-  privateChatConnection: null | { roomId: string; userId: string };
-  roomsConnection: null | string;
+  privateChatConnection: null | {
+    roomId: string;
+    userId: string;
+    connection: () => void;
+  };
 }

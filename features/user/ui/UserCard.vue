@@ -15,7 +15,9 @@
                             <UAvatar :ui="{
                                 rounded: 'object-cover'
                             }" :src="getUserAvatar(user)" :alt="user.username" size="lg" />
-                            <p class="font-semibold text-sm text-center">{{ user.username }}</p>
+                            <p
+                                class="font-semibold text-sm text-center max-w-[100px] overflow-hidden whitespace-normal text-ellipsis">
+                                {{ user.username }}</p>
                         </div>
                         <div class="flex flex-col items-center gap-2 w-24">
                             <TitleIcon :rating="user.rating" />
@@ -25,19 +27,17 @@
                 </UCard>
             </div>
         </template>
-        <ClientOnly>
-            <div class="flex flex-col h-full w-full justify-between font-normal text-sm">
-                <div class="flex flex-col gap-2 mt-4">
-                    <InviteButton :user-id="user._id" :disabled="user.isOnline" />
-                    <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft"
-                        icon="i-heroicons-user-plus" class="flex-grow">
-                        {{ t('friends.addFriend') }}
-                    </UButton>
-                    <ChatButton :username="user.username" :user-id="user._id" :chat-setting="user.chatSetting"
-                        class="flex-grow" />
-                </div>
+        <div class="flex flex-col h-full w-full justify-between font-normal text-sm">
+            <div class="flex flex-col gap-2 mt-4">
+                <InviteButton :user-id="user._id" :disabled="user.isOnline" />
+                <UButton v-if="canAddFriend" @click="addFriend" color="emerald" variant="soft"
+                    icon="i-heroicons-user-plus" class="flex-grow">
+                    {{ t('friends.addFriend') }}
+                </UButton>
+                <ChatButton :username="user.username" :user-id="user._id" :chat-setting="user.chatSetting"
+                    class="flex-grow" />
             </div>
-        </ClientOnly>
+        </div>
         <template #footer v-if="isInFriendList">
             <UButton color="red" variant="soft" icon="i-heroicons-user-minus" class="w-full"
                 @click="removeFriend(user._id)">

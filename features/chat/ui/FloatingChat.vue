@@ -1,7 +1,7 @@
 <!-- FloatingChat.vue -->
 <template>
     <div v-if="chatStore.isOpen"
-        class="fixed z-30 bottom-4 right-4 w-80 lg:w-96 h-[600px] shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
+        class="fixed z-30 bottom-4 right-4 w-80 lg:w-96 h-[450px] shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
         <header class="p-4 rounded-t-lg flex justify-between items-center border-b dark:border-gray-700">
             <h2 class="text-lg font-semibold">
                 {{ activeRoomId ? otherParticipant?.username : t('chat.chatTitle') }}

@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-screen flex flex-col md:items-center relative">
-        <UContainer :ui="{ base: 'm-0 ' }">
-            <nav class="py-4 flex items-center justify-between max-w-[570px]">
+    <div class="min-h-screen flex flex-col md:items-center relative ">
+        <UContainer :ui="{ base: 'm-0 ' }" class="fixed z-50 bg-white w-full flex justify-center">
+            <nav class="py-4 flex items-center justify-between max-w-[570px] sm:w-full">
                 <NuxtLink to="/" class="text-2xl font-bold mr-4 text-center sm:text-xl text-green-600">ChessNexus
                 </NuxtLink>
 
@@ -55,7 +55,7 @@
             {{ t('game.returnToGame') }}
         </UButton>
 
-        <main class="flex-grow w-full max-w-[750px] xl:max-w-[1024px]">
+        <main class="flex-grow w-full max-w-[750px] xl:max-w-[1024px] mt-14">
             <UContainer class="py-4 sm:px-2 max-w-[750px] xl:max-w-[1024px] flex flex-col justify-center items-center">
                 <NuxtPage />
             </UContainer>

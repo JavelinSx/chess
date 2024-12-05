@@ -26,7 +26,7 @@ const openChat = async () => {
 
     isLoading.value = true;
     try {
-        const response = await chatApi.createOrGetRoom({
+        const room = await chatStore.createOrGetAndOpenRoom({
             userId: userStore.user._id,
             username: userStore.user.username,
             userChatSetting: userStore.user.chatSetting,
@@ -37,10 +37,8 @@ const openChat = async () => {
             recipientAvatar: userStore.getUserInUserList(props.userId)?.avatar || '/images/default-avatar.png'
         });
 
-        if (response.data) {
-            chatStore.addRoom(response.data);
-            await chatStore.setActiveRoom(String(response.data._id));
-            if (!chatStore.isOpen) chatStore.toggleChat();
+        if (room && !chatStore.isOpen) {
+            chatStore.toggleChat();
         }
     } finally {
         isLoading.value = false;

@@ -1,6 +1,6 @@
 <template>
     <div v-if="isOpen"
-        class="fixed bottom-4 right-4 z-30 w-80 h-96 shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
+        class="fixed bottom-4 right-4 z-30 w-80 h-[450px] shadow-lg rounded-lg flex flex-col bg-slate-50 dark:bg-slate-800">
         <div class="p-4 rounded-t-lg flex justify-between items-center">
             <h2 class="text-lg font-semibold">{{ t('friends.friends') }} ({{ onlineFriendsCount }} {{ t('common.online')
                 }})</h2>
@@ -50,14 +50,14 @@
                             <UButton size="lg" color="red" variant="soft" @click="removeFriend(friend._id)"
                                 icon="i-heroicons-user-minus" />
                         </div>
-                        <div class="flex justify-center w-full gap-2">
+                        <div class="flex justify-start w-full gap-2">
+
+                            <ChatButton :username="friend.username" :user-id="friend._id"
+                                :chat-setting="friend.chatSetting" class="w-28" @click="isOpen = false" />
                             <UButton v-if="!friend.isGame && friend.isOnline" size="xs" color="purple"
                                 @click="inviteToGame(friend)" icon="i-heroicons-play">
                                 {{ t('game.invite') }}
                             </UButton>
-                            <ChatButton :username="friend.username" :user-id="friend._id"
-                                :chat-setting="friend.chatSetting" class="w-28" @click="isOpen = false" />
-
                         </div>
                     </div>
                 </div>
