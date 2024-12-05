@@ -12,10 +12,10 @@ export class UserSSEManager {
   private userConnections: Map<string, H3Event> = new Map();
 
   async addUserConnection(userId: string, event: H3Event) {
+    await this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     if (this.userConnections.get(userId)) return;
     else {
       this.userConnections.set(userId, event);
-      this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     }
   }
 
@@ -67,15 +67,12 @@ export class UserSSEManager {
 
   async sendUserUpdate(userData: ClientUser) {
     UserListCache.updateUser(userData._id.toString(), userData);
-    const event = this.userConnections.get(userData._id);
-    if (event) {
-      await this.sendEvent(
-        event,
-        JSON.stringify({
-          type: 'user_update',
-          user: userData,
-        })
-      );
+    const message = JSON.stringify({
+      type: 'user_update',
+      user: userData,
+    });
+    for (const [userId, connection] of this.userConnections) {
+      await this.sendEvent(connection, message);
     }
   }
 
@@ -144,8 +141,20 @@ export class UserSSEManager {
       await this.sendEvent(connection, message);
     }
   }
-  private async sendEvent(event: H3Event, data: string) {
-    await event.node.res.write(`data: ${data}\n\n`);
+  private async sendEvent(event: H3Event, data: string, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        await event.node.res.write(`data: ${data}\n\n`);
+        return;
+      } catch (error: any) {
+        // Указываем тип any для error
+        if (error.code === 'EBUSY' && i < retries - 1) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
+    }
   }
 }
 

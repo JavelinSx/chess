@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import { useInvitationStore } from '~/store/invitation';
-import { useUserStore } from '~/store/user';
+import { useInvitationStore } from '~/stores/invitation';
+import { useUserStore } from '~/stores/user';
 import { storeToRefs } from 'pinia';
 
 const props = defineProps<{

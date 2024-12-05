@@ -28,8 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '~/store/game';
-import { useGameTimerStore } from '~/store/gameTimer';
+import { useGameStore } from '~/stores/game';
+import { useGameTimerStore } from '~/stores/gameTimer';
 import type { PieceColor } from '~/server/types/game';
 import { gameApi } from '~/shared/api/game';
 

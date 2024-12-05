@@ -1,5 +1,5 @@
-import { useAuthStore } from '~/store/auth';
-import { useUserStore } from '~/store/user';
+import { useAuthStore } from '~/stores/auth';
+import { useUserStore } from '~/stores/user';
 import type { ClientUser } from '~/server/types/user';
 
 export function useGithubAuth() {

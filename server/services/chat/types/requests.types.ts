@@ -1,14 +1,12 @@
-import type { ChatSetting } from './room.types';
+import type { ChatSetting } from '~/server/types/user';
 
 export interface CreateRoomParams {
   userId: string;
-  recipientId: string;
+  username: string;
+  userAvatar: string;
   userChatSetting: ChatSetting;
+  recipientId: string;
+  recipientUsername: string;
+  recipientAvatar: string;
   recipientChatSetting: ChatSetting;
-}
-
-export interface GetMessagesParams {
-  roomId: string;
-  page: number;
-  limit: number;
 }

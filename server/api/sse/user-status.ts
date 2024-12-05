@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   // Подключение пользователя к SSE
   await userSSEManager.addUserConnection(userId, event);
   // Добавляем пользователя в кэш
-  await UserActivityService.updateUserActivity(userId);
+  await UserActivityService.updateUserActivity(userId, event);
 
   // Обновляем статус пользователя
   await UserService.updateUserStatus(userId, true, false);

@@ -1,6 +1,6 @@
-import { useAuthStore } from '~/store/auth';
-import { useFriendsStore } from '~/store/friends';
-import { useUserStore } from '~/store/user';
+import { useAuthStore } from '~/stores/auth';
+import { useFriendsStore } from '~/stores/friends';
+import { useUserStore } from '~/stores/user';
 
 // composables/useFriendSSE.ts
 export function useFriendsSSE() {

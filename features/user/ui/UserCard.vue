@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useFriendsStore } from '~/store/friends';
+import { useFriendsStore } from '~/stores/friends';
 import ChatButton from '~/features/chat/ui/ChatButton.vue';
 import InviteButton from '~/features/invite/InviteButton.vue';
 import TitleIcon from '~/features/profile/ui/TitleIcon.vue';

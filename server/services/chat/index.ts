@@ -1,33 +1,36 @@
-// services/chat/index.ts
-
-import { roomService } from './room.service';
 import { messageService } from './message.service';
+import { roomService } from './room.service';
 import { privacyService } from './privacy.service';
-import { cleanupService } from './cleanup.service';
+import { blockedService } from './blocked.service';
 
-import type { IChatRoom, ChatMessage } from '~/server/types/chat';
-import type { ChatSetting } from '~/server/types/user';
-import type { ApiResponse } from '~/server/types/api';
-
-// Собираем все методы сервисов в один объект с четким указанием что и откуда берется
 export const ChatService = {
-  // Room methods
-  createOrGetRoomWithPrivacyCheck: roomService.createOrGetRoom,
-  getRoomsWithPrivacyCheck: roomService.getRooms,
-  getRoomByParticipants: roomService.getByParticipants,
-  deleteRoom: roomService.delete,
-
   // Message methods
-  addMessage: messageService.add,
-  getRoomMessages: messageService.getMessages,
+  sendMessage: messageService.sendMessage,
+  getMessages: messageService.getMessages,
+  updateMessageStatus: messageService.updateStatus,
+  deleteMessage: messageService.deleteMessage,
+
+  // Room methods
+  createRoom: roomService.createOrGetRoom,
+  getRooms: roomService.getRooms,
+  deleteRoom: roomService.deleteRoom,
+  updateParticipant: roomService.updateParticipant,
+  getParticipants: roomService.getParticipants,
 
   // Privacy methods
-  updateUserChatPrivacy: privacyService.updatePrivacy,
-  canInteract: privacyService.canInteract,
+  updatePrivacy: privacyService.updatePrivacy,
+  checkCanInteract: privacyService.canInteract,
+  checkRoomPrivacy: privacyService.checkRoomPrivacy,
+  getBlockedUsers: privacyService.getBlockedUsers,
+  applyRestriction: privacyService.applyRestriction,
 
-  // Cleanup methods
-  handleDeletedUser: cleanupService.handleUserDeletion,
+  // Block methods
+  blockUser: blockedService.blockUser,
+  unblockUser: blockedService.unblockUser,
+  getBlockInfo: blockedService.getBlockInfo,
+  updateBlockDuration: blockedService.updateBlockDuration,
+  cleanExpiredBlocks: blockedService.cleanExpiredBlocks,
+  getBlockedRooms: blockedService.getBlockedRooms,
 } as const;
 
-// Для удобства использования можем добавить тип самого сервиса
 export type ChatServiceType = typeof ChatService;

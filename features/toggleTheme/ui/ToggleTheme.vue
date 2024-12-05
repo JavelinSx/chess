@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-import { useThemeStore } from '~/store/theme';
+import { useThemeStore } from '~/stores/theme';
 import { storeToRefs } from 'pinia';
 import { onMounted } from 'vue';
 

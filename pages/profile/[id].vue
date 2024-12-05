@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import ProfileEdit from '~/features/profile/ui/ProfileEdit.vue';
-import { useUserStore } from '~/store/user';
+import { useUserStore } from '~/stores/user';
 import { useRoute } from 'vue-router';
 
 const userStore = useUserStore();

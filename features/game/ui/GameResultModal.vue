@@ -44,8 +44,8 @@
 </template>
 
 <script setup lang="ts">
-import { useGameStore } from '~/store/game';
-import { useUserStore } from '~/store/user';
+import { useGameStore } from '~/stores/game';
+import { useUserStore } from '~/stores/user';
 import RatingTitle from '~/features/profile/ui/RatingTitle.vue';
 const { t } = useI18n();
 const gameStore = useGameStore();

@@ -1,8 +1,8 @@
 // composables/useUserSSE.ts
 
 import { ref, watch } from 'vue';
-import { useUserStore } from '~/store/user';
-import { useAuthStore } from '~/store/auth';
+import { useUserStore } from '~/stores/user';
+import { useAuthStore } from '~/stores/auth';
 
 export function useUserSSE() {
   const userStore = useUserStore();

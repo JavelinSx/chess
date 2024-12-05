@@ -76,9 +76,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useFriendsStore } from '~/store/friends';
-import { useUserStore } from '~/store/user';
-import { useInvitationStore } from '~/store/invitation';
+import { useFriendsStore } from '~/stores/friends';
+import { useUserStore } from '~/stores/user';
+import { useInvitationStore } from '~/stores/invitation';
 import { storeToRefs } from 'pinia';
 import GameDurationSelector from '~/features/game/ui/GameDurationSelector.vue';
 import ChatButton from '~/features/chat/ui/ChatButton.vue';

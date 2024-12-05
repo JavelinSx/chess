@@ -1,6 +1,6 @@
 import { isDraw } from '~/shared/game-state';
 import type { GameResult, GameResultReason } from '~/server/types/game';
-import type { GameStore } from '~/store/game';
+import type { GameStore } from '~/stores/game';
 
 export function useGameEnd(gameStore: GameStore) {
   async function handleGameEnd(reason: GameResultReason) {

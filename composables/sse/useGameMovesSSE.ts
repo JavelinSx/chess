@@ -2,9 +2,9 @@
 
 import { ref, onUnmounted, watch } from 'vue';
 import { gameApi } from '~/shared/api/game';
-import { useAuthStore } from '~/store/auth';
-import { useGameStore } from '~/store/game';
-import { useGameTimerStore } from '~/store/gameTimer';
+import { useAuthStore } from '~/stores/auth';
+import { useGameStore } from '~/stores/game';
+import { useGameTimerStore } from '~/stores/gameTimer';
 
 export function useGameMovesSSE(gameId: string) {
   const gameStore = useGameStore();

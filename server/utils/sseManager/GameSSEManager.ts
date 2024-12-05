@@ -30,9 +30,9 @@ export class GameSSEManager {
   }
 
   async addGameConnection(gameId: string, userId: string, event: H3Event) {
+    await this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     if (!this.gameConnections.has(gameId)) {
       this.gameConnections.set(gameId, new Map());
-      await this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     }
     this.gameConnections.get(gameId)!.set(userId, event);
   }
@@ -142,11 +142,19 @@ export class GameSSEManager {
     }
   }
 
-  private async sendEvent(event: H3Event, data: string) {
-    try {
-      await event.node.res.write(`data: ${data}\n\n`);
-    } catch (error) {
-      throw error;
+  private async sendEvent(event: H3Event, data: string, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        await event.node.res.write(`data: ${data}\n\n`);
+        return;
+      } catch (error: any) {
+        // Указываем тип any для error
+        if (error.code === 'EBUSY' && i < retries - 1) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
     }
   }
 }

@@ -1,67 +1,53 @@
 // services/chat/message.service.ts
-import mongoose from 'mongoose';
-import type { ChatMessage, GetMessagesParams, PaginatedMessages } from './types';
-import type { ChatSetting } from './types';
+
 import type { ApiResponse } from '~/server/types/api';
-import ChatRoom from '~/server/db/models/chat-room.model';
-import { privacyService } from './privacy.service';
-import { chatSSEManager } from '~/server/utils/sseManager/ChatSSEManager';
+import { MessageStatus, type ChatMessage, type PaginatedMessages } from '~/server/services/chat/types';
+import ChatRoomModel from '~/server/db/models/chat-room.model';
+import { privateChatSSEManager } from '~/server/utils/sseManager/chat/PrivateChatSSEManager';
+import { chatRoomsSSEManager } from '~/server/utils/sseManager/chat/ChatRoomSSEManager';
 
 export const messageService = {
-  async add(
+  async sendMessage(
     roomId: string,
-    user: { _id: string; username: string; chatSetting: ChatSetting },
-    content: string
-  ): Promise<ApiResponse<{ message: ChatMessage; success: boolean }>> {
+    senderId: string,
+    content: string,
+    username: string
+  ): Promise<ApiResponse<ChatMessage>> {
     try {
-      const room = await ChatRoom.findById(roomId).populate('participants', 'chatSetting').lean();
+      const room = await ChatRoomModel.findById(roomId);
 
       if (!room) {
-        return { data: null, error: 'Chat room not found' };
+        return { data: null, error: 'Room not found' };
       }
 
-      const otherParticipant = room.participants.find((p) => p.userId !== user._id);
-      if (!otherParticipant) {
-        return { data: null, error: 'Other participant not found' };
-      }
-
-      if (!privacyService.canInteract(user.chatSetting, otherParticipant.chatSetting)) {
-        return { data: null, error: 'Cannot send message due to privacy settings' };
-      }
-
-      const chatMessage: ChatMessage = {
-        _id: new mongoose.Types.ObjectId().toString(),
-        username: user.username,
+      const message: ChatMessage = {
+        roomId,
+        senderId,
+        username,
         content,
         timestamp: Date.now(),
+        status: {
+          status: MessageStatus.SENT,
+        },
       };
 
-      const updatedRoom = await ChatRoom.findByIdAndUpdate(
-        roomId,
-        {
-          $push: { messages: chatMessage },
-          $set: {
-            lastMessage: chatMessage,
-            lastMessageAt: new Date(),
-          },
-          $inc: { messageCount: 1 },
-        },
-        { new: true }
-      ).lean();
+      // Добавляем сообщение в комнату
+      room.messages.push(message);
+      room.messageCount++;
+      room.lastMessage = message;
+      room.lastMessageAt = new Date();
 
-      if (!updatedRoom) {
-        return { data: null, error: 'Failed to update chat room' };
+      await room.save();
+
+      // Уведомляем участников приватного чата
+      await privateChatSSEManager.sendMessage(roomId, message);
+
+      // Уведомляем об обновлении комнаты
+      for (const participant of room.participants) {
+        await chatRoomsSSEManager.notifyRoomUpdated(participant.userId, roomId);
       }
 
-      await chatSSEManager.sendChatMessage(roomId, chatMessage);
-
-      return {
-        data: {
-          success: true,
-          message: chatMessage,
-        },
-        error: null,
-      };
+      return { data: message, error: null };
     } catch (error) {
       return {
         data: null,
@@ -70,56 +56,93 @@ export const messageService = {
     }
   },
 
-  async getMessages(params: GetMessagesParams): Promise<ApiResponse<PaginatedMessages>> {
-    const { roomId, page = 1, limit = 50 } = params;
-
+  async getMessages(roomId: string, page: number = 1, limit: number = 50): Promise<ApiResponse<PaginatedMessages>> {
     try {
-      const room = await ChatRoom.findById(roomId).populate('participants', 'chatSetting').lean();
+      const room = await ChatRoomModel.findById(roomId);
 
       if (!room) {
-        return { data: null, error: 'Chat room not found' };
+        return { data: null, error: 'Room not found' };
       }
 
-      const totalCount = room.messageCount;
-      const totalPages = Math.ceil(totalCount / limit);
       const skip = (page - 1) * limit;
-
-      const messages = room.messages.slice(Math.max(0, totalCount - skip - limit), totalCount - skip).reverse();
-
-      const isBlocked = !privacyService.canInteract(room.participants[0].chatSetting, room.participants[1].chatSetting);
+      const messages = room.messages
+        .slice(Math.max(0, room.messageCount - skip - limit), room.messageCount - skip)
+        .reverse();
 
       return {
         data: {
           messages,
-          totalCount,
+          totalCount: room.messageCount,
           currentPage: page,
-          totalPages,
-          isBlocked,
+          totalPages: Math.ceil(room.messageCount / limit),
+          isBlocked: false, // Будет определяться в privacy service
         },
         error: null,
       };
     } catch (error) {
       return {
         data: null,
-        error: error instanceof Error ? error.message : 'Failed to fetch messages',
+        error: error instanceof Error ? error.message : 'Failed to get messages',
       };
     }
   },
 
-  async deleteAllMessages(roomId: string): Promise<ApiResponse<void>> {
+  async updateStatus(roomId: string, messageId: string, status: MessageStatus): Promise<ApiResponse<void>> {
     try {
-      await ChatRoom.findByIdAndUpdate(roomId, {
-        $set: {
-          messages: [],
-          messageCount: 0,
-          lastMessage: null,
+      const room = await ChatRoomModel.findById(roomId);
+
+      if (!room) {
+        return { data: null, error: 'Room not found' };
+      }
+
+      await ChatRoomModel.updateOne(
+        {
+          _id: roomId,
+          'messages._id': messageId,
         },
-      });
+        {
+          $set: {
+            'messages.$.status.status': status,
+            'messages.$.status.deliveredAt': status === MessageStatus.DELIVERED ? new Date() : undefined,
+            'messages.$.status.readAt': status === MessageStatus.READ ? new Date() : undefined,
+          },
+        }
+      );
+
+      // Уведомляем участников об обновлении статуса
+      for (const participant of room.participants) {
+        await chatRoomsSSEManager.notifyRoomUpdated(participant.userId, roomId);
+      }
+
       return { data: undefined, error: null };
     } catch (error) {
       return {
         data: null,
-        error: error instanceof Error ? error.message : 'Failed to delete messages',
+        error: error instanceof Error ? error.message : 'Failed to update message status',
+      };
+    }
+  },
+
+  async deleteMessage(roomId: string, messageId: string): Promise<ApiResponse<void>> {
+    try {
+      const room = await ChatRoomModel.findById(roomId);
+
+      if (!room) {
+        return { data: null, error: 'Room not found' };
+      }
+
+      await ChatRoomModel.updateOne({ _id: roomId }, { $pull: { messages: { _id: messageId } } });
+
+      // Уведомляем участников об удалении
+      for (const participant of room.participants) {
+        await chatRoomsSSEManager.notifyRoomUpdated(participant.userId, roomId);
+      }
+
+      return { data: undefined, error: null };
+    } catch (error) {
+      return {
+        data: null,
+        error: error instanceof Error ? error.message : 'Failed to delete message',
       };
     }
   },

@@ -1,9 +1,9 @@
 import { computed, onMounted } from 'vue';
 import type { AuthData } from '~/server/types/auth';
 import type { ApiResponse } from '~/server/types/api';
-import { useAuthStore } from '~/store/auth';
-import { useGameStore } from '~/store/game';
-import { useUserStore } from '~/store/user';
+import { useAuthStore } from '~/stores/auth';
+import { useGameStore } from '~/stores/game';
+import { useUserStore } from '~/stores/user';
 import type { ClientUser } from '~/server/types/user';
 
 export const useAuth = () => {

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { useUserStore } from '~/store/user';
+import { useUserStore } from '~/stores/user';
 import type { ClientUser } from '~/server/types/user';
 
 export const usePaginationStore = defineStore('pagination', {

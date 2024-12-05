@@ -1,84 +1,122 @@
-import { apiRequest } from './api';
-import { useUserStore } from '~/store/user';
-import type { IChatRoom, ChatMessage, UserChatMessage } from '~/server/types/chat';
-import type { ChatSetting } from '~/server/types/user';
+// client/api/chat.ts
+import type {
+  ChatMessage,
+  ChatRoom,
+  PaginatedMessages,
+  CreateRoomParams,
+  RoomWithPrivacy,
+  BlockedUser,
+  ChatParticipant,
+  MessageStatus,
+} from '~/server/services/chat/types';
 import type { ApiResponse } from '~/server/types/api';
-
-export interface RoomRequestParams {
-  senderUserId: string;
-  recipientUserId: string;
-  chatSettingSender: string;
-  chatSettingRecipient: string;
-}
+import { apiRequest } from './api';
+import type { ChatSetting } from '~/server/types/user';
 
 export const chatApi = {
-  async createOrGetRoom(params: RoomRequestParams): Promise<ApiResponse<{ room: IChatRoom; canInteract: boolean }>> {
-    // Преобразуем params в Record<string, unknown>
-    const requestBody: Record<string, unknown> = {
-      senderUserId: params.senderUserId,
-      recipientUserId: params.recipientUserId,
-      chatSettingSender: params.chatSettingSender,
-      chatSettingRecipient: params.chatSettingRecipient,
-    };
-
-    return apiRequest<{ room: IChatRoom; canInteract: boolean }>('/chat/create-or-get-room', 'POST', requestBody);
+  // Room operations
+  async createOrGetRoom({
+    userId,
+    username,
+    userChatSetting,
+    userAvatar,
+    recipientId,
+    recipientUsername,
+    recipientChatSetting,
+    recipientAvatar,
+  }: CreateRoomParams): Promise<ApiResponse<RoomWithPrivacy>> {
+    return apiRequest('/chat/room/create-or-get', 'POST', {
+      userId,
+      username,
+      userChatSetting,
+      userAvatar,
+      recipientId,
+      recipientUsername,
+      recipientChatSetting,
+      recipientAvatar,
+    });
   },
 
-  async sendMessage(roomId: string, content: string): Promise<ApiResponse<ChatMessage>> {
-    const userStore = useUserStore();
-    const user = userStore.user;
-    if (!user) {
-      throw new Error('User not authenticated');
-    }
-    try {
-      const response = await apiRequest<ChatMessage>('/chat/send-message', 'POST', {
-        roomId,
-        content,
-        _id: user._id,
-        username: user.username,
-        chatSetting: user.chatSetting, // Добавьте это поле
-      });
-
-      if (response.error && response.error.includes('privacy settings')) {
-        throw new Error('Cannot send message due to privacy settings');
-      }
-      return response;
-    } catch (error) {
-      console.error('Error in sendMessage:', error);
-      if (error instanceof Error) {
-        return { data: null, error: error.message };
-      }
-      return { data: null, error: 'An unknown error occurred' };
-    }
+  async getRooms(): Promise<ApiResponse<ChatRoom[]>> {
+    return apiRequest('/chat/rooms', 'GET');
   },
 
-  async getRooms(userId: string, chatSetting: ChatSetting): Promise<ApiResponse<IChatRoom[]>> {
-    return apiRequest<IChatRoom[]>('/chat/rooms', 'GET', undefined, { userId, chatSetting });
+  async deleteRoom(roomId: string): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/room/delete', 'POST', { roomId });
   },
 
-  async getRoomMessages(
+  async getParticipants(roomId: string): Promise<ApiResponse<ChatParticipant[]>> {
+    return apiRequest(`/chat/room/${roomId}/participants`, 'GET');
+  },
+
+  async updateParticipant(
     roomId: string,
-    page: number = 1,
-    limit: number = 50
-  ): Promise<
-    ApiResponse<{
-      messages: ChatMessage[];
-      totalCount: number;
-      currentPage: number;
-      totalPages: number;
-      isBlocked: boolean;
-    }>
-  > {
-    return apiRequest<{
-      messages: ChatMessage[];
-      totalCount: number;
-      currentPage: number;
-      totalPages: number;
-      isBlocked: boolean;
-    }>(`/chat/${roomId}/messages?page=${page}&limit=${limit}`, 'GET');
+    userId: string,
+    updates: Partial<ChatParticipant>
+  ): Promise<ApiResponse<ChatRoom>> {
+    return apiRequest('/chat/room/participant/update', 'POST', { roomId, userId, updates });
   },
 
-  async deleteRoom(roomId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return apiRequest<{ success: boolean }>('/chat/delete-room', 'POST', { roomId });
+  // Message operations
+  async sendMessage(
+    roomId: string,
+    senderId: string,
+    content: string,
+    username: string
+  ): Promise<ApiResponse<ChatMessage>> {
+    return apiRequest('/chat/message/send', 'POST', { roomId, senderId, content, username });
+  },
+
+  async getMessages(roomId: string, page: number = 1, limit: number = 50): Promise<ApiResponse<PaginatedMessages>> {
+    return apiRequest(`/chat/room/${roomId}/messages`, 'GET', undefined, {
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+  },
+
+  async updateMessageStatus(roomId: string, messageId: string, status: MessageStatus): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/message/status', 'POST', { roomId, messageId, status });
+  },
+
+  async deleteMessage(roomId: string, messageId: string): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/message/delete', 'POST', { roomId, messageId });
+  },
+
+  // Privacy operations
+  async updatePrivacy(userId: string, chatSetting: ChatSetting): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/privacy/update', 'POST', { userId, chatSetting });
+  },
+
+  async checkRoomPrivacy(roomId: string): Promise<ApiResponse<{ isBlocked: boolean }>> {
+    return apiRequest(`/chat/privacy/${roomId}`, 'GET');
+  },
+
+  async applyRestriction(roomId: string, restrictedUntil: Date, reason?: string): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/restriction/apply', 'POST', { roomId, restrictedUntil, reason });
+  },
+
+  // Block operations
+  async blockUser(roomId: string, userId: string, blockedUntil?: Date, reason?: string): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/block/add', 'POST', { roomId, userId, blockedUntil, reason });
+  },
+
+  async unblockUser(roomId: string, userId: string): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/block/remove', 'POST', { roomId, userId });
+  },
+
+  async getBlockInfo(roomId: string, userId: string): Promise<ApiResponse<BlockedUser | null>> {
+    return apiRequest(`/chat/block/info/${roomId}/${userId}`, 'GET');
+  },
+
+  async updateBlockDuration(roomId: string, userId: string, newBlockedUntil: Date): Promise<ApiResponse<void>> {
+    return apiRequest('/chat/block/duration', 'POST', { roomId, userId, newBlockedUntil });
+  },
+
+  async getBlockedRooms(userId: string): Promise<ApiResponse<ChatRoom[]>> {
+    return apiRequest(`/chat/block/rooms/${userId}`, 'GET');
+  },
+
+  async cleanExpiredBlocks(roomId: string): Promise<ApiResponse<void>> {
+    return apiRequest(`/chat/block/clean/${roomId}`, 'POST');
   },
 };

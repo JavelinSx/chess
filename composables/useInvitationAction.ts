@@ -1,4 +1,4 @@
-import { useInvitationStore } from '~/store/invitation';
+import { useInvitationStore } from '~/stores/invitation';
 
 // composables/useInviteAction.ts
 export function useInviteAction() {

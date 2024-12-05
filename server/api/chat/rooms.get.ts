@@ -1,38 +1,24 @@
-// ~/server/api/chat/rooms.get.ts
+import { defineEventHandler } from 'h3';
+import { friendsService } from '~/server/services/friends.service';
+import { roomService } from '~/server/services/chat/room.service';
+export default defineEventHandler(async (event) => {
+  const userId = event.context.auth?.userId;
 
-import { ChatService } from '~/server/services/chat.service';
-import type { IChatRoom } from '~/server/types/chat';
-import type { ChatSetting } from '~/server/types/user';
-import type { ApiResponse } from '~/server/types/api';
-import { z } from 'zod';
-
-const RoomRequestParamsSchema = z.object({
-  userId: z.string(),
-  chatSetting: z.string(),
-});
-
-export default defineEventHandler(async (event): Promise<ApiResponse<IChatRoom[]>> => {
-  const query = getQuery(event);
-
-  const result = RoomRequestParamsSchema.safeParse(query);
-
-  if (!result.success) {
-    return {
-      data: null,
-      error: 'Invalid or missing required parameters',
-    };
+  if (!userId) {
+    throw createError({
+      statusCode: 401,
+      message: 'Unauthorized',
+    });
   }
 
-  const { userId, chatSetting } = result.data;
-
   try {
-    const response = await ChatService.getRoomsWithPrivacyCheck(userId, chatSetting as ChatSetting);
+    const response = await roomService.getRooms(userId);
     return response;
   } catch (error) {
     console.error('Error fetching rooms:', error);
-    return {
-      data: null,
-      error: error instanceof Error ? error.message : 'An unknown error occurred in fetching rooms',
-    };
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to fetch rooms',
+    });
   }
 });

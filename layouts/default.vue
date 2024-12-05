@@ -82,11 +82,11 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '../store/auth';
-import { useUserStore } from '~/store/user';
-import { useGameStore } from '~/store/game';
-import { useChatStore } from '~/store/chat';
-import { useInvitationStore } from '~/store/invitation';
+import { useAuthStore } from '~/stores/auth';
+import { useUserStore } from '~/stores/user';
+import { useGameStore } from '~/stores/game';
+import { useChatStore } from '~/stores/chat';
+import { useInvitationStore } from '~/stores/invitation';
 import { computed, ref } from 'vue';
 import FloatingChat from '~/features/chat/ui/FloatingChat.vue';
 import ToggleTheme from '~/features/toggleTheme/ui/ToggleTheme.vue'

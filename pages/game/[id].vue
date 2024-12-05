@@ -26,12 +26,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useGameStore } from '~/store/game';
+import { useGameStore } from '~/stores/game';
 import ChessBoard from '~/features/game/ui/ChessBoard.vue';
 import CapturedPieces from '~/features/game/ui/CapturedPieces.vue';
 import GameResultModal from '~/features/game/ui/GameResultModal.vue';
 import { useGameMovesSSE } from '~/composables/sse/useGameMovesSSE';
-import { useGameTimerStore } from '~/store/gameTimer';
+import { useGameTimerStore } from '~/stores/gameTimer';
 
 const { t } = useI18n();
 const route = useRoute();

@@ -1,4 +1,4 @@
-import type { ChatSetting } from './room.types';
+import type { ChatSetting } from '~/server/types/user';
 
 export interface ChatParticipant {
   userId: string;

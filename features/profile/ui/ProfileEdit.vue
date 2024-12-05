@@ -91,7 +91,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { useUserStore } from '~/store/user';
+import { useUserStore } from '~/stores/user';
 import ChangePassword from './ChangePassword.vue';
 import DeleteAccount from './DeleteAccount.vue';
 import RatingTitle from './RatingTitle.vue';

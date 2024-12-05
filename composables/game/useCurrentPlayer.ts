@@ -1,5 +1,5 @@
 import { computed } from 'vue';
-import type { GameStore } from '~/store/game';
+import type { GameStore } from '~/stores/game';
 
 export function useCurrentPlayer(gameStore: GameStore) {
   const whitePlayer = computed(() => gameStore.currentGame?.players.white);

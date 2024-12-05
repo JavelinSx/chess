@@ -35,8 +35,8 @@
 
 <script setup lang="ts">
 import { onMounted, computed } from 'vue';
-import { useFriendsStore } from '~/store/friends';
-import { useUserStore } from '~/store/user';
+import { useFriendsStore } from '~/stores/friends';
+import { useUserStore } from '~/stores/user';
 import { storeToRefs } from 'pinia';
 const { t } = useI18n()
 const friendsStore = useFriendsStore();

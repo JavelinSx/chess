@@ -15,8 +15,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '~/store/auth';
-import { useUserStore } from '~/store/user';
+import { useAuthStore } from '~/stores/auth';
+import { useUserStore } from '~/stores/user';
 const route = useRoute();
 const authStore = useAuthStore();
 const userStore = useUserStore();

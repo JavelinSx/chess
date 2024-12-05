@@ -1,6 +1,6 @@
-import { useAuthStore } from '~/store/auth';
-import { useInvitationStore } from '~/store/invitation';
-import { useUserStore } from '~/store/user';
+import { useAuthStore } from '~/stores/auth';
+import { useInvitationStore } from '~/stores/invitation';
+import { useUserStore } from '~/stores/user';
 
 // useInvitationsSSE.ts
 export function useInvitationsSSE() {
@@ -91,21 +91,6 @@ export function useInvitationsSSE() {
       }
     }
   );
-
-  // // Следим за онлайн статусом пользователя
-  // watch(
-  //   () => userStore.user?.isOnline,
-  //   (newValue) => {
-  //     if (authStore.isAuthenticated) {
-  //       if (newValue) {
-  //         setupSSE();
-  //       } else {
-  //         console.log('hello1111111111111111111111111111');
-  //         closeSSE();
-  //       }
-  //     }
-  //   }
-  // );
 
   return {
     setupSSE,

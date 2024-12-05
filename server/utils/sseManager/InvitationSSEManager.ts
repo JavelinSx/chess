@@ -8,10 +8,10 @@ export class InvitationSSEManager {
   private invitationTimers: Map<string, NodeJS.Timeout> = new Map();
 
   async addInvitationConnection(userId: string, event: H3Event) {
+    await this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     if (this.invitationConnections.get(userId)) return;
     else {
       this.invitationConnections.set(userId, event);
-      this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
     }
   }
   async removeInvitationConnection(userId: string) {
@@ -109,11 +109,19 @@ export class InvitationSSEManager {
     playerIds.forEach((playerId) => this.clearInvitationTimer(playerId));
   }
 
-  private async sendEvent(event: H3Event, data: string) {
-    try {
-      await event.node.res.write(`data: ${data}\n\n`);
-    } catch (err) {
-      console.error('Error writing SSE event:', err);
+  private async sendEvent(event: H3Event, data: string, retries = 3, delay = 1000) {
+    for (let i = 0; i < retries; i++) {
+      try {
+        await event.node.res.write(`data: ${data}\n\n`);
+        return;
+      } catch (error: any) {
+        // Указываем тип any для error
+        if (error.code === 'EBUSY' && i < retries - 1) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        throw error;
+      }
     }
   }
 }

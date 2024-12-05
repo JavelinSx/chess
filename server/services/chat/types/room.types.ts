@@ -1,10 +1,21 @@
 import type { ChatMessage } from './message.types';
 import type { ChatParticipant } from './participant.types';
 
-export type ChatSetting = 'all' | 'friends_only' | 'nobody';
+// types/chat/rooms.types.ts
+export interface BlockedUser {
+  userId: string;
+  blockedAt: Date;
+  blockedUntil?: Date; // для временной блокировки
+  reason?: string;
+}
+
+export interface ChatRestriction {
+  restrictedUntil: Date;
+  reason?: string;
+}
 
 export interface ChatRoom {
-  _id: string;
+  _id: string | unknown;
   participants: ChatParticipant[];
   messages: ChatMessage[];
   messageCount: number;
@@ -12,4 +23,7 @@ export interface ChatRoom {
   createdAt: Date;
   updatedAt: Date;
   lastMessageAt: Date;
+  blockedUsers: BlockedUser[];
+  restrictions: ChatRestriction[];
+  isActive: boolean;
 }

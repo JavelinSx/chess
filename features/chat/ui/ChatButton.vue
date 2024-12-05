@@ -1,42 +1,49 @@
+<!-- ChatButton.vue -->
 <template>
-    <UButton @click="openChat" icon="i-heroicons-chat-bubble-left-ellipsis">
+    <UButton @click="openChat" icon="i-heroicons-chat-bubble-left-ellipsis" :disabled="isLoading">
         {{ t('chat.chat') }}
+        <UIcon v-if="isLoading" name="i-heroicons-arrow-path" class="animate-spin ml-2" />
     </UButton>
 </template>
 
 <script setup lang="ts">
-import { useChatStore } from '~/store/chat';
-import { useUserStore } from '~/store/user';
 import type { ChatSetting } from '~/server/types/user';
+import { chatApi } from '~/shared/api/chat';
+import { useChatStore } from '~/stores/chat';
 
-const { t } = useI18n();
 const props = defineProps<{
     userId: string;
     username: string;
-    chatSetting: ChatSetting
+    chatSetting: ChatSetting;
 }>();
-
+const { t } = useI18n();
+const isLoading = ref(false);
 const chatStore = useChatStore();
 const userStore = useUserStore();
 
 const openChat = async () => {
-    if (userStore.user) {
-        const currentUser = {
-            _id: userStore.user._id,
+    if (!userStore.user) return;
+
+    isLoading.value = true;
+    try {
+        const response = await chatApi.createOrGetRoom({
+            userId: userStore.user._id,
             username: userStore.user.username,
-            chatSetting: userStore.user.chatSetting
-        };
-        const otherUser = {
-            _id: props.userId,
-            username: props.username,
-            chatSetting: props.chatSetting
-        };
-        await chatStore.createOrGetRoom(currentUser, otherUser);
-        if (chatStore.isOpen) {
-            chatStore.setActiveRoom(chatStore.currentRoom?._id.toString() || null);
-        } else {
-            chatStore.toggleChat();
+            userChatSetting: userStore.user.chatSetting,
+            userAvatar: userStore.user.avatar || '/images/default-avatar.png',
+            recipientId: props.userId,
+            recipientUsername: props.username,
+            recipientChatSetting: props.chatSetting,
+            recipientAvatar: userStore.getUserInUserList(props.userId)?.avatar || '/images/default-avatar.png'
+        });
+
+        if (response.data) {
+            chatStore.addRoom(response.data);
+            await chatStore.setActiveRoom(String(response.data._id));
+            if (!chatStore.isOpen) chatStore.toggleChat();
         }
+    } finally {
+        isLoading.value = false;
     }
 };
 </script>

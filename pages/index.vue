@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-import { useInvitationStore } from '~/store/invitation';
+import { useInvitationStore } from '~/stores/invitation';
 import UserList from '~/features/user-list/UserList.vue';
 
 const { isAuthenticated, user } = useAuth()

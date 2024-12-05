@@ -44,7 +44,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useInvitationStore } from '~/store/invitation';
+import { useInvitationStore } from '~/stores/invitation';
 import type { GameDuration, StartColor } from '~/server/types/game';
 
 const { t } = useI18n();

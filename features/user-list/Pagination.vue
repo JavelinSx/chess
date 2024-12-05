@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { usePaginationStore } from '~/store/pagination';
+import { usePaginationStore } from '~/stores/pagination';
 const { t } = useI18n();
 const paginationStore = usePaginationStore();
 

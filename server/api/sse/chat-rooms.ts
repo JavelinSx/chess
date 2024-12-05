@@ -1,8 +1,9 @@
-// server/api/sse/chat.ts
-import { chatSSEManager } from '~/server/utils/sseManager/ChatSSEManager';
+import { chatRoomsSSEManager } from '~/server/utils/sseManager/chat/ChatRoomSSEManager';
 
+// server/api/sse/chat-rooms.ts
 export default defineEventHandler(async (event) => {
   const userId = event.context.auth?.userId;
+
   if (!userId) {
     throw createError({
       statusCode: 401,
@@ -14,13 +15,20 @@ export default defineEventHandler(async (event) => {
   setHeader(event, 'Cache-Control', 'no-cache');
   setHeader(event, 'Connection', 'keep-alive');
 
-  await chatSSEManager.addChatConnection(userId, event);
+  await chatRoomsSSEManager.addConnection(userId, event);
 
   const closeHandler = async () => {
-    await chatSSEManager.removeChatConnection(userId);
+    await chatRoomsSSEManager.removeConnection(userId);
   };
 
-  event.node.req.on('close', closeHandler);
+  const keepAliveInterval = setInterval(() => {
+    event.node.res.write(':\n\n');
+  }, 10000);
+
+  event.node.req.on('close', () => {
+    clearInterval(keepAliveInterval);
+    closeHandler();
+  });
 
   return new Promise(() => {});
 });

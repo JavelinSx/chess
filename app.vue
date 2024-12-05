@@ -11,12 +11,18 @@ import { useSSEManagement } from './composables/sse/useSSEManagement';
 
 const { isAuthenticated } = useAuth();
 
-onBeforeMount(() => {
-    useSSEManagement();
+const { initializeSSE, cleanupSSE } = useSSEManagement();
+const heartbeat = useHeartbeat()
+onMounted(async () => {
     if (isAuthenticated.value) {
-        useHeartbeat()
+        await initializeSSE();
+        await heartbeat.startHeartbeat()
     }
-})
+});
+
+onBeforeUnmount(() => {
+    cleanupSSE();
+});
 
 </script>
 <style>

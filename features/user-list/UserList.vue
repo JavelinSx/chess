@@ -31,8 +31,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { useUserStore } from '~/store/user';
-import { usePaginationStore } from '~/store/pagination';
+import { useUserStore } from '~/stores/user';
+import { usePaginationStore } from '~/stores/pagination';
 import SortingPlayers from './SortingPlayers.vue';
 import UserCard from '../user/ui/UserCard.vue';
 import Pagination from './Pagination.vue';

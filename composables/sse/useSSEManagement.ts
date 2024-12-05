@@ -1,38 +1,36 @@
-// composables/useSSEManagement.ts
-
 import { onMounted, onBeforeUnmount } from 'vue';
 import { useUserSSE } from './useUserSSE';
-import { useChatSSE } from './useChatSSE';
 import { useFriendsSSE } from './useFriendsSSE';
 import { useInvitationsSSE } from './useInvitationsSSE';
+import { useChatRoomsSSE } from '../chat/useChatRoomsSSE';
 
 export function useSSEManagement() {
   const { setupSSE: setupUserSSE, closeSSE: closeUserSSE } = useUserSSE();
-  const { setupSSE: setupChatSSE, closeSSE: closeChatSSE } = useChatSSE();
   const { setupSSE: setupFriendsSSE, closeSSE: closeFriendsSSE } = useFriendsSSE();
   const { setupSSE: setupInvitationSSE, closeSSE: closeInvitationSSE } = useInvitationsSSE();
+  const { setupSSE: setupChatRoomsSSE, closeSSE: closeChatRoomsSSE } = useChatRoomsSSE();
 
   const initializeSSE = async () => {
     try {
       await setupUserSSE();
-      await setupChatSSE();
       await setupInvitationSSE();
       await setupFriendsSSE();
+      await setupChatRoomsSSE();
     } catch (error) {
       console.error('Failed to initialize SSE connections:', error);
       cleanupSSE();
     }
   };
 
-  const cleanupSSE = () => {
+  const cleanupSSE = async () => {
     closeUserSSE();
-    closeChatSSE();
     closeInvitationSSE();
     closeFriendsSSE();
+    await closeChatRoomsSSE();
   };
 
-  onMounted(() => {
-    initializeSSE();
+  onMounted(async () => {
+    await initializeSSE();
   });
 
   onBeforeUnmount(() => {

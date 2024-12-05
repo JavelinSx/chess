@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { useUserStore } from '~/store/user';
+import { useUserStore } from '~/stores/user';
 import UserProfile from '~/features/profile/ui/UserProfile.vue';
 import type { ClientUser } from '~/server/types/user';
 

@@ -1,33 +1,30 @@
 // composables/useHeartbeat.ts
 import { ref, onMounted, onUnmounted } from 'vue';
 
+// composables/useHeartbeat.ts
 export function useHeartbeat() {
   const heartbeatInterval = ref<NodeJS.Timeout | null>(null);
   const HEARTBEAT_INTERVAL = 30000;
 
   const startHeartbeat = async () => {
-    // Очищаем существующий интервал если есть
     if (heartbeatInterval.value) {
       clearInterval(heartbeatInterval.value);
     }
 
-    // Отправляем первый heartbeat сразу
     try {
       await $fetch('/api/user/heartbeat', { method: 'POST' });
+
+      heartbeatInterval.value = setInterval(async () => {
+        try {
+          await $fetch('/api/user/heartbeat', { method: 'POST' });
+        } catch (error) {
+          stopHeartbeat();
+          console.error('Failed to send heartbeat:', error);
+        }
+      }, HEARTBEAT_INTERVAL);
     } catch (error) {
       console.error('Failed to send initial heartbeat:', error);
     }
-
-    heartbeatInterval.value = setInterval(async () => {
-      try {
-        await $fetch('/api/user/heartbeat', {
-          method: 'POST',
-        });
-      } catch (error) {
-        stopHeartbeat();
-        console.error('Failed to send heartbeat:', error);
-      }
-    }, HEARTBEAT_INTERVAL);
   };
 
   const stopHeartbeat = () => {
@@ -36,14 +33,6 @@ export function useHeartbeat() {
       heartbeatInterval.value = null;
     }
   };
-
-  onMounted(() => {
-    startHeartbeat();
-  });
-
-  onUnmounted(() => {
-    stopHeartbeat();
-  });
 
   return {
     startHeartbeat,
