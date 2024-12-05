@@ -1,6 +1,6 @@
 <template>
     <div class="min-h-screen flex flex-col md:items-center relative ">
-        <UContainer :ui="{ base: 'm-0 ' }" class="fixed z-50 bg-white w-full flex justify-center">
+        <UContainer :ui="{ base: 'm-0 ' }" class="fixed z-50 bg-white dark:bg-[#121212] w-full flex justify-center">
             <nav class="py-4 flex items-center justify-between max-w-[570px] sm:w-full">
                 <NuxtLink to="/" class="text-2xl font-bold mr-4 text-center sm:text-xl text-green-600">ChessNexus
                 </NuxtLink>
@@ -30,7 +30,7 @@
         <!-- Mobile menu -->
         <Transition name="menu">
             <UContainer v-show="isMenuOpen"
-                class="border-b border-b-green-600 md:hidden fixed top-0 left-0 z-30 w-full pt-14 bg-white dark:bg-gray-900">
+                class="border-b border-b-green-600 md:hidden fixed top-0 left-0 z-30 w-full pt-14 bg-white dark:bg-[#121212]">
                 <div class="flex flex-col space-y-2 py-4 items-center gap-4">
                     <UButton :ui="{ base: 'flex flex-col gap-2' }" v-for="link in navLinks" :key="link.to" :to="link.to"
                         color="gray" variant="ghost" block @click="isMenuOpen = false">
