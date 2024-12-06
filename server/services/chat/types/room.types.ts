@@ -1,29 +1,35 @@
 import type { ChatMessage } from './message.types';
-import type { ChatParticipant } from './participant.types';
 
-// types/chat/rooms.types.ts
-export interface BlockedUser {
+export interface ChatParticipant {
   userId: string;
-  blockedAt: Date;
-  blockedUntil?: Date; // для временной блокировки
-  reason?: string;
-}
-
-export interface ChatRestriction {
-  restrictedUntil: Date;
-  reason?: string;
+  username: string;
+  chatSetting: 'all' | 'friends_only' | 'nobody';
+  unreadCount: number;
 }
 
 export interface ChatRoom {
-  _id: string | unknown;
+  _id: string;
   participants: ChatParticipant[];
   messages: ChatMessage[];
-  messageCount: number;
   lastMessage: ChatMessage | null;
-  createdAt: Date;
-  updatedAt: Date;
   lastMessageAt: Date;
-  blockedUsers: BlockedUser[];
-  restrictions: ChatRestriction[];
   isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface CreateRoomParams {
+  userId: string;
+  username: string;
+  chatSetting: 'all' | 'friends_only' | 'nobody';
+  recipientId: string;
+  recipientUsername: string;
+  recipientChatSetting: 'all' | 'friends_only' | 'nobody';
+}
+
+export interface PaginatedMessages {
+  messages: ChatMessage[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
 }

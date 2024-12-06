@@ -8,7 +8,6 @@
 
 <script setup lang="ts">
 import type { ChatSetting } from '~/server/types/user';
-import { chatApi } from '~/shared/api/chat';
 import { useChatStore } from '~/stores/chat';
 
 const props = defineProps<{
@@ -16,6 +15,7 @@ const props = defineProps<{
     username: string;
     chatSetting: ChatSetting;
 }>();
+
 const { t } = useI18n();
 const isLoading = ref(false);
 const chatStore = useChatStore();
@@ -26,18 +26,15 @@ const openChat = async () => {
 
     isLoading.value = true;
     try {
-        const room = await chatStore.createOrGetAndOpenRoom({
+        await chatStore.createOrGetRoom({
             userId: userStore.user._id,
-            username: userStore.user.username,
-            userChatSetting: userStore.user.chatSetting,
-            userAvatar: userStore.user.avatar || '/images/default-avatar.png',
+            chatSetting: userStore.user.chatSetting,
             recipientId: props.userId,
             recipientUsername: props.username,
             recipientChatSetting: props.chatSetting,
-            recipientAvatar: userStore.getUserInUserList(props.userId)?.avatar || '/images/default-avatar.png'
         });
 
-        if (room && !chatStore.isOpen) {
+        if (!chatStore.isOpen) {
             chatStore.toggleChat();
         }
     } finally {

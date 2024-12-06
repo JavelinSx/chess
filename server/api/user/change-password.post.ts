@@ -20,6 +20,12 @@ export default defineEventHandler(async (event) => {
         statusMessage: 'User not found',
       });
     }
+    if (!user.password) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Error password undefined',
+      });
+    }
 
     const isPasswordCorrect = await comparePassword(currentPassword, user.password);
     if (!isPasswordCorrect) {

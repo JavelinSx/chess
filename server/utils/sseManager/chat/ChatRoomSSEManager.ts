@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3';
-import type { BlockedUser, ChatRoom } from '~/server/services/chat/types';
+import type { ChatRoom } from '~/server/services/chat/types';
 
 // server/utils/sseManager/ChatRoomsSSEManager.ts
 export class ChatRoomsSSEManager {
@@ -12,60 +12,6 @@ export class ChatRoomsSSEManager {
 
   async removeConnection(userId: string) {
     this.connections.delete(userId);
-  }
-
-  async notifyUserBlocked(userId: string, roomId: string, blockInfo: BlockedUser) {
-    const connection = this.connections.get(userId);
-    if (connection) {
-      const event = JSON.stringify({
-        type: 'user_blocked',
-        data: {
-          roomId,
-          blockInfo,
-        },
-      });
-      await this.sendEvent(connection, event);
-    }
-  }
-
-  async notifyUserUnblocked(userId: string, roomId: string) {
-    const connection = this.connections.get(userId);
-    if (connection) {
-      const event = JSON.stringify({
-        type: 'user_unblocked',
-        data: {
-          roomId,
-        },
-      });
-      await this.sendEvent(connection, event);
-    }
-  }
-
-  async notifyBlockDurationUpdated(userId: string, roomId: string, blockInfo: BlockedUser) {
-    const connection = this.connections.get(userId);
-    if (connection) {
-      const event = JSON.stringify({
-        type: 'block_duration_updated',
-        data: {
-          roomId,
-          blockInfo,
-        },
-      });
-      await this.sendEvent(connection, event);
-    }
-  }
-
-  async notifyBlockExpired(userId: string, roomId: string) {
-    const connection = this.connections.get(userId);
-    if (connection) {
-      const event = JSON.stringify({
-        type: 'block_expired',
-        data: {
-          roomId,
-        },
-      });
-      await this.sendEvent(connection, event);
-    }
   }
 
   async notifyRoomCreated(userId: string, room: ChatRoom) {
@@ -109,6 +55,20 @@ export class ChatRoomsSSEManager {
         data: {
           userId,
           chatSetting,
+        },
+      });
+      await this.sendEvent(connection, event);
+    }
+  }
+
+  async notifyNewMessage(recepientId: string, senderId: string, roomId: string) {
+    const connection = this.connections.get(recepientId);
+    if (connection) {
+      const event = JSON.stringify({
+        type: 'new_chat_message',
+        data: {
+          senderId,
+          roomId,
         },
       });
       await this.sendEvent(connection, event);

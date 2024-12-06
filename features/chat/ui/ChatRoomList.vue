@@ -1,90 +1,79 @@
 <!-- ChatRoomList.vue -->
 <template>
-    <div ref="roomsContainer" class="h-full overflow-y-auto" @scroll="handleScroll">
-        <UAlert v-if="error" color="red" :title="t('chat.error')" :text="error" class="m-4" />
+    <div ref="roomsContainer" class="h-full overflow-y-auto">
+        <UAlert v-if="chatStore.error" color="red" :title="t('chat.error')" :text="chatStore.error" class="m-4" />
 
-        <div v-if="rooms.length > 0" class="divide-y divide-gray-200 dark:divide-gray-700">
-            <TransitionGroup name="list" tag="div">
-                <div v-for="room in rooms" :key="room._id"
-                    class="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                    @click="setActiveRoom(String(room._id))">
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-3">
-                            <UAvatar :ui="{
-                                rounded: 'object-cover'
-                            }" :src="getOtherParticipant(room)?.avatar" :alt="getOtherParticipant(room)?.username" size="sm" />
-                            <div>
-                                <h3 class="font-medium">
-                                    {{ getOtherParticipant(room)?.username }}
-                                </h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 truncate w-40">
-                                    {{ room.lastMessage?.content }}
-                                </p>
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-end gap-1">
-                            <span class="text-xs text-gray-500 dark:text-gray-400">
-                                {{ formatDate(room.lastMessageAt) }}
-                            </span>
-                            <UBadge v-if="room.unreadCount" color="primary" size="sm">
-                                {{ room.unreadCount }}
-                            </UBadge>
+        <div v-if="sortedRooms.length > 0" class="divide-y divide-gray-200 dark:divide-gray-700">
+            <div v-for="room in sortedRooms" :key="room._id"
+                class="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                @click="chatStore.openRoom(String(room._id))">
+
+                <div class="flex justify-between items-start relative">
+                    <div class="flex items-center gap-3">
+                        <UAvatar :alt="getOtherParticipant(room)?.username" size="sm"
+                            :ui="{ rounded: 'rounded-full' }" />
+                        <div>
+                            <h3 class="font-medium max-w-[150px] overflow-hidden whitespace-nowrap text-ellipsis">
+                                {{ getOtherParticipant(room)?.username }}
+                            </h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate w-40">
+                                {{ room.lastMessage?.content }}
+                            </p>
                         </div>
                     </div>
+                    <UButton class="mt-2" color="red" variant="ghost" icon="i-heroicons-trash"
+                        @click.stop="roomToDelete = room" />
+                    <span class="text-xs text-gray-500 dark:text-gray-400 absolute right-0 -top-3">
+                        {{ formatDate(room.lastMessageAt) }}
+                    </span>
+                    <!-- Показываем количество непрочитанных, если есть -->
+                    <span v-if="getUnreadCount(room) > 0" class="bg-blue-500 text-white text-xs rounded-full px-2 py-1">
+                        {{ getUnreadCount(room) }}
+                    </span>
                 </div>
-            </TransitionGroup>
+
+            </div>
         </div>
+
         <div v-else class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
             <UIcon name="i-heroicons-chat-bubble-left" class="h-12 w-12 mb-2" />
             <p>{{ t('chat.noChatRoomsAvailable') }}</p>
         </div>
     </div>
+    <ChatDeleteModal :is-open="!!roomToDelete" :loading="isDeleting" @confirm="handleDeleteConfirm"
+        @close="roomToDelete = null" />
 </template>
 
 <script setup lang="ts">
 import type { ChatRoom } from '~/server/services/chat/types';
 import { useChatStore } from '~/stores/chat';
-
+import ChatDeleteModal from './ChatDeleteModal.vue';
 const { t } = useI18n();
-const roomsContainer = ref<HTMLElement>();
-const error = ref<string | null>(null);
 const chatStore = useChatStore();
 const userStore = useUserStore();
+const { sortedRooms } = storeToRefs(chatStore);
+const isDeleting = ref(false);
+const roomToDelete = ref<ChatRoom | null>(null);
 
-interface ExtendedChatRoom extends ChatRoom {
-    unreadCount?: number;
-    _id: string;
-}
+const handleDeleteConfirm = async () => {
+    if (!roomToDelete.value) return;
 
-const handleScrollEvent = (e: Event) => {
-    handleScroll(e);
+    isDeleting.value = true;
+    try {
+        await chatStore.deleteRoom(roomToDelete.value._id);
+        roomToDelete.value = null;
+    } finally {
+        isDeleting.value = false;
+    }
 };
-
-const handleRoomClick = (roomId: string) => {
-    setActiveRoom(roomId);
-};
-
-const handleScroll = (e: Event) => {
-    // Implement scroll logic if needed
-};
-
-const rooms = computed<ExtendedChatRoom[]>(() =>
-    chatStore.sortedRooms.map(room => ({
-        ...room,
-        _id: String(room._id)
-    }))
-);
 
 const getOtherParticipant = (room: ChatRoom) => {
     return room.participants.find(p => p.userId !== userStore.user?._id);
 };
 
-const setActiveRoom = async (roomId: string) => {
-    try {
-        await chatStore.setActiveRoom(roomId);
-    } catch (e) {
-        error.value = e instanceof Error ? e.message : 'Unknown error';
-    }
+const getUnreadCount = (room: ChatRoom) => {
+    const currentUserParticipant = room.participants.find(p => p.userId === userStore.user?._id);
+    return currentUserParticipant?.unreadCount || 0;
 };
 
 const formatDate = (date: Date) => {

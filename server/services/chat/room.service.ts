@@ -1,87 +1,52 @@
-// services/chat/room.service.ts
+// room.service.ts
 import type { ApiResponse } from '~/server/types/api';
-import type { ChatRoom, CreateRoomParams, RoomWithPrivacy, ChatParticipant } from './types';
+import type { ChatRoom, CreateRoomParams } from './types';
 import ChatRoomModel from '~/server/db/models/chat-room.model';
 import { chatRoomsSSEManager } from '~/server/utils/sseManager/chat/ChatRoomSSEManager';
-import { privacyService } from './privacy.service';
 
 export const roomService = {
-  async createOrGetRoom(params: CreateRoomParams): Promise<ApiResponse<RoomWithPrivacy>> {
+  async createOrGetRoom(params: CreateRoomParams): Promise<ApiResponse<ChatRoom>> {
     try {
-      // Проверяем существующую комнату
+      // Явно указываем тип возвращаемых данных
       let room = await ChatRoomModel.findOne({
-        'participants.userId': {
-          $all: [params.userId, params.recipientId],
-        },
-      }).lean();
+        'participants.userId': { $all: [params.userId, params.recipientId] },
+      }).lean<ChatRoom>();
 
-      if (room) {
-        const canInteract = await privacyService.canInteract(params.userChatSetting, params.recipientChatSetting);
-        // Обновляем настройки участников
-        room.participants = room.participants.map((user) => {
-          if (String(user.userId) === params.userId) {
-            return { ...user, chatSetting: params.userChatSetting };
-          }
-          if (String(user.userId) === params.recipientId) {
-            return { ...user, chatSetting: params.recipientChatSetting };
-          }
-          return user;
-        });
-        return {
-          data: {
-            ...room,
-            canSendMessage: canInteract,
-            isBlocked: false,
+      if (room) return { data: room, error: null };
+
+      // При создании нового документа
+      const newRoom = await ChatRoomModel.create({
+        participants: [
+          {
+            userId: params.userId,
+            username: params.username,
+            chatSetting: params.chatSetting,
           },
-          error: null,
-        };
-      }
+          {
+            userId: params.recipientId,
+            username: params.recipientUsername,
+            chatSetting: params.recipientChatSetting,
+          },
+        ],
+        messages: [],
+        lastMessage: null,
+        lastMessageAt: new Date(),
+        isActive: true,
+      });
 
-      // Создаем новую комнату
-      room = (
-        await ChatRoomModel.create({
-          participants: [
-            {
-              userId: params.userId,
-              username: params.username,
-              chatSetting: params.userChatSetting,
-              avatar: params.userAvatar,
-            },
-            {
-              userId: params.recipientId,
-              username: params.recipientUsername,
-              chatSetting: params.recipientChatSetting,
-              avatar: params.recipientAvatar,
-            },
-          ],
-          messages: [],
-          messageCount: 0,
-          lastMessage: null,
-          blockedUsers: [],
-          restrictions: [],
-          isActive: true,
-          lastMessageAt: new Date(),
-        })
-      ).toObject();
+      // Преобразуем в plain object и указываем тип
+      room = newRoom.toObject() as ChatRoom;
 
-      // Уведомляем участников о создании
       await Promise.all([
         chatRoomsSSEManager.notifyRoomCreated(params.userId, room),
         chatRoomsSSEManager.notifyRoomCreated(params.recipientId, room),
       ]);
 
-      return {
-        data: {
-          ...room,
-          canSendMessage: true,
-          isBlocked: false,
-        },
-        error: null,
-      };
+      return { data: room, error: null };
     } catch (error) {
       return {
         data: null,
-        error: error instanceof Error ? error.message : 'Failed to create room',
+        error: error instanceof Error ? error.message : 'Create error',
       };
     }
   },
@@ -96,107 +61,43 @@ export const roomService = {
         .sort({ lastMessageAt: -1 })
         .lean<ChatRoom[]>();
 
-      return { data: rooms as ChatRoom[], error: null };
+      return { data: rooms, error: null };
     } catch (error) {
-      return {
-        data: null,
-        error: error instanceof Error ? error.message : 'Failed to get rooms',
-      };
+      return { data: null, error: error instanceof Error ? error.message : 'Fetch error' };
     }
   },
-
-  async deleteRoom(roomId: string, userId: string): Promise<ApiResponse<void>> {
+  async deleteRoom(roomId: string, userId: string): Promise<ApiResponse<{ success: boolean }>> {
     try {
+      // Находим комнату
       const room = await ChatRoomModel.findById(roomId);
 
       if (!room) {
-        return { data: null, error: 'Room not found' };
+        return { data: null, error: 'Комната не найдена' };
       }
 
-      // Проверяем права на удаление
-      const isParticipant = room.participants.some((p) => p.userId === userId);
+      // Проверяем, является ли пользователь участником комнаты
+      const isParticipant = room.participants.some((p) => String(p.userId) === String(userId));
 
       if (!isParticipant) {
         return {
           data: null,
-          error: 'Not authorized to delete room',
+          error: 'Нет прав на удаление комнаты',
         };
       }
 
-      // Мягкое удаление
-      await ChatRoomModel.findByIdAndUpdate(roomId, {
-        isActive: false,
-      });
+      // Делаем мягкое удаление - просто помечаем как неактивную
+      await ChatRoomModel.deleteOne({ _id: roomId });
 
-      // Уведомляем участников
+      // Уведомляем всех участников об удалении
       for (const participant of room.participants) {
-        await chatRoomsSSEManager.notifyRoomDeleted(participant.userId, roomId);
+        await chatRoomsSSEManager.notifyRoomDeleted(String(participant.userId), String(roomId));
       }
 
-      return { data: undefined, error: null };
+      return { data: { success: true }, error: null };
     } catch (error) {
       return {
         data: null,
-        error: error instanceof Error ? error.message : 'Failed to delete room',
-      };
-    }
-  },
-
-  async updateParticipant(
-    roomId: string,
-    userId: string,
-    updates: Partial<ChatParticipant>
-  ): Promise<ApiResponse<ChatRoom>> {
-    try {
-      const room = await ChatRoomModel.findOneAndUpdate(
-        {
-          _id: roomId,
-          'participants.userId': userId,
-        },
-        {
-          $set: {
-            'participants.$': {
-              ...updates,
-              userId,
-            },
-          },
-        },
-        { new: true }
-      ).lean<ChatRoom>();
-
-      if (!room) {
-        return { data: null, error: 'Room or participant not found' };
-      }
-
-      // Уведомляем другого участника
-      const otherParticipant = room.participants.find((p) => p.userId !== userId);
-
-      if (otherParticipant) {
-        await chatRoomsSSEManager.notifyRoomUpdated(otherParticipant.userId, roomId);
-      }
-
-      return { data: room as ChatRoom, error: null };
-    } catch (error) {
-      return {
-        data: null,
-        error: error instanceof Error ? error.message : 'Failed to update participant',
-      };
-    }
-  },
-
-  async getParticipants(roomId: string): Promise<ApiResponse<ChatParticipant[]>> {
-    try {
-      const room = await ChatRoomModel.findById(roomId);
-
-      if (!room) {
-        return { data: null, error: 'Room not found' };
-      }
-
-      return { data: room.participants, error: null };
-    } catch (error) {
-      return {
-        data: null,
-        error: error instanceof Error ? error.message : 'Failed to get participants',
+        error: error instanceof Error ? error.message : 'Ошибка удаления комнаты',
       };
     }
   },

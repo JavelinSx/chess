@@ -1,10 +1,11 @@
-// server/api/chat/message/send.post.ts
+// /server/api/chat/message/send.post.ts
 import { messageService } from '~/server/services/chat/message.service';
 
 export default defineEventHandler(async (event) => {
-  const { roomId, content, senderId, username } = await readBody(event);
+  const { roomId, content } = await readBody(event);
+  const userId = event.context.auth?.userId;
 
-  if (!roomId || !content || !senderId || !username) {
+  if (!roomId || !content || !userId) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Missing required message data',
@@ -12,7 +13,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const response = await messageService.sendMessage(roomId, senderId, content, username);
+    const response = await messageService.sendMessage(roomId, userId, content);
     return response;
   } catch (error) {
     throw createError({

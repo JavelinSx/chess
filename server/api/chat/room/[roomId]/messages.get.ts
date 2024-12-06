@@ -1,3 +1,4 @@
+// /server/api/chat/room/[roomId]/messages.get.ts
 import { messageService } from '~/server/services/chat/message.service';
 
 export default defineEventHandler(async (event) => {

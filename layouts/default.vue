@@ -71,8 +71,8 @@
         <UButton v-if="isAuthenticated && !chatStore.isOpen" @click="toggleChat" color="primary" variant="soft"
             size="xl" icon="i-heroicons-chat-bubble-left-ellipsis" class="fixed w-28 right-4 bottom-4">
             {{ t('chat.chat') }}
-            <UBadge v-if="chatStore.unreadMessagesCount > 0" :label="chatStore.unreadMessagesCount" color="red"
-                class="absolute -top-2 -right-2" size="sm" />
+            <!-- <UBadge v-if="chatStore.unreadMessagesCount > 0" :label="chatStore.unreadMessagesCount" color="red"
+                class="absolute -top-2 -right-2" size="sm" /> -->
         </UButton>
     </div>
     <GameDurationSelector v-if="invitationStore.showDurationSelector" :selected-user="invitationStore.infoInvitation"
@@ -85,7 +85,7 @@
 import { useAuthStore } from '~/stores/auth';
 import { useUserStore } from '~/stores/user';
 import { useGameStore } from '~/stores/game';
-import { useChatStore } from '~/stores/chat';
+import { useChatStore } from '#imports';
 import { useInvitationStore } from '~/stores/invitation';
 import { computed, ref } from 'vue';
 import FloatingChat from '~/features/chat/ui/FloatingChat.vue';

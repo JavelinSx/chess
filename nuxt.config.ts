@@ -5,6 +5,18 @@ export default defineNuxtConfig({
   modules: ['@pinia/nuxt', '@pinia-plugin-persistedstate/nuxt', '@nuxt/ui', '@nuxtjs/i18n'],
   plugins: ['~/plugins/auth'],
   css: ['~/app/styles/global.css'],
+  typescript: {
+    strict: true,
+    typeCheck: true,
+    tsConfig: {
+      compilerOptions: {
+        paths: {
+          '~/*': ['./*'],
+          '@/*': ['./*'],
+        },
+      },
+    },
+  },
   nitro: {
     plugins: ['~/server/db/index.ts'],
     routeRules: {
@@ -85,10 +97,6 @@ export default defineNuxtConfig({
       'process.env.DEBUG': JSON.stringify(process.env.DEBUG),
     },
     plugins: [svgLoader()],
-  },
-
-  typescript: {
-    strict: true,
   },
 
   compatibilityDate: '2024-09-13',

@@ -146,6 +146,9 @@
     "noPendingFriend": "No pending friend requests"
   },
   "chat": {
+    "confirmDeleteTitle": "Delete chat?",
+    "deleteRoomWarning": "The dialog will be deleted for all participants. This action cannot be undone.",
+    "enterMessage": "Enter message here...",
     "chat": "Chat",
     "chatTitle": "Chats",
     "send": "Send",
