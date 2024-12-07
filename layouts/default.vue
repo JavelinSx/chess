@@ -51,11 +51,11 @@
 
 
         <UButton v-if="isAuthenticated && activeGameId && !isGamePage" :to="`/game/${activeGameId}`" color="primary"
-            variant="soft" class="w-80 h-10 text-center self-center mt-4">
+            variant="soft" class=" mt-20 w-80 h-10 text-center self-center">
             {{ t('game.returnToGame') }}
         </UButton>
 
-        <main class="flex-grow w-full max-w-[750px] xl:max-w-[1024px] mt-14">
+        <main class="flex-grow w-full max-w-[750px] xl:max-w-[1024px]">
             <UContainer class="py-4 sm:px-2 max-w-[750px] xl:max-w-[1024px] flex flex-col justify-center items-center">
                 <NuxtPage />
             </UContainer>
@@ -114,14 +114,17 @@ const { isAuthenticated } = useAuth();
 const isMenuOpen = ref(false);
 
 const isGamePage = computed(() => {
-    return route.name === 'game-id' || route.path.startsWith('/game/');
+    return route.path.startsWith('/game/');
 });
 
 const activeGameId = computed(() => {
     const currentGame = gameStore.currentGame;
+
     return currentGame && currentGame.status === 'active' ? currentGame._id : null;
 });
-
+console.log(isGamePage.value)
+console.log(activeGameId.value)
+console.log(isAuthenticated.value)
 const navLinks = computed(() => [
     { label: t('misc.home'), to: '/' },
     ...(isAuthenticated.value

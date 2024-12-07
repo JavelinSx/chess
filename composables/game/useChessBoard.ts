@@ -1,9 +1,8 @@
 import { ref, computed } from 'vue';
-import ChessBoard from '~/features/game/ui/ChessBoard.vue';
-import type { Position, PieceType, ChessGame } from '~/server/types/game';
+import type { Position, PieceType } from '~/server/types/game';
 import { getValidMoves } from '~/shared/game-logic';
-import { useGameStore, type GameStore } from '~/stores/game';
-import { useUserStore, type UserStore } from '~/stores/user';
+import { useGameStore } from '~/stores/game';
+import { useUserStore } from '~/stores/user';
 
 export function useChessBoard() {
   const gameStore = useGameStore();

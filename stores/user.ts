@@ -1,104 +1,100 @@
 import { defineStore } from 'pinia';
 import type { ClientUser, ChatSetting, UserStats } from '~/server/types/user';
-import type { GameResult } from '~/server/types/game';
 import { userApi } from '~/shared/api/user';
 import { useAuthStore } from './auth';
 
-export interface UserStore {
-  user: ClientUser | null;
-  usersList: ClientUser[];
-}
+export const useUserStore = defineStore(
+  'user',
+  () => {
+    // Состояние
+    const state = reactive({
+      user: null as ClientUser | null,
+      usersList: [] as ClientUser[],
+    });
 
-export const useUserStore = defineStore('user', {
-  state: () => ({
-    user: null as ClientUser | null,
-    usersList: [] as ClientUser[],
-  }),
+    // Геттеры
+    const _id = computed(() => state.user?._id);
+    const username = computed(() => state.user?.username);
+    const email = computed(() => state.user?.email);
+    const rating = computed(() => state.user?.rating);
+    const stats = computed(() => state.user?.stats);
+    const lastLogin = computed(() => state.user?.lastLogin);
+    const isOnline = computed(() => state.user?.isOnline);
+    const isGame = computed(() => state.user?.isGame);
+    const winRate = computed(() => state.user?.winRate);
+    const currentGameId = computed(() => state.user?.currentGameId);
+    const chatSettings = computed(() => state.user?.chatSetting);
 
-  getters: {
-    _id: (state) => state.user?._id,
-    username: (state) => state.user?.username,
-    email: (state) => state.user?.email,
-    rating: (state) => state.user?.rating,
-    stats: (state) => state.user?.stats,
-    lastLogin: (state) => state.user?.lastLogin,
-    isOnline: (state) => state.user?.isOnline,
-    isGame: (state) => state.user?.isGame,
-    winRate: (state) => state.user?.winRate,
-    currentGameId: (state) => state.user?.currentGameId,
-    chatSettings: (state) => state.user?.chatSetting,
-  },
+    // Действия
+    function setUser(user: ClientUser) {
+      state.user = user;
+    }
 
-  actions: {
-    setUser(user: ClientUser) {
-      this.user = user;
-    },
+    function clearUser() {
+      state.user = null;
+      state.usersList = [];
+    }
 
-    clearUser() {
-      this.user = null;
-      this.usersList = [];
-    },
-
-    async getUserById(userId: string): Promise<ClientUser | null> {
-      let userInList = this.usersList.find((u) => u._id === userId);
-      if (!userInList && this.usersList.length === 0) {
-        await this.getUsersList();
-        userInList = this.usersList.find((u) => u._id === userId);
+    async function getUserById(userId: string): Promise<ClientUser | null> {
+      let userInList = state.usersList.find((u) => u._id === userId);
+      if (!userInList && state.usersList.length === 0) {
+        await getUsersList();
+        userInList = state.usersList.find((u) => u._id === userId);
       }
       return userInList || null;
-    },
+    }
 
-    updateUserStatus(userId: string, isOnline: boolean, isGame: boolean) {
-      const userInList = this.usersList.find((u) => u._id === userId);
+    function updateUserStatus(userId: string, isOnline: boolean, isGame: boolean) {
+      const userInList = state.usersList.find((u) => u._id === userId);
       if (userInList) {
         userInList.isOnline = isOnline;
         userInList.isGame = isGame;
       }
-      if (this.user && this.user._id === userId) {
-        this.user.isOnline = isOnline;
-        this.user.isGame = isGame;
+      if (state.user && state.user._id === userId) {
+        state.user.isOnline = isOnline;
+        state.user.isGame = isGame;
       }
-    },
+    }
 
-    updateUser(updatedUser: Partial<ClientUser>) {
-      const index = this.usersList.findIndex((u) => u._id === updatedUser._id);
+    function updateUser(updatedUser: Partial<ClientUser>) {
+      const index = state.usersList.findIndex((u) => u._id === updatedUser._id);
       if (index !== -1) {
-        this.usersList[index] = { ...this.usersList[index], ...updatedUser };
+        state.usersList[index] = { ...state.usersList[index], ...updatedUser };
       }
-      if (this.user && this.user._id === updatedUser._id) {
-        this.user = { ...this.user, ...updatedUser };
+      if (state.user && state.user._id === updatedUser._id) {
+        state.user = { ...state.user, ...updatedUser };
       }
-    },
+    }
 
-    updateAllUsers(users: ClientUser[]) {
-      this.usersList = users;
-      if (this.user) {
-        const updatedCurrentUser = users.find((u) => u._id === this.user?._id);
+    function updateAllUsers(users: ClientUser[]) {
+      state.usersList = users;
+      if (state.user) {
+        const updatedCurrentUser = users.find((u) => u._id === state.user?._id);
         if (updatedCurrentUser) {
-          this.user = updatedCurrentUser;
+          state.user = updatedCurrentUser;
         }
       }
-    },
+    }
 
-    addUser(user: ClientUser) {
-      if (!this.usersList.some((u) => u._id === user._id)) {
-        this.usersList.push(user);
+    function addUser(user: ClientUser) {
+      if (!state.usersList.some((u) => u._id === user._id)) {
+        state.usersList.push(user);
       }
-    },
+    }
 
-    removeUser(userId: string) {
-      this.usersList = this.usersList.filter((u) => u._id !== userId);
-      if (this.user && this.user._id === userId) {
-        this.user = null;
+    function removeUser(userId: string) {
+      state.usersList = state.usersList.filter((u) => u._id !== userId);
+      if (state.user && state.user._id === userId) {
+        state.user = null;
       }
-    },
+    }
 
-    async deleteAccount() {
+    async function deleteAccount() {
       try {
         const authStore = useAuthStore();
         const response = await userApi.deleteAccount();
-        if (response.data && response.data.success) {
-          this.clearUser();
+        if (response.data?.success) {
+          clearUser();
           authStore.logout();
           navigateTo('/login');
         } else if (response.error) {
@@ -108,29 +104,27 @@ export const useUserStore = defineStore('user', {
         console.error('Error deleting account:', error);
         throw error;
       }
-    },
+    }
 
-    async changePassword(currentPassword: string, newPassword: string) {
+    async function changePassword(currentPassword: string, newPassword: string) {
       try {
         const response = await userApi.changePassword(currentPassword, newPassword);
         if (response.data) {
           return { success: true, message: response.data.message };
-        } else if (response.error) {
-          throw new Error(response.error);
         }
-        throw new Error('Unexpected response structure');
+        throw new Error(response.error || 'Unexpected response structure');
       } catch (error) {
         console.error('Error changing password:', error);
         throw error;
       }
-    },
+    }
 
-    async updateProfile(username: string, email: string, chatSetting: ChatSetting, avatar: string) {
-      if (!this.user) throw new Error('User is not authenticated');
+    async function updateProfile(username: string, email: string, chatSetting: ChatSetting, avatar: string) {
+      if (!state.user) throw new Error('User is not authenticated');
       try {
-        const response = await userApi.profileUpdate(this.user._id, username, email, avatar, chatSetting);
+        const response = await userApi.profileUpdate(state.user._id, username, email, avatar, chatSetting);
         if (response.data) {
-          this.setUser({ ...this.user, username, email, chatSetting, avatar });
+          setUser({ ...state.user, username, email, chatSetting, avatar });
         } else if (response.error) {
           throw new Error(response.error);
         }
@@ -138,51 +132,81 @@ export const useUserStore = defineStore('user', {
         console.error('Error updating profile:', error);
         throw error;
       }
-    },
-    async getUsersList() {
+    }
+
+    async function getUsersList() {
       try {
         const response = await userApi.getUsersList();
         if (response.data) {
-          this.usersList = response.data;
+          state.usersList = response.data;
         }
       } catch (error) {
         console.error('Failed to fetch users list:', error);
       }
-    },
-    updateUserStats(updatedStats: UserStats) {
-      if (this.user) {
-        this.user.stats = updatedStats;
-        this.updateUser({ ...this.user, stats: updatedStats });
+    }
+
+    function updateUserStats(updatedStats: UserStats) {
+      if (state.user) {
+        state.user.stats = updatedStats;
+        updateUser({ ...state.user, stats: updatedStats });
       }
-      // Обновляем пользователя в списке
-      const userInList = this.usersList.find((u) => u._id === this.user?._id);
+      const userInList = state.usersList.find((u) => u._id === state.user?._id);
       if (userInList) {
         userInList.stats = updatedStats;
       }
-    },
+    }
 
-    handleUserDeleted(deletedUserId: string) {
-      if (this.user && this.user._id === deletedUserId) {
-        this.clearUser();
+    function handleUserDeleted(deletedUserId: string) {
+      if (state.user && state.user._id === deletedUserId) {
+        clearUser();
         navigateTo('/login');
       }
-
-      // Обновляем список пользователей
-      this.usersList = this.usersList.filter((user) => user._id !== deletedUserId);
-
-      // Обновляем список друзей текущего пользователя
-      if (this.user) {
-        this.user.friends = this.user.friends.filter((friend) => friend._id !== deletedUserId);
+      state.usersList = state.usersList.filter((user) => user._id !== deletedUserId);
+      if (state.user) {
+        state.user.friends = state.user.friends.filter((friend) => friend._id !== deletedUserId);
       }
-    },
+    }
 
-    getUserInUserList(id: string) {
-      return this.usersList.find((user) => user._id === id);
-    },
-  },
+    function getUserInUserList(id: string) {
+      return state.usersList.find((user) => user._id === id);
+    }
 
-  persist: {
-    storage: persistedState.localStorage,
-    paths: ['user', 'userList'],
+    return {
+      // Состояние
+      ...toRefs(state),
+
+      // Геттеры
+      _id,
+      username,
+      email,
+      rating,
+      stats,
+      lastLogin,
+      isOnline,
+      isGame,
+      winRate,
+      currentGameId,
+      chatSettings,
+
+      // Методы
+      setUser,
+      clearUser,
+      getUserById,
+      updateUserStatus,
+      updateUser,
+      updateAllUsers,
+      addUser,
+      removeUser,
+      deleteAccount,
+      changePassword,
+      updateProfile,
+      getUsersList,
+      updateUserStats,
+      handleUserDeleted,
+      getUserInUserList,
+    };
   },
-});
+  {
+    persist: true,
+  }
+);

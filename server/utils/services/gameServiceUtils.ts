@@ -73,8 +73,8 @@ export async function updateGameStats(
   }
 
   // Подсчет захваченных фигур
-  const opponentColor = playerColor === 'white' ? 'black' : 'white';
-  newStats.capturedPawns += game.capturedPieces[opponentColor].filter((piece) => piece === 'pawn').length;
+  const myColor = playerColor; // цвет текущего игрока
+  newStats.capturedPawns += game.capturedPieces[myColor].filter((piece) => piece === 'pawn').length;
 
   // Анализ истории ходов для специальных событий
   game.moveHistory.forEach((move) => {
@@ -122,24 +122,20 @@ export async function updateGameStats(
 export function calculateEloChange(
   playerRating: number,
   opponentRating: number,
-  result: 'win' | 'loss' | 'draw'
+  result: 'win' | 'loss' | 'draw' | 'forfeit_loss' | 'forfeit_win'
 ): number {
-  // Уменьшаем коэффициент K для более стабильных изменений
   const K = 32;
 
-  // Проверяем корректность входных данных
-  const safePlayerRating = Math.max(0, playerRating);
-  const safeOpponentRating = Math.max(0, opponentRating);
-
-  const expectedScore = 1 / (1 + Math.pow(10, (safeOpponentRating - safePlayerRating) / 400));
-  const actualScore = result === 'win' ? 1 : result === 'draw' ? 0.5 : 0;
-
-  const change = Math.round(K * (actualScore - expectedScore));
-
-  // Проверяем, чтобы итоговый рейтинг не стал отрицательным
-  if (safePlayerRating + change < 0) {
-    return -safePlayerRating;
+  if (result === 'forfeit_loss') {
+    return -K;
   }
 
-  return change;
+  if (result === 'forfeit_win') {
+    return K;
+  }
+
+  const expectedScore = 1 / (1 + Math.pow(10, (opponentRating - playerRating) / 400));
+  const actualScore = result === 'win' ? 1 : result === 'draw' ? 0.5 : 0;
+
+  return Math.round(K * (actualScore - expectedScore));
 }

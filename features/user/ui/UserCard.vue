@@ -1,14 +1,15 @@
 <template>
     <UCard :ui="{
         base: 'h-full w-full',
-        header: 'px-0 py-0 sm:px-0',
+        header: {
+            base: 'px-2 py-0 sm:px-2'
+        },
         ring: user.isOnline
             ? 'ring-1 ring-green-500 dark:ring-green-400'
             : 'ring-1 ring-gray-200 dark:ring-gray-700',
     }">
         <template #header>
-            <div class="flex items-center justify-between cursor-pointer px-4 py-5 md:px-6"
-                @click="navigateToUserProfile">
+            <div @click="navigateToUserProfile">
                 <UCard :ui="{ base: 'w-full' }">
                     <div class="flex justify-between gap-2">
                         <div class="flex flex-col items-center justify-center gap-2 w-24">

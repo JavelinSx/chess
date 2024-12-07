@@ -1,4 +1,3 @@
-import { $fetch, FetchError } from 'ofetch';
 import type { ApiResponse } from '~/server/types/api';
 
 export async function apiRequest<T>(
@@ -15,6 +14,7 @@ export async function apiRequest<T>(
     ...customHeaders,
   };
 
+  // Добавляем токен в заголовки, если клиент
   if (import.meta.client) {
     const token = useCookie('auth_token').value;
     if (token) {
@@ -22,33 +22,29 @@ export async function apiRequest<T>(
     }
   }
 
+  // Добавляем query-параметры
   if (queryParams) {
     const searchParams = new URLSearchParams(queryParams);
     url += `?${searchParams.toString()}`;
   }
 
   try {
+    // Выполняем запрос через $fetch
     const response = await $fetch<ApiResponse<T>>(url, {
       method,
       body,
       headers,
     });
 
+    // Проверяем структуру ответа
     if (!response || typeof response !== 'object' || (!('data' in response) && !('error' in response))) {
       throw new Error('Invalid response structure');
     }
 
     return response;
   } catch (error: unknown) {
-    if (error instanceof FetchError) {
-      return {
-        data: null,
-        error: error.data?.message || error.message || 'An error occurred',
-      };
-    }
-    if (error instanceof Error) {
-      return { data: null, error: error.message };
-    }
-    return { data: null, error: 'An unknown error occurred' };
+    // Обработка ошибок
+    const errorMessage = (error instanceof Error && error.message) || 'An unknown error occurred';
+    return { data: null, error: errorMessage };
   }
 }

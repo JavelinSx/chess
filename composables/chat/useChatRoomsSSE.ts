@@ -1,12 +1,9 @@
 import { useChatStore } from '~/stores/chat';
-import { useUserStore } from '~/stores/user';
 
 export function useChatRoomsSSE() {
   const eventSource = ref<EventSource | null>(null);
   const isConnected = ref(false);
   const chatStore = useChatStore();
-  const userStore = useUserStore();
-  const toast = useToast();
 
   const handleSSEMessage = async (data: any) => {
     switch (data.type) {
@@ -17,12 +14,10 @@ export function useChatRoomsSSE() {
         await chatStore.fetchRooms();
         break;
       case 'new_chat_message':
-        const senderId = data.data.senderId;
-        const roomId = data.data.roomId;
-        if (senderId && roomId) {
-          chatStore.showMessageNotification(senderId, roomId);
+        // Показываем уведомление только если чат закрыт
+        if (!chatStore.isOpen && data.data.senderId && data.data.roomId) {
+          chatStore.showMessageNotification(data.data.senderId, data.data.roomId);
         }
-
         break;
     }
   };
@@ -44,7 +39,6 @@ export function useChatRoomsSSE() {
   };
 
   const closeSSE = () => {
-    console.log('hello');
     eventSource.value?.close();
     eventSource.value = null;
     isConnected.value = false;

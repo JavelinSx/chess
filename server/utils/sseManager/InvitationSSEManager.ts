@@ -8,12 +8,15 @@ export class InvitationSSEManager {
   private invitationTimers: Map<string, NodeJS.Timeout> = new Map();
 
   async addInvitationConnection(userId: string, event: H3Event) {
-    await this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
-    if (this.invitationConnections.get(userId)) return;
-    else {
-      this.invitationConnections.set(userId, event);
+    if (this.invitationConnections.get(userId)) {
+      // Закрываем старое соединение
+      const oldConnection = this.invitationConnections.get(userId);
+      oldConnection?.node.res.end();
     }
+    this.invitationConnections.set(userId, event);
+    await this.sendEvent(event, JSON.stringify({ type: 'connection_established', userId }));
   }
+
   async removeInvitationConnection(userId: string) {
     this.invitationConnections.delete(userId);
     this.clearInvitationTimer(userId);

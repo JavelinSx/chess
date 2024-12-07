@@ -1,5 +1,6 @@
 import { GameService } from '~/server/services/game.service';
 import type { GameResult } from '~/server/types/game';
+import { gameSSEManager } from '~/server/utils/sseManager/GameSSEManager';
 
 export default defineEventHandler(async (event) => {
   try {

@@ -5,7 +5,7 @@ import UserListCache from '../utils/UserListCache';
 import { UserService } from './user.service';
 import { gameSSEManager } from '../utils/sseManager/GameSSEManager';
 import { userSSEManager } from '../utils/sseManager/UserSSEManager';
-import { calculateEloChange, initializeBoard } from '~/server/utils/services/gameServiceUtils';
+import { calculateEloChange, initializeBoard, updateGameStats } from '~/server/utils/services/gameServiceUtils';
 import type { GameResult, ChessGame, PieceColor, TimeControl, GamePlayer, GameResultReason } from '../types/game';
 import type { ClientUser, IUser } from '../types/user';
 import type { ApiResponse } from '../types/api';
@@ -236,8 +236,27 @@ export class GameService {
     const isWhiteWinner = result.winner?._id === whitePlayer._id;
     const ratingChanges: Record<string, number> = {};
 
-    const whiteOutcome = result.reason === 'draw' ? 'draw' : isWhiteWinner ? 'win' : 'loss';
-    const blackOutcome = result.reason === 'draw' ? 'draw' : !isWhiteWinner ? 'win' : 'loss';
+    const whiteOutcome =
+      result.reason === 'forfeit'
+        ? isWhiteWinner
+          ? 'forfeit_win'
+          : 'forfeit_loss'
+        : result.reason === 'draw'
+        ? 'draw'
+        : isWhiteWinner
+        ? 'win'
+        : 'loss';
+
+    const blackOutcome =
+      result.reason === 'forfeit'
+        ? !isWhiteWinner
+          ? 'forfeit_win'
+          : 'forfeit_loss'
+        : result.reason === 'draw'
+        ? 'draw'
+        : !isWhiteWinner
+        ? 'win'
+        : 'loss';
 
     // Обновляем статистику игроков
     const whiteStats = await updateGameStats(whiteUser.stats, game, isWhiteWinner, 'white');

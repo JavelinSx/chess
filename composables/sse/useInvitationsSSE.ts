@@ -72,6 +72,34 @@ export function useInvitationsSSE() {
     }
   };
 
+  const reconnect = async () => {
+    console.log('hello1');
+    if (isConnected.value || !authStore.isAuthenticated) return;
+
+    if (reconnectAttempts.value < MAX_RECONNECT_ATTEMPTS) {
+      console.log('hello2');
+      const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts.value);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      reconnectAttempts.value++;
+      await setupSSE();
+    }
+  };
+
+  // Добавить интервал проверки соединения
+  let checkInterval: NodeJS.Timeout;
+
+  onMounted(() => {
+    checkInterval = setInterval(() => {
+      if (!isConnected.value && authStore.isAuthenticated && userStore.user?.isOnline) {
+        reconnect();
+      }
+    }, 10000);
+  });
+
+  onUnmounted(() => {
+    clearInterval(checkInterval);
+  });
+
   const closeSSE = () => {
     if (eventSource.value) {
       eventSource.value.close();

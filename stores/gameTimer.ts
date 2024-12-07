@@ -1,7 +1,22 @@
-// store/gameTimer.ts
-import { defineStore } from 'pinia';
+import { defineStore, type DefineStoreOptions } from 'pinia';
+import { useLocalStorage } from '@vueuse/core';
 import { useGameStore } from './game';
 import type { GameDuration, PieceColor } from '~/server/types/game';
+
+// Определяем типы для геттеров и экшенов
+interface StoreGetters {
+  remainingTime: (color: PieceColor) => number;
+  isGameReady: boolean;
+  isCountingDown: boolean;
+}
+
+interface StoreActions {
+  initialize: (gameId: string, duration?: GameDuration) => Promise<void>;
+  startCountdown: () => void;
+  handleTimerSync: (timerData: any) => void;
+  handleSSEUpdate: (data: any) => void;
+  cleanup: () => void;
+}
 
 interface TimerState {
   whiteTime: number;
@@ -11,133 +26,83 @@ interface TimerState {
   lastUpdateTime: number;
   countdownTime: number;
   initialDuration: number | null;
-  gameId: string | null; // Добавляем ID игры для идентификации
-  lastSyncTime: number; // Добавляем время последней синхронизации
-  localInterval: NodeJS.Timeout | null; // Для локальных обновлений
+  gameId: string | null;
+  lastSyncTime: number;
   isCountingStarted: boolean;
 }
 
-export const useGameTimerStore = defineStore('gameTimer', {
-  state: (): TimerState => ({
-    whiteTime: 0,
-    blackTime: 0,
-    activeColor: null,
-    status: 'not_started',
-    lastUpdateTime: 0,
-    countdownTime: 5,
-    initialDuration: null,
-    gameId: null,
-    lastSyncTime: 0,
-    localInterval: null,
-    isCountingStarted: false,
-  }),
+export const useGameTimerStore = defineStore(
+  'gameTimer',
+  () => {
+    const state = reactive<TimerState>({
+      whiteTime: 0,
+      blackTime: 0,
+      activeColor: null,
+      status: 'not_started',
+      lastUpdateTime: 0,
+      countdownTime: 5,
+      initialDuration: null,
+      gameId: null,
+      lastSyncTime: 0,
+      isCountingStarted: false,
+    });
 
-  getters: {
-    remainingTime: (state) => (color: PieceColor) => {
+    // Локальные переменные
+    let localInterval: NodeJS.Timeout | null = null;
+
+    // Геттеры
+    const remainingTime = (color: PieceColor) => {
       return color === 'white' ? state.whiteTime : state.blackTime;
-    },
-    isGameReady: (state) => state.status === 'active',
-    isCountingDown: (state) => state.status === 'countdown',
-  },
+    };
 
-  actions: {
-    async initialize(gameId: string, duration?: GameDuration) {
-      // Сбрасываем счетчик при новой инициализации
-      this.countdownTime = 5;
-      this.isCountingStarted = false;
+    const isGameReady = computed(() => state.status === 'active');
+    const isCountingDown = computed(() => state.status === 'countdown');
 
-      // Проверяем, не та же ли это игра после перезагрузки
-      if (this.gameId === gameId && this.status === 'active') {
-        return;
+    // Вспомогательные функции
+    function stopLocalTimer() {
+      if (localInterval) {
+        clearInterval(localInterval);
+        localInterval = null;
       }
+    }
 
-      this.gameId = gameId;
+    function startLocalTimer() {
+      stopLocalTimer();
 
-      if (duration) {
-        // Новая игра
-        const timeInSeconds = duration * 60;
-        this.whiteTime = timeInSeconds;
-        this.blackTime = timeInSeconds;
-        this.initialDuration = timeInSeconds;
-        this.activeColor = 'white';
-        this.status = 'countdown';
-        this.lastUpdateTime = Date.now();
-      } else if (this.status === 'active') {
-        this.startLocalTimer();
-      } else {
-        // После перезагрузки ждем синхронизации через SSE
-        this.status = 'not_started';
-      }
-    },
-
-    startCountdown() {
-      if (this.isCountingStarted || this.status !== 'countdown') return;
-
-      this.isCountingStarted = true;
-      const countdownInterval = setInterval(() => {
-        this.countdownTime--;
-        if (this.countdownTime <= 0) {
-          clearInterval(countdownInterval);
-          this.status = 'active';
-          this.startLocalTimer(); // Запускаем таймер после обратного отсчета
+      localInterval = setInterval(() => {
+        if (state.status !== 'active' || !state.activeColor) {
+          return;
         }
+
+        const now = Date.now();
+        const elapsed = (now - state.lastUpdateTime) / 1000;
+
+        if (state.activeColor === 'white') {
+          state.whiteTime = Math.max(0, state.whiteTime - elapsed);
+          if (state.whiteTime <= 0) {
+            handleTimeout('white');
+            return;
+          }
+        } else {
+          state.blackTime = Math.max(0, state.blackTime - elapsed);
+          if (state.blackTime <= 0) {
+            handleTimeout('black');
+            return;
+          }
+        }
+
+        state.lastUpdateTime = now;
       }, 1000);
-    },
+    }
 
-    handleTimerSync(timerData: {
-      whiteTime: number;
-      blackTime: number;
-      activeColor: PieceColor;
-      gameId: string;
-      status: 'countdown' | 'active' | 'completed';
-    }) {
-      // Проверяем, что синхронизация для текущей игры
-      if (timerData.gameId !== this.gameId) return;
+    // Основные действия
+    function handleTimeout(color: PieceColor) {
+      if (state.status === 'completed') return;
 
-      this.whiteTime = timerData.whiteTime;
-      this.blackTime = timerData.blackTime;
-      this.activeColor = timerData.activeColor;
-      this.lastUpdateTime = Date.now();
-
-      // Обновляем статус только если он изменился
-      if (this.status !== timerData.status) {
-        this.status = timerData.status;
-      }
-    },
-
-    // Обработка временного разрыва после переподключения
-    handleReconnection(lastUpdateTime: number) {
-      if (!this.activeColor || this.status !== 'active') return;
-
-      const timeDiff = (Date.now() - lastUpdateTime) / 1000;
-
-      if (this.activeColor === 'white') {
-        this.whiteTime = Math.max(0, this.whiteTime - timeDiff);
-        if (this.whiteTime <= 0) {
-          this.handleTimeout('white');
-        }
-      } else {
-        this.blackTime = Math.max(0, this.blackTime - timeDiff);
-        if (this.blackTime <= 0) {
-          this.handleTimeout('black');
-        }
-      }
-    },
-
-    updateActiveColor(color: PieceColor) {
-      if (this.activeColor !== color) {
-        this.activeColor = color;
-        this.lastUpdateTime = Date.now();
-      }
-    },
-
-    handleTimeout(color: PieceColor) {
-      if (this.status === 'completed') return;
-
-      this.status = 'completed';
+      state.status = 'completed';
       const gameStore = useGameStore();
 
-      if (gameStore.currentGame && gameStore.currentGame._id === this.gameId) {
+      if (gameStore.currentGame && gameStore.currentGame._id === state.gameId) {
         const winner = gameStore.currentGame.players[color === 'white' ? 'black' : 'white']!;
         const loser = gameStore.currentGame.players[color]!;
 
@@ -155,49 +120,67 @@ export const useGameTimerStore = defineStore('gameTimer', {
           reason: 'timeout',
         });
       }
-    },
+    }
 
-    startLocalTimer() {
-      if (this.localInterval) {
-        clearInterval(this.localInterval);
-      }
+    function startCountdown() {
+      if (state.isCountingStarted || state.status !== 'countdown') return;
 
-      this.localInterval = setInterval(() => {
-        if (this.status !== 'active' || !this.activeColor) {
-          return;
+      state.isCountingStarted = true;
+      const countdownInterval = setInterval(() => {
+        state.countdownTime--;
+        if (state.countdownTime <= 0) {
+          clearInterval(countdownInterval);
+          state.status = 'active';
+          startLocalTimer();
         }
-
-        const now = Date.now();
-        const elapsed = (now - this.lastUpdateTime) / 1000;
-
-        if (this.activeColor === 'white') {
-          this.whiteTime = Math.max(0, this.whiteTime - elapsed);
-          if (this.whiteTime <= 0) {
-            this.handleTimeout('white');
-            return;
-          }
-        } else {
-          this.blackTime = Math.max(0, this.blackTime - elapsed);
-          if (this.blackTime <= 0) {
-            this.handleTimeout('black');
-            return;
-          }
-        }
-
-        this.lastUpdateTime = now;
       }, 1000);
-    },
+    }
 
-    // Остановка локального интервала
-    stopLocalTimer() {
-      if (this.localInterval) {
-        clearInterval(this.localInterval);
-        this.localInterval = null;
+    async function initialize(gameId: string, duration?: GameDuration) {
+      state.countdownTime = 5;
+      state.isCountingStarted = false;
+
+      if (state.gameId === gameId && state.status === 'active') {
+        return;
       }
-    },
 
-    // Обработка SSE обновлений
-    handleSSEUpdate(data: {
+      state.gameId = gameId;
+
+      if (duration) {
+        const timeInSeconds = duration * 60;
+        state.whiteTime = timeInSeconds;
+        state.blackTime = timeInSeconds;
+        state.initialDuration = timeInSeconds;
+        state.activeColor = 'white';
+        state.status = 'countdown';
+        state.lastUpdateTime = Date.now();
+      } else if (state.status === 'active') {
+        startLocalTimer();
+      } else {
+        state.status = 'not_started';
+      }
+    }
+
+    function handleTimerSync(timerData: {
+      whiteTime: number;
+      blackTime: number;
+      activeColor: PieceColor;
+      gameId: string;
+      status: 'countdown' | 'active' | 'completed';
+    }) {
+      if (timerData.gameId !== state.gameId) return;
+
+      state.whiteTime = timerData.whiteTime;
+      state.blackTime = timerData.blackTime;
+      state.activeColor = timerData.activeColor;
+      state.lastUpdateTime = Date.now();
+
+      if (state.status !== timerData.status) {
+        state.status = timerData.status;
+      }
+    }
+
+    function handleSSEUpdate(data: {
       whiteTime: number;
       blackTime: number;
       activeColor: PieceColor;
@@ -205,69 +188,56 @@ export const useGameTimerStore = defineStore('gameTimer', {
       status: 'countdown' | 'active' | 'completed';
       timestamp: number;
     }) {
-      if (data.gameId !== this.gameId) return;
-      if (data.status === 'countdown' && !this.isCountingStarted) {
-        this.startCountdown();
+      if (data.gameId !== state.gameId) return;
+      if (data.status === 'countdown' && !state.isCountingStarted) {
+        startCountdown();
         return;
       }
 
-      // Проверяем, что обновление более свежее
-      if (data.timestamp <= this.lastSyncTime) return;
+      if (data.timestamp <= state.lastSyncTime) return;
 
-      this.whiteTime = data.whiteTime;
-      this.blackTime = data.blackTime;
-      this.activeColor = data.activeColor;
-      this.status = data.status;
-      this.lastSyncTime = data.timestamp;
-      this.lastUpdateTime = Date.now();
+      state.whiteTime = data.whiteTime;
+      state.blackTime = data.blackTime;
+      state.activeColor = data.activeColor;
+      state.status = data.status;
+      state.lastSyncTime = data.timestamp;
+      state.lastUpdateTime = Date.now();
 
-      // Перезапускаем локальный таймер для плавных обновлений
-      if (this.status === 'active') {
-        this.restartLocalTimer();
+      if (state.status === 'active') {
+        stopLocalTimer();
+        startLocalTimer();
       }
-    },
+    }
 
-    // Перезапуск локального таймера
-    restartLocalTimer() {
-      this.stopLocalTimer();
-      this.startLocalTimer();
-    },
-
-    // Обработка изменений в игре
-    handleGameUpdate(gameStatus: string) {
-      if (gameStatus === 'completed') {
-        this.stopLocalTimer();
-        this.status = 'completed';
+    function cleanup() {
+      stopLocalTimer();
+      if (state.status !== 'active') {
+        state.whiteTime = 0;
+        state.blackTime = 0;
+        state.activeColor = null;
+        state.status = 'not_started';
+        state.lastUpdateTime = 0;
+        state.countdownTime = 5;
+        state.initialDuration = null;
+        state.gameId = null;
+        state.lastSyncTime = 0;
+        state.isCountingStarted = false;
       }
-    },
+    }
 
-    // Очистка при размонтировании
-    cleanup() {
-      this.stopLocalTimer();
-      if (this.status !== 'active') {
-        this.resetTimer();
-      }
-    },
-
-    resetTimer() {
-      this.stopLocalTimer();
-      this.isCountingStarted = false;
-      this.$reset();
-    },
+    return {
+      ...toRefs(state),
+      remainingTime,
+      isGameReady,
+      isCountingDown,
+      initialize,
+      startCountdown,
+      handleTimerSync,
+      handleSSEUpdate,
+      cleanup,
+    };
   },
-
-  persist: {
-    storage: persistedState.localStorage,
-    paths: [
-      'whiteTime',
-      'blackTime',
-      'activeColor',
-      'status',
-      'gameId',
-      'initialDuration',
-      'lastSyncTime',
-      'countdownTime',
-      'isCountingStarted',
-    ],
-  },
-});
+  {
+    persist: true,
+  }
+);
