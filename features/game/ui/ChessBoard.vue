@@ -10,7 +10,7 @@
                 <div class="flex items-center space-x-2">
                     <UAvatar :ui="{ rounded: 'object-cover' }" :src="currentPlayerAvatar" :alt="currentPlayerName"
                         size="sm" />
-                    <p class="text-sm">
+                    <p class="text-sm overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px]">
                         {{ t('game.playerTurn', { name: currentPlayerName }) }}
                     </p>
                 </div>
