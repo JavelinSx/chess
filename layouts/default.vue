@@ -52,12 +52,13 @@
 
 
 
-        <main class="flex-grow w-full max-w-[750px] xl:max-w-[1024px] mt-20 flex flex-col">
+        <main class=" flex-grow w-full max-w-[750px] xl:max-w-[1024px] mt-20 flex flex-col">
             <UButton v-if="isAuthenticated && activeGameId && !isGamePage" :to="`/game/${activeGameId}`" color="primary"
                 variant="soft" class=" w-80 h-10 text-center self-center">
                 {{ t('game.returnToGame') }}
             </UButton>
-            <UContainer class="py-4 sm:px-2 max-w-[750px] xl:max-w-[1024px] flex flex-col justify-center items-center">
+            <UContainer
+                class="mx-0 py-4 sm:px-2 max-w-[750px] xl:max-w-[1024px] flex flex-col justify-center items-center">
                 <NuxtPage />
             </UContainer>
             <FloatingChat />
